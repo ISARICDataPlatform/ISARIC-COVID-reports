@@ -1,0 +1,26 @@
+---
+title: "COVID-19 Analysis Report"
+date: "13 March, 2020"
+output:
+  html_document:
+    keep_md: yes
+    df_print: paged
+    number_sections: yes
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: no
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+# References
+
+1.	Worby, C., Kenyon, C., Lynfield, R. et al. Examining the role of different age groups and of vaccination during the 2012 Minnesota pertussis outbreak. Sci Rep 5, 13182 (2015). https://doi.org/10.1038/srep13182 
+	 
+
+
+
+
+

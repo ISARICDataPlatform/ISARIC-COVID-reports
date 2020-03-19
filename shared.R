@@ -1,0 +1,573 @@
+library(tidyverse)
+library(lubridate)
+library(grid)
+
+# Still not sure how best to let external groups point to their data. For now:
+
+#input.folder <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/"
+
+#setwd(input.folder)
+
+d.dict <- read_csv("data/Site List & Data Dictionaries/CCPUKSARI_DataDictionary_2020-03-17.csv") %>%
+  dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
+  dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
+
+comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
+admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4")) %>% pull(field.name)
+
+comorbidities.labels <- d.dict %>% 
+  filter(form.name == "comorbidities" & field.type == "radio") %>% 
+  pull(field.label) %>%
+  str_match(pattern = "4b\\.[0-9]+\\.\\s(.*)") %>%
+  as_tibble() %>%
+  pull(2) %>%
+  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
+  map_chr(function(x) sub("\\s+$", "", x))
+
+# some things are best done by hand
+
+comorbidities.labels[1] <- "Chronic cardiac disease"
+comorbidities.labels[18] <- "Other"
+
+admission.symptoms.labels <- d.dict %>% 
+  filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4")) %>% 
+  pull(field.label) %>%
+  str_match(pattern = "4a\\.[0-9]+\\.[\\.]?[0-9]?\\s(.*)") %>%
+  as_tibble() %>%
+  pull(2) %>%
+  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
+  map_chr(function(x) sub("\\s+$", "", x))
+
+admission.symptoms.labels[26] <- "Bleeding (other)"
+
+comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
+admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
+
+
+
+uk.data <- read_csv("data/CCPUKSARI_DATA_2020-03-17_1211-1.csv", guess_max = 10000) %>%
+  # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
+dplyr::mutate(oxy_vsorres = as.character(oxy_vsorres),
+         daily_hco3_lborres = as.character(daily_hco3_lborres),
+         daily_haematocrit_lborres = as.character(daily_haematocrit_lborres)) %>%
+dplyr::mutate(Country = "UK")
+
+site.list <- read_csv("data/Site List & Data Dictionaries/REDCap_user_list_ 17MAR20.csv") %>% 
+  dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
+  dplyr::mutate(site.name = map_chr(`Site Number_1`, function(x) substr(x, 5, nchar(x)))) %>%
+  dplyr::select(site.number, site.name, Country)
+
+row.data <- read_csv("data/ISARICnCoV_DATA_2020-03-17_1215.csv", guess_max = 10000) %>% 
+  # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
+  dplyr::mutate(oxy_vsorres = as.character(oxy_vsorres),
+         daily_hco3_lborres = as.character(daily_hco3_lborres),
+         daily_haematocrit_lborres = as.character(daily_haematocrit_lborres)) %>%
+  # different column names for some comorbidities
+  dplyr::rename(chrincard = chroniccard_mhyn, 
+         modliv = modliver_mhyn, 
+         mildliver = mildliv_mhyn, 
+         chronichaemo_mhyn = chronhaemo_mhyn, 
+         diabetescom_mhyn = diabetiscomp_mhyn,
+         rheumatologic_mhyn = rheumatology_mhyr) %>%
+  dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
+  left_join(site.list, by = "site.number") %>%
+  dplyr::select(-site.number)
+
+raw.data <- bind_rows(uk.data, row.data) %>%
+  dplyr::mutate(dsstdat = dmy(dsstdat), 
+         agedat = dmy(agedat), 
+         daily_dsstdat = dmy(daily_dsstdat), 
+         daily_lbdat = dmy(daily_lbdat),
+         hostdat = dmy(hostdat),
+         cestdat = dmy(cestdat))
+
+demog.data <- raw.data %>% group_by(subjid) %>% slice(1)
+
+event.data <- raw.data %>% group_by(subjid) %>% slice(-1) %>% nest() %>% dplyr::rename(events = data)
+
+patient.data <- demog.data %>% left_join(event.data) %>% ungroup()
+
+
+
+patient.data <- patient.data %>%
+  dplyr::mutate(unresolved = map_lgl(events, function(x){
+    if(is.null(x)){
+      # no rows beyond the first - censored
+      return(TRUE)
+    } else if(x %>% pull(redcap_event_name) %>% startsWith("dischargedeath") %>% any() %>% not()){
+      # still in site
+      return(TRUE)
+    } else {
+      # Anything other than discharge or death is "unresolved"
+      return(x %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
+    }
+  })) %>%
+  dplyr::mutate(resolution = map2_chr(unresolved, events, function(x, y){
+    if(x){
+      return("unresolved")
+    } else {
+      return(switch(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% as.character(),
+                    "1" = "discharge",
+                    "4" = "death"))
+    }
+  })) %>%
+  dplyr::mutate(resolved.date = map2_chr(unresolved, events, function(x, y){
+    if(x){
+      return(NA)
+    } else {
+      if(length(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character()) > 1){
+        stop("Multiple resolution dates?")
+      }
+      return(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character())
+    }
+  })) %>%
+  dplyr::mutate(resolved.date = dmy(resolved.date)) %>%
+  dplyr::mutate(death.date = map2_chr(resolution, resolved.date, function(x,y){
+    if(is.na(y)){
+      NA
+    }
+    ifelse(x=="death", as.character(y), NA)
+  })) %>%
+  # oh for map_date!!!
+  dplyr::mutate(death.date = ymd(death.date)) %>%
+  dplyr::mutate(discharge.date = map2_chr(resolution, resolved.date, function(x,y){
+    if(is.na(y)){
+      NA
+    }
+    ifelse(x=="discharge", as.character(y), NA)
+  }))  %>%
+  dplyr::mutate(discharge.date = ymd(discharge.date)) %>%
+  dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
+    if(is.na(dob)){
+      ageest
+    } else {
+      floor(decimal_date(doa) - decimal_date(dob))
+    }
+  })) %>%
+  dplyr::mutate(agegp = cut(consolidated.age, c(0,seq(10,90,by = 5),120), right = FALSE)) %>%
+  dplyr::mutate(agegp = fct_relabel(agegp, function(a){
+    
+    temp <- substr(a, 2, nchar(a) -1 )
+    temp <- str_replace(temp, ",", "-")
+    str_replace(temp, "90-120", "90+")
+    
+  }))
+
+compareNA <- function(v1,v2) {
+  same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
+  same[is.na(same)] <- FALSE
+  return(same)
+}
+
+
+ref.date = today()
+
+patient.data <- patient.data %>%
+  dplyr::mutate(Admit.Discharge.any = as.numeric(difftime(dsstdtc, hostdat,  unit="days")),
+         Onset.Hosp = as.numeric(difftime(hostdat, cestdat, unit="days"))) %>%
+  dplyr::mutate(Admit.Censored.any = map2_dbl(Admit.Discharge.any, hostdat, function(x,y){
+    if(is.na(x)){
+      as.numeric(difftime(ref.date, y,  unit="days"))}
+    else{
+      NA
+    }
+  })) %>%
+  dplyr::mutate(Admit.Death = pmap_dbl(list(dsstdtcyn, dsstdtc, hostdat), function(x, y, z){
+    if(compareNA(4,x )){
+      as.numeric(difftime(y, z,  unit="days"))
+    } else {
+      NA
+    }
+  })) %>%
+  dplyr::mutate(Admit.Recovered = pmap_dbl(list(dsstdtcyn, dsstdtc, hostdat), function(x, y, z){
+    if(compareNA(1, x)){
+      as.numeric(difftime(y, z,  unit="days"))
+    } else {
+      NA
+    }
+  }))
+
+# @todo CHECK THAT GENDERS ARE RIGHT
+
+age.pyramid <- function(data){
+  
+  data2 <- data %>%
+    group_by(agegp, sex, resolution) %>%
+    dplyr::summarise(count = n()) %>%
+    ungroup() %>%
+    filter(!is.na(sex) & !is.na(agegp)) %>%
+    dplyr::mutate(resolution = factor(resolution)) %>%
+    dplyr::mutate(count = map2_dbl(count, sex, function(c, s){
+      if(s == 1){
+        -c
+      } else {
+        c
+      }
+    })) %>%
+    dplyr::mutate(sex = map_chr(sex, function(s){
+      c("M", "F")[s]
+    })) 
+  
+  ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp, y=count, fill = resolution), stat = "identity", col = "black") +
+    geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp, y=count, fill = resolution),  stat = "identity", col = "black") +
+    coord_flip(clip = 'off') +
+    theme_bw() +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
+    xlab("Age group") +
+    ylab("Count") +
+    scale_x_discrete(drop = "F") +
+    scale_y_continuous(
+      breaks = seq(-(ceiling(max(abs(data2$count))/10)*10), ceiling(max(abs(data2$count))/10)*10, by = 10),
+      labels = as.character(c(rev(seq(10, ceiling(max(abs(data2$count))/10)*10, by = 10)), 0, seq(10, ceiling(max(abs(data2$count))/10)*10, by= 10)))) +
+    annotation_custom(
+      grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
+      ymin = -max(data2$count)*1.1/2,      
+      ymax = -max(data2$count)*1.1/2,
+      xmin = length(levels(data2$agegp))+1.5 ,         
+      xmax = length(levels(data2$agegp))+1.5) +
+    annotation_custom(
+      grob = textGrob(label = "Females", hjust = 0.5, gp = gpar(cex = 1.5)),
+      ymin = max(data2$count)*1.1/2,      
+      ymax = max(data2$count)*1.1/2,
+      xmin = length(levels(data2$agegp))+1.5,         
+      xmax = length(levels(data2$agegp))+1.5) +
+    theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
+  
+}
+
+sites.by.country <- function(data){
+  data2 <- data %>%
+    group_by(Country, redcap_data_access_group) %>%
+    dplyr::summarise(n.sites = 1) %>%
+    dplyr::summarise(n.sites = sum(n.sites))
+  
+  ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
+    theme_bw() +
+    xlab("Country") +
+    ylab("Sites") 
+}
+
+outcomes.by.country <- function(data){
+  ggplot(data) + geom_bar(aes(x = Country, fill = resolution), col = "black") +
+    theme_bw() +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
+    xlab("Country") +
+    ylab("Cases") 
+}
+
+outcomes.by.admission.date <- function(data){
+  ggplot(data) + geom_bar(aes(x = hostdat, fill = resolution), col = "black", width = 0.95) +
+    theme_bw() +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
+    xlab("Date") +
+    ylab("Cases") 
+}
+
+comorbidities.upset <- function(data, max.comorbidities){
+  
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(comorbidities$field)) 
+  
+  n.comorb <- ncol(data2) - 1
+  
+  data2 <- data2 %>%
+    pivot_longer(2:(n.comorb+1), names_to = "Condition", values_to = "Present") %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) 
+  
+  most.common <- data2 %>%        
+    group_by(Condition) %>%
+    dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
+    ungroup() %>%
+    filter(Condition != "other_mhyn") %>%
+    arrange(desc(Present)) %>%
+    slice(1:max.comorbidities) %>%
+    pull(Condition)
+  
+  data3 <- data %>%
+    dplyr::select(subjid, one_of(most.common)) %>%
+    pivot_longer(2:(length(most.common)+1), names_to = "Condition", values_to = "Present") %>%
+    left_join(comorbidities, by = c("Condition" = "field")) %>%
+    dplyr::select(-Condition) %>%
+    filter(!is.na(Present)) %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) %>%
+    group_by(subjid) %>%
+    dplyr::summarise(Conditions = list(label), Presence = list(Present)) %>%
+    dplyr::mutate(conditions.present = map2(Conditions, Presence, function(c,p){
+      c[which(p)]
+    })) %>%
+    dplyr::select(-Conditions, -Presence)
+  
+  ggplot(data3, aes(x = conditions.present)) + 
+    geom_bar(fill = "indianred3", col = "black") + 
+    theme_bw() +
+    xlab("Comorbidities present at admission") +
+    ylab("Count") +
+    scale_x_upset() 
+}
+
+
+symptoms.upset <- function(data, max.symptoms){
+  
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(admission.symptoms$field)) 
+  
+  n.comorb <- ncol(data2) - 1
+  
+  data2 <- data2 %>%
+    pivot_longer(2:(n.comorb+1), names_to = "Condition", values_to = "Present") %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) 
+  
+  most.common <- data2 %>%        
+    group_by(Condition) %>%
+    dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
+    ungroup() %>%
+    filter(Condition != "other_mhyn") %>%
+    arrange(desc(Present)) %>%
+    slice(1:max.symptoms) %>%
+    pull(Condition)
+  
+  data3 <- data %>%
+    dplyr::select(subjid, one_of(most.common)) %>%
+    pivot_longer(2:(length(most.common)+1), names_to = "Condition", values_to = "Present") %>%
+    left_join(admission.symptoms, by = c("Condition" = "field")) %>%
+    dplyr::select(-Condition) %>%
+    filter(!is.na(Present)) %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) %>%
+    group_by(subjid) %>%
+    dplyr::summarise(Conditions = list(label), Presence = list(Present)) %>%
+    dplyr::mutate(conditions.present = map2(Conditions, Presence, function(c,p){
+      c[which(p)]
+    })) %>%
+    dplyr::select(-Conditions, -Presence)
+  
+  ggplot(data3, aes(x = conditions.present)) + 
+    geom_bar(fill = "deepskyblue3", col = "black") + 
+    theme_bw() +
+    xlab("Symptoms present at admission") +
+    ylab("Count") +
+    scale_x_upset() 
+}
+
+comorbidity.symptom.prevalence <- function(data){
+  
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(admission.symptoms$field), one_of(comorbidities$field)) 
+  
+  nconds <- ncol(data2) - 1
+  
+  combined.labeller <- bind_rows(comorbidities %>% add_column(type = "Comorbidities"), 
+                                 admission.symptoms %>% add_column(type = "Symptoms at admission"))
+  
+  data2 <- data2 %>%
+    pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
+    group_by(Condition) %>%
+    filter(!is.na(Present)) %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) %>%
+    dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
+    left_join(combined.labeller, by = c("Condition" = "field")) %>%
+    dplyr::select(-Condition) %>%
+    dplyr::mutate(prop.yes = Present/Total) %>%
+    dplyr::mutate(prop.no = 1-prop.yes) %>%
+    arrange(type, prop.yes) %>%
+    dplyr::mutate(Condition = as_factor(label)) %>%
+    pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
+    dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
+    dplyr::mutate(typepresent = glue("{type}_{affected}")) %>%
+    filter(label != "Other")
+  
+  
+  ggplot(data2) + 
+    geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    facet_wrap(~type, scales = "free") +
+    theme_bw() + 
+    coord_flip() + 
+    ylim(0, 1) +
+    scale_fill_brewer(palette = "Paired", name = "Condition\npresent", labels = c("No", "Yes")) +
+    theme(axis.text.y = element_text(size = 7))
+  
+}
+
+modified.km.plot <- function(data){
+  
+  total.patients <- nrow(data)
+  
+  data2 <- data %>%
+    filter(resolution != "unresolved" & !is.na(resolved.date)) %>%
+    dplyr::select(subjid, hostdat, resolved.date, resolution) %>%
+    dplyr::mutate(admission.to.resolution = map2_dbl(hostdat, resolved.date, function(x,y) as.numeric(difftime(y, x,  unit="days"))))
+  
+  timeline <- map(0:max(data2$admission.to.resolution), function(x){
+    resolved.now <- data2 %>% filter(admission.to.resolution <= x)
+    prop.dead <- nrow(resolved.now %>% filter(resolution == "death"))/total.patients
+    prop.discharged <- nrow(resolved.now %>% filter(resolution == "discharge"))/total.patients
+    list(day = x, prop.dead = prop.dead, prop.discharged = prop.discharged)
+  }) %>% bind_rows() %>%
+    dplyr::mutate(prop.not.discharged = 1-prop.discharged) %>%
+    dplyr::select(-prop.discharged)
+    
+    
+    
+
+  final.dead <- timeline %>%  pull(prop.dead) %>% max()
+  final.not.discharged <- timeline %>% pull(prop.not.discharged) %>% min()
+  
+  interpolation.line <- final.dead + (1-(final.not.discharged+final.dead))*(final.dead/(final.dead + (1-final.not.discharged)))
+  
+  timeline <- timeline %>%
+    add_column(interpolation = interpolation.line) %>%
+    pivot_longer(2:4, names_to = "stat", values_to = "value") %>%
+    dplyr::mutate(stat = factor(stat, levels = c("prop.dead", "prop.not.discharged", "interpolation")))
+  
+  ggplot(timeline) + 
+    geom_line(aes(x= day, y=value, col = stat, linetype = stat), size =0.75) +
+    theme_bw() +
+    scale_colour_manual(values = c("#e41a1c", "#377eb8", "black"), name = "Statistic", labels = c("Death", "Discharge", "Interpolated\nfatality risk")) +
+    scale_linetype_manual(values = c("solid", "solid", "dashed"),  guide = F) +
+    xlab("Days after admission") +
+    ylab("Cumulative probability")
+  
+}
+
+
+hospital.fatality.ratio <- function(data){
+
+
+
+  # As I understand the method, we don't care about when people were admitted
+  # for this plot, just the numbers that have been discharged and the number
+  # who have died
+  Dc_date <- data$discharge.date
+  Died_date <- data$death.date
+  
+  # First patient in my mock data recruited 1/2/2020
+  
+  d.0 <- as.Date("2020-02-01")
+  
+  for (i in 0:60) {
+
+    d.i <- d.0 + i
+    date <- d.0 + i
+    disch <- sum(Dc_date == date, na.rm=TRUE)
+    died <- sum(Died_date == date, na.rm=TRUE)
+    
+    db.i <- data.frame(Row = i, Date = date, Dc = disch, Died = died)
+    db.i$Dc[is.na(db.i$Dc) == TRUE] <- 0
+    db.i$Died[is.na(db.i$Died) == TRUE] <- 0
+    
+    db.i$Dc_c <- 0
+    db.i$Died_c <- 0
+    
+    if (i == 0) {
+      db <- db.i
+      db$Dc_c <- db$Dc
+      db$Died_c <- db$Died
+    } else {  
+      db <- rbind(db, db.i, deparse.level = 0)
+      db$Dc_c[i + 1] <- db$Dc_c[i] + db$Dc[i + 1]
+      db$Died_c[i + 1] <- db$Died_c[i] + db$Died[i + 1]
+    }
+  }
+  
+  db$Events <- db$Dc_c + db$Died_c
+  
+  # Discard rows before the first patients with events
+  
+  db <- subset(db, Events > 0)
+  
+  # hospital fatality risk = (fatal cases)/(fatal cases+recovered cases)
+  
+  db$Hfr <- db$Died_c / db$Events
+  bino <- binom.confint(
+    db$Died_c, 
+    db$Events, 
+    conf.level = .95, 
+    methods = "exact"
+  )
+  
+  db <- cbind(db, bino, deparse.level = 0)
+  
+  # With the example data I used the graph was dominated by a huge confidence
+  # interval yet the estimated mortality ended up around 2.5% so I trimmed
+  # the plot at 20%.  Obviously we might not want to do this with the real data.
+  
+  trim <- .2
+  
+  db$upper[db$upper > .2] <- trim
+  
+  line <- geom_line(
+    data = db, 
+    stat = "identity", 
+    aes(x = Date, y = Hfr), 
+    colour = "blue",
+    size = 1
+  ) 
+  shade <- geom_ribbon(
+    fill = 'lightblue',
+    data = db,
+    stat = "identity", 
+    aes(x = Date, ymin = lower, ymax = upper),  
+    linetype = 2,
+    alpha = 0.5
+  )
+  yaxis <- scale_y_continuous(
+    name = "Hospital fatality ratio", 
+    limits = c(0, trim)
+  )
+  plot <- ggplot(data = db) +
+    line +
+    shade +
+    yaxis + theme_bw()
+  
+  plot
+  
+}
