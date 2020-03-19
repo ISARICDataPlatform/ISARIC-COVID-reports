@@ -86,7 +86,7 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
 # the events table needs a copy of the first row. Mad, but t
 
-event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename %>% ungroup() %>% ungroup()
+event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
 patient.data <- demog.data %>% left_join(event.data)
 
@@ -99,7 +99,7 @@ patient.data <- patient.data %>%
       # still in site
       return(TRUE)
     } else {
-      # Anything other than discharge or death is "unresolved"
+      # Anything other than discharge or death is "censored"
       return(x %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
     }
   })) %>%
@@ -129,8 +129,8 @@ patient.data <- patient.data %>%
       return(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character())
     }
   })) %>%
-  dplyr::mutate(resolved.date = dmy(resolved.date)) %>%
-  dplyr::mutate(death.date = map2_chr(resolution, resolved.date, function(x,y){
+  dplyr::mutate(outcome.date = dmy(outcome.date)) %>%
+  dplyr::mutate(death.date = map2_chr(outcome, outcome.date, function(x,y){
     if(is.na(y)){
       NA
     }
@@ -138,7 +138,7 @@ patient.data <- patient.data %>%
   })) %>%
   # oh for map_date!!!
   dplyr::mutate(death.date = ymd(death.date)) %>%
-  dplyr::mutate(discharge.date = map2_chr(resolution, resolved.date, function(x,y){
+  dplyr::mutate(discharge.date = map2_chr(outcome, outcome.date, function(x,y){
     if(is.na(y)){
       NA
     }
@@ -236,11 +236,11 @@ patient.data <- patient.data %>%
 age.pyramid <- function(data){
   
   data2 <- data %>%
-    group_by(agegp, sex, resolution) %>%
+    group_by(agegp, sex, outcome) %>%
     dplyr::summarise(count = n()) %>%
     ungroup() %>%
     filter(!is.na(sex) & !is.na(agegp)) %>%
-    dplyr::mutate(resolution = factor(resolution)) %>%
+    dplyr::mutate(outcome = factor(outcome)) %>%
     dplyr::mutate(count = map2_dbl(count, sex, function(c, s){
       if(s == 1){
         -c
@@ -252,8 +252,8 @@ age.pyramid <- function(data){
       c("M", "F")[s]
     })) 
   
-  ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp, y=count, fill = resolution), stat = "identity", col = "black") +
-    geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp, y=count, fill = resolution),  stat = "identity", col = "black") +
+  ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp, y=count, fill = outcome), stat = "identity", col = "black") +
+    geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
@@ -292,7 +292,7 @@ sites.by.country <- function(data){
 }
 
 outcomes.by.country <- function(data){
-  ggplot(data) + geom_bar(aes(x = Country, fill = resolution), col = "black") +
+  ggplot(data) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
     xlab("Country") +
@@ -300,7 +300,7 @@ outcomes.by.country <- function(data){
 }
 
 outcomes.by.admission.date <- function(data){
-  ggplot(data) + geom_bar(aes(x = hostdat, fill = resolution), col = "black", width = 0.95) +
+  ggplot(data) + geom_bar(aes(x = hostdat, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
     xlab("Date") +
@@ -486,14 +486,14 @@ modified.km.plot <- function(data){
   total.patients <- nrow(data)
   
   data2 <- data %>%
-    filter(resolution != "unresolved" & !is.na(resolved.date)) %>%
-    dplyr::select(subjid, hostdat, resolved.date, resolution) %>%
-    dplyr::mutate(admission.to.resolution = map2_dbl(hostdat, resolved.date, function(x,y) as.numeric(difftime(y, x,  unit="days"))))
+    filter(outcome != "censored" & !is.na(outcome.date)) %>%
+    dplyr::select(subjid, hostdat, outcome.date, outcome) %>%
+    dplyr::mutate(admission.to.outcome = map2_dbl(hostdat, outcome.date, function(x,y) as.numeric(difftime(y, x,  unit="days"))))
   
-  timeline <- map(0:max(data2$admission.to.resolution), function(x){
-    resolved.now <- data2 %>% filter(admission.to.resolution <= x)
-    prop.dead <- nrow(resolved.now %>% filter(resolution == "death"))/total.patients
-    prop.discharged <- nrow(resolved.now %>% filter(resolution == "discharge"))/total.patients
+  timeline <- map(0:max(data2$admission.to.outcome), function(x){
+    outcome.date <- data2 %>% filter(admission.to.outcome <= x)
+    prop.dead <- nrow(outcome.date %>% filter(outcome == "death"))/total.patients
+    prop.discharged <- nrow(outcome.date %>% filter(outcome == "discharge"))/total.patients
     list(day = x, prop.dead = prop.dead, prop.discharged = prop.discharged)
   }) %>% bind_rows() %>%
     dplyr::mutate(prop.not.discharged = 1-prop.discharged) %>%

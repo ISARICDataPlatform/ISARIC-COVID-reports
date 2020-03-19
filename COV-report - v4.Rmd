@@ -37,9 +37,9 @@ setwd(dir.path)
 
 #setwd(dir.path2)
 
-source("shiny/COVID-dashboard/shared.R")
-source("shiny/COVID-dashboard/functions2.R")
-ed.data <- read.csv("data/data.csv")
+source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
+source("/Users/mdhall/ISARIC-COVID-dashboard/functions2.R")
+data <- read.csv("data/data.csv")
 
 ```
 
@@ -172,10 +172,8 @@ adm.outcome.func(data)
 
 
 
-Kaplan-Meier plot for the  probability of hospital exit discharge (by recovery or death), displayed by sex:
-
-```{r kpplot, out.width= "80%"}
-
+```{r kpplot, out.width= "80%", include = FALSE}
+#Kaplan-Meier plot for the  probability of hospital exit discharge (by recovery or death), displayed by sex:
 #data -> df
 #surv_plot_func(f = df)
 
@@ -184,10 +182,10 @@ Kaplan-Meier plot for the  probability of hospital exit discharge (by recovery o
 
 
 
-Modified Kaplan-Meier curves for outcomes (death or discharge)**:
 
-```{r outcomelines, out.width="80%"}
 
+```{r outcomelines, out.width="80%", include = FALSE}
+# Modified Kaplan-Meier curves for outcomes (death or discharge)**:
 # Non-parametric CFR estimates
 
 ## Function to calculate case fatality ratio and uncertainty bounds.
@@ -336,7 +334,7 @@ Patient details were submitted electronically by participating sites to the ISAR
 Graphs have been used to represent the age distribution of patience by sex and status (censores, death, recovered), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
 
 
-To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions are fitted to the observed data, allowing for censored observations. 
+To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions were fitted to the observed data, allowing for censored observations. 
 
 
 
