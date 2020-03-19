@@ -68,7 +68,8 @@ row.data <- read_csv("data/ISARICnCoV_DATA_2020-03-17_1215.csv", guess_max = 100
          mildliver = mildliv_mhyn, 
          chronichaemo_mhyn = chronhaemo_mhyn, 
          diabetescom_mhyn = diabetiscomp_mhyn,
-         rheumatologic_mhyn = rheumatology_mhyr) %>%
+         rheumatologic_mhyn = rheumatology_mhyr,
+         icu_hoendat = hoendat) %>%
   dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
   left_join(site.list, by = "site.number") %>%
   dplyr::select(-site.number)
@@ -81,16 +82,16 @@ raw.data <- bind_rows(uk.data, row.data) %>%
          hostdat = dmy(hostdat),
          cestdat = dmy(cestdat))
 
-demog.data <- raw.data %>% group_by(subjid) %>% slice(1)
+demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
-event.data <- raw.data %>% group_by(subjid) %>% slice(-1) %>% nest() %>% dplyr::rename(events = data)
+# the events table needs a copy of the first row. Mad, but t
 
-patient.data <- demog.data %>% left_join(event.data) %>% ungroup()
+event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename %>% ungroup() %>% ungroup()
 
-
+patient.data <- demog.data %>% left_join(event.data)
 
 patient.data <- patient.data %>%
-  dplyr::mutate(unresolved = map_lgl(events, function(x){
+  dplyr::mutate(censored = map_lgl(events, function(x){
     if(is.null(x)){
       # no rows beyond the first - censored
       return(TRUE)
@@ -102,21 +103,28 @@ patient.data <- patient.data %>%
       return(x %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
     }
   })) %>%
-  dplyr::mutate(resolution = map2_chr(unresolved, events, function(x, y){
+  dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
     if(x){
-      return("unresolved")
+      return("censored")
     } else {
       return(switch(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% as.character(),
                     "1" = "discharge",
                     "4" = "death"))
     }
   })) %>%
-  dplyr::mutate(resolved.date = map2_chr(unresolved, events, function(x, y){
+  dplyr::mutate(outcome.date.known = map2_dbl(censored, events, function(x, y){
+    if(x){
+      return(2)
+    } else {
+      return(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtcyn))
+    }
+  })) %>%
+  dplyr::mutate(outcome.date = map2_chr(censored, events, function(x, y){
     if(x){
       return(NA)
     } else {
       if(length(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character()) > 1){
-        stop("Multiple resolution dates?")
+        stop("Multiple outcome dates?")
       }
       return(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character())
     }
@@ -151,7 +159,12 @@ patient.data <- patient.data %>%
     temp <- str_replace(temp, ",", "-")
     str_replace(temp, "90-120", "90+")
     
-  }))
+  })) %>%
+  dplyr::mutate(admission.date = hostdat) %>%
+  dplyr::mutate(enrollment.date = dsstdat) %>%
+  dplyr::mutate(onset.date = cestdat) %>%
+  dplyr::mutate(icu.admission.date = icu_hostdat) %>%
+  dplyr::mutate(icu.discharge.date = icu_hoendat)
 
 compareNA <- function(v1,v2) {
   same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
@@ -161,6 +174,37 @@ compareNA <- function(v1,v2) {
 
 
 ref.date = today()
+
+
+# other.dates <- map(1:nrow(patient.data), function(i){
+#   print(i)
+#   id = patient.data$subjid[i]
+#   events.tibble <- patient.data$events[i][[1]]
+# 
+#   # the NIMV field for the daily form is daily_noninvasive_prtrt
+#   
+#   ever.nimv <- patient.data$noninvasive_proccur == 2
+#   
+#   NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% select(daily_dsstdat, daily_noninvasive_prtrt)
+#   if(nrow(NIMV.rows) == 0){
+#     NIMV.start.date <- NA
+#     NIMV.end.date <- NA
+#     multiple.NIMV.periods <- NA
+#   } else if(!any(NIMV.rows$daily_noninvasive_prtrt == 2)){
+#     NIMV.start.date <- NA
+#     NIMV.end.date <- NA
+#     multiple.NIMV.periods <- NA
+#   } else {
+#     print(i)
+#     NIMV.start.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 2) %>% slice(1) %>% pull(daily_dsstdat)
+#     NIMV.start.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 2) %>% slice(n()) %>% pull(daily_dsstdat)
+#     
+#   }
+#   
+#   
+# })
+
+
 
 patient.data <- patient.data %>%
   dplyr::mutate(Admit.Discharge.any = as.numeric(difftime(dsstdtc, hostdat,  unit="days")),

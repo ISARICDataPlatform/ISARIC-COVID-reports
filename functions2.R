@@ -167,8 +167,8 @@ replacezeros <- function(admit.discharge){
 
 onset.adm.func <- function(dat2 = data){
   
- library(fitdistrplus) 
-
+  library(fitdistrplus) 
+  
   admit.discharge <- dat2$Onset.Hosp
   
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
@@ -196,7 +196,7 @@ onset.adm.func <- function(dat2 = data){
     labs(y = 'Density', x = 'Days', title = 'Time from symptom onset to admission')
   
   return(plot)
-
+  
   
 }
 
@@ -212,48 +212,48 @@ onset.adm.func <- function(dat2 = data){
 
 
 adm.outcome.func <- function(dat2 = data){
-
-admit.discharge <- dat2$Admit.hospexit.any
-
-admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-
-admit.discharge <- replacezeros(admit.discharge)
-
-
-
-censored <- abs(dat2$Admit.Censored)
-
-censored <- replacezeros(censored[!(is.na(censored))])
-
-
-left <- c(admit.discharge, censored)
-right <- c(admit.discharge, rep(NA, length(censored)))
-
-censored_df <- data.frame(left, right)
-
-fit <- fitdistcens(censored_df, dist = 'gamma')
-
-
-join <- c(admit.discharge, censored)
-
-t <- data.frame(x = join)
-
-
-plot <- ggplot(data = t) + 
-  geom_histogram(data = as.data.frame(join), aes(x=join, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-  geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="black", size = 2) +
-  theme(
-    plot.title = element_text( size=14, face="bold", hjust = 0.5),
-    axis.title.x = element_text( size=12),
-    axis.title.y = element_text( size=12)
-  ) +
-  theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                        colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-  labs(y = 'Density', x = 'Days', title = 'Time from admission to outcome (any)')
-
-return(plot)
-
-
+  
+  admit.discharge <- dat2$Admit.hospexit.any
+  
+  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+  
+  admit.discharge <- replacezeros(admit.discharge)
+  
+  
+  
+  censored <- abs(dat2$Admit.Censored)
+  
+  censored <- replacezeros(censored[!(is.na(censored))])
+  
+  
+  left <- c(admit.discharge, censored)
+  right <- c(admit.discharge, rep(NA, length(censored)))
+  
+  censored_df <- data.frame(left, right)
+  
+  fit <- fitdistcens(censored_df, dist = 'gamma')
+  
+  
+  join <- c(admit.discharge, censored)
+  
+  t <- data.frame(x = join)
+  
+  
+  plot <- ggplot(data = t) + 
+    geom_histogram(data = as.data.frame(join), aes(x=join, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="black", size = 2) +
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+    labs(y = 'Density', x = 'Days', title = 'Time from admission to outcome (any)')
+  
+  return(plot)
+  
+  
 }
 
 
@@ -275,48 +275,48 @@ surv_plot_func <- function(f = data){
   
   #length(age_groups)      
   # This is to include  dates for individuals still in hospital
- a$length.of.stay <- rep(NA, nrow(a))
+  a$length.of.stay <- rep(NA, nrow(a))
   
   
   for(i in 1:nrow(a)){
     
-  a$length.of.stay[i] <- max(a$Admit.hospexit.any[i], a$Admit.Censored[i], na.rm = T)
+    a$length.of.stay[i] <- max(a$Admit.hospexit.any[i], a$Admit.Censored[i], na.rm = T)
   }
   
-
+  
   # Omit entry 160 (unknown sex)
   
-a <- a[-160, ]
-
-
-# Make positive
-
-
-a$length.of.stay <- abs(a$length.of.stay)
-
-
-a$sex <- revalue(as.factor(a$sex), c('1' = 'Male', '2' = 'Female'))
-
-
-fit <- survfit(Surv(length.of.stay, Censored) ~ sex, data = a)
-#print(fit)
-
-
-plot <- ggsurvplot(fit,
-           pval = T, conf.int = T,
-           risk.table = F, # Add risk table
-           # risk.table.col = "strata", # Change risk table color by groups
-           linetype = "strata", # Change line type by groups
-           #surv.median.line = "hv", # Specify median survival
-           ggtheme = theme_bw(), # Change ggplot2 theme
-           palette = c('#D2691E', '#BA55D3'),
-           legend.labs = 
-             c("Male", "Female"), title = (main = ' '), ylab = '1 - Probability of hospital exit' , legend = c(0.8, 0.9))
-
-
-return(plot)
-
-
+  a <- a[-160, ]
+  
+  
+  # Make positive
+  
+  
+  a$length.of.stay <- abs(a$length.of.stay)
+  
+  
+  a$sex <- revalue(as.factor(a$sex), c('1' = 'Male', '2' = 'Female'))
+  
+  
+  fit <- survfit(Surv(length.of.stay, Censored) ~ sex, data = a)
+  #print(fit)
+  
+  
+  plot <- ggsurvplot(fit,
+                     pval = T, conf.int = T,
+                     risk.table = F, # Add risk table
+                     # risk.table.col = "strata", # Change risk table color by groups
+                     linetype = "strata", # Change line type by groups
+                     #surv.median.line = "hv", # Specify median survival
+                     ggtheme = theme_bw(), # Change ggplot2 theme
+                     palette = c('#D2691E', '#BA55D3'),
+                     legend.labs = 
+                       c("Male", "Female"), title = (main = ' '), ylab = '1 - Probability of hospital exit' , legend = c(0.8, 0.9))
+  
+  
+  return(plot)
+  
+  
 }
 
 
@@ -344,11 +344,11 @@ status.by.time.after.admission <- function(data){
   
   timings.wrangle <- data2 %>%
     dplyr::select(subjid,
-           Died,
-           # Admit.ICU,
-           # Dur.ICU,
-           Censored,
-           Admit.hospexit.any) %>%
+                  Died,
+                  # Admit.ICU,
+                  # Dur.ICU,
+                  Censored,
+                  Admit.hospexit.any) %>%
     dplyr::mutate(hospital.start = 0) %>%
     dplyr::mutate(hospital.end = Admit.hospexit.any) %>%
     # mutate(ICU.start = Admit.ICU) %>%
