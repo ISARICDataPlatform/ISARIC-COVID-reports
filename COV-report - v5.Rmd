@@ -16,7 +16,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
-
+library(magrittr)
 library(tidyverse)
 library(glue)
 library(viridis)
@@ -25,10 +25,15 @@ library(sf)
 library(rgeos)
 library(rnaturalearth)
 library(rnaturalearthdata)
-library(magrittr)
 library(binom)
 library(plyr)
 library(glue)
+library(survival)
+library(survminer)
+library(ggplot2)
+library(fitdistrplus)
+
+
 
 
 # Set versions
@@ -38,18 +43,18 @@ library(glue)
 
 # Define and set working directory 
 
-dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
-# dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
+#dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
+ dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
 
-setwd(dir.path)
+setwd(dir.path2)
 # setwd(dir.path2)
 
 
 # Source files
-
-source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
-source("shiny/COVID-dashboard/functions2.R")
-data <- read.csv("data/data.v4.csv")
+source("/Users/Hp/OneDrive - Nexus365/COVID Reports/shiny/COVID-dashboard/shared.R")
+#source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
+#source("shiny/COVID-dashboard/functions2.R")
+#data <- read.csv("data/data.v4.csv")
 
 ```
 
@@ -69,7 +74,7 @@ data <- read.csv("data/data.v4.csv")
 The results in this report have been produced using data from the  International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. These data were contributed by 22 sites across 14 countries.
 
 
-Up to 19 March 2020, data have been entered for 91 patients. The cohort is made up of 43 males and 37 females - sex is unreported for 11 cases. The median age (calculated based on reported ages) is 50.5 years. Follow-up is ongoing for 52 patients. 12 patients have died.
+Up to 19 March 2020, data have been entered for 91 patients. The cohort is made up of 43 males and 37 females - sex is unreported for 11 cases. The median age (calculated based on reported ages) is 50.5 years. Follow-up is ongoing for 52 patients. 
 
 
 Among this cohort, there was no significant difference in the duration from admission to outcome (either death or recovery) for males and females (p=0.29). The expected mean for the time from admission to outcome (either death or recovery) is 24.5 days (96% CI: 22.9, 27.1), accounting for censorship, i.e. unobserved outcomes. The number of days from (first) symptom onset to hospital admission has an expected mean of 7.1 (6.8, 7.7) and a variance of 38.5 (36.9, 49.4).  Of 41 patients with completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids.  33% received an antibiotic and 18% received antivirals.
@@ -117,12 +122,13 @@ Distribution of patient statuses by time since admission:
 
 ```{r outcome.curve, out.width= "80%"}
 
-  
 status.by.time.after.admission.2(patient.data)
+
+
 ```
 
 
-Length of hospital stay by sex:
+Length of hospital stay until 19/03/2020, by sex:
 
 ```{r stay.by.sex, out.width= "80%"}
 
@@ -132,7 +138,7 @@ violin.sex.func(patient.data)
 ```
 
 
-Length of hospital stay by age group:
+Length of hospital stay until 19/03/2020, by age group:
 
 ```{r  stay.by.age, out.width= "80%"}
 
@@ -179,7 +185,7 @@ upset.plot(patient.data)
 
 
 
-```{r treatment, echo=FALSE}
+```{r treatment2, echo=FALSE}
 
 treatment.use.plot(patient.data)
 
