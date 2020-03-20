@@ -135,14 +135,6 @@ violin.age.func(patient.data)
 ```
 
 
-
-```{r out.width= "80%", include = FALSE}
-
-#Hospital fatality ratio (based only on completed outcomes):
-hospital.fatality.ratio(patient.data)
-```
-
-
 ```{r out.width= "80%"}
 
 
@@ -150,7 +142,7 @@ hospital.fatality.ratio(patient.data)
 ```
 
 
-All patients and outcomes by date of admission:
+**Figure 9**: Patient outcomes by epidemiological week (of 2020) of admission
 
 ```{r recruitment3, echo=FALSE}
 
@@ -306,7 +298,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-Number of sites per country
+**Figure 12**: Number of sites per country
 
 ```{r recruitment1, echo=FALSE}
 
@@ -314,7 +306,7 @@ sites.by.country(patient.data)
 
 ```
 
-All patients by country and outcome:
+**Figure 13**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
