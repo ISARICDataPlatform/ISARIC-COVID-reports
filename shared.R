@@ -868,7 +868,7 @@ violin.age.func <- function(data){
   
   vdx<- tibble(subjid = data2$subjid, Age = data2$new.agegp, length_of_stay = abs(data2$length.of.stay) )
   
-  
+  vdx <- vdx[-77, ]
   
   vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + geom_violin(trim=FALSE)+ #geom_boxplot(width=0.1, fill="white")  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") + 
