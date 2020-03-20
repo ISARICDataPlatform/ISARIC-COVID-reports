@@ -38,16 +38,16 @@ intl.version <- 'ISARICnCoV_DATA_2020-03-19_1326.csv'
 
 # Define and set working directory 
 
-#dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
-dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
+dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
+# dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
 
-#setwd(dir.path)
-setwd(dir.path2)
+setwd(dir.path)
+# setwd(dir.path2)
 
 
 # Source files
 
-#source("shiny/COVID-dashboard/shared.R")
+source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
 source("shiny/COVID-dashboard/functions2.R")
 data <- read.csv("data/data.v4.csv")
 
@@ -117,7 +117,7 @@ Distribution of patient statuses by time since admission:
 ```{r outcome.curve, out.width= "80%"}
 
   
-status.by.time.after.admission(data)
+status.by.time.after.admission.2(patient.data)
 ```
 
 

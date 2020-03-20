@@ -330,7 +330,7 @@ patient.data <- patient.data %>%
     as.numeric(difftime(x, y,  unit="days"))
   }))
 
-save(patient.data, glue("patient_data_{today()}.rda"))
+save(patient.data, file=glue("patient_data_{today()}.rda"))
 
 
 ##### GRAPH FUNCTIONS ##### 
@@ -648,7 +648,7 @@ modified.km.plot <- function(data){
   
   data2 <- data %>%
     filter(outcome != "censored" & !is.na(outcome.date)) %>%
-    dplyr::select(subjid, hostdat, outcome.date, outcome) 
+    dplyr::select(subjid, hostdat, outcome.date, outcome, admission.to.exit) 
   
   timeline <- map(0:max(data2$admission.to.exit), function(x){
     outcome.date <- data2 %>% filter(admission.to.exit <= x)
@@ -896,7 +896,7 @@ surv_plot_func <- function(data){
 ######### Timeline plot ##############
 
 
-status.by.time.after.admission <- function(data){
+status.by.time.after.admission.2 <- function(data){
   
   data2 <- data %>%
     dplyr::mutate(status = map_chr(exit.code, function(x){
