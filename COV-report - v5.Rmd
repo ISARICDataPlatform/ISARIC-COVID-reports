@@ -150,12 +150,21 @@ outcomes.by.admission.date(patient.data)
 ```
 
 
+# Treatment
+
+**Figure 10**: Treatments used on all patients where this information was recorded
+
+```{r treatment1, echo=FALSE}
+treatment.use.plot(patient.data)
+```
+
+
 # Statistical Analysis
 
 Blue curves show the Gamma distribution fit to the data. 
 
 
-**Figure 11**: Distribution of time from symptom onset to admission.
+**Figure 10**: Distribution of time from symptom onset to admission.
 
 ```{r onset.admission, out.width = '80%', fig.align= 'center'}
 
@@ -165,7 +174,7 @@ onset.adm.func(data)
 
 
 
-*Figure 12**: Distribution of time from admission to death or recovery.
+**Figure 11**: Distribution of time from admission to death or recovery.
 
 ```{r  adm.outcome, out.width = '80%', fig.align= 'center' }
 
