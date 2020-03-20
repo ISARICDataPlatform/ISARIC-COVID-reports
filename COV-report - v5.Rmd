@@ -74,6 +74,7 @@ Among this cohort, there was no significant difference in the duration from admi
 
 
 
+
 # Patient Characteristics
 
 
@@ -135,12 +136,13 @@ violin.age.func(patient.data)
 ```
 
 
+**Figure 8**: Hospital fatality ratio (excluding unbserved outcomes).
+
 ```{r out.width= "80%"}
 
-
 hospital.fatality.ratio(patient.data)
-```
 
+```
 
 **Figure 9**: Patient outcomes by epidemiological week (of 2020) of admission
 
@@ -161,14 +163,14 @@ treatment.use.plot(patient.data)
 
 **Figure 11**: Recombinations of antimicrobial treatments given during hospital admission 
 
-```{r treatment1, echo=FALSE}
+```{r treatment2, echo=FALSE}
 upset.plot(patient.data)
 ```
 
 
 # Statistical Analysis
 
-Blue curves show the Gamma distribution fit to data. 
+Blue curves show the Gamma distribution fit to two time-dependent data variables. 
 
 
 **Figure 12**: Distribution of time from symptom onset to admission.
@@ -181,6 +183,7 @@ onset.adm.func(patient.data)
 
 
 **Figure 13**: Distribution of time from admission to an outcome - either death or recovery.
+
 
 ```{r  adm.outcome, out.width = '80%', fig.align= 'center' }
 
@@ -313,7 +316,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 12**: Number of sites per country
+**Figure 14**: Number of sites per country
 
 ```{r recruitment1, echo=FALSE}
 
@@ -321,7 +324,7 @@ sites.by.country(patient.data)
 
 ```
 
-**Figure 13**: Distribution of patients by country and outcome
+**Figure 15**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
