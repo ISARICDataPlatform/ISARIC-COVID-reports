@@ -693,17 +693,20 @@ hospital.fatality.ratio <- function(data){
   
   
   
-  # As I understand the method, we don't care about when people were admitted
-  # for this plot, just the numbers that have been discharged and the number
-  # who have died
-  Dc_date <- data$discharge.date
-  Died_date <- data$death.date
+  Dc_date <- out$discharge.date
+  Died_date <- out$death.date
   
-  # First patient in my mock data recruited 1/2/2020
+  # Identify first and last events
   
-  d.0 <- as.Date("2020-02-01")
+  first <- min(Dc_date, Died_date, na.rm = TRUE)
+  last <- max(Dc_date, Died_date, na.rm = TRUE)
+  diff <- last - first
   
-  for (i in 0:60) {
+  # Plot to start after first event
+  
+  d.0 <- first
+  
+  for (i in 0:diff) {
     
     d.i <- d.0 + i
     date <- d.0 + i
@@ -746,13 +749,6 @@ hospital.fatality.ratio <- function(data){
   
   db <- cbind(db, bino, deparse.level = 0)
   
-  # With the example data I used the graph was dominated by a huge confidence
-  # interval yet the estimated mortality ended up around 2.5% so I trimmed
-  # the plot at 20%.  Obviously we might not want to do this with the real data.
-  
-  trim <- .2
-  
-  db$upper[db$upper > .2] <- trim
   
   line <- geom_line(
     data = db, 
@@ -771,16 +767,17 @@ hospital.fatality.ratio <- function(data){
   )
   yaxis <- scale_y_continuous(
     name = "Hospital fatality ratio", 
-    limits = c(0, trim)
+    limits = c(0, 1)
   )
-  plot <- ggplot(data = db) +
+  plt <- ggplot(data = db) +
     line +
     shade +
     yaxis + theme_bw()
   
-  plot
+  return(plt)
   
 }
+
 
 # The following not currently in use
 
