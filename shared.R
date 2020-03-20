@@ -1103,23 +1103,6 @@ p <- ggplot(treatments, aes(x = treatments.used)) +
 return(p)
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ######### Timeline plot ##############
 
 
