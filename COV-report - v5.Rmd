@@ -66,11 +66,12 @@ data <- read.csv("data/data.v4.csv")
 
 # Summary
 
-The results in this report have been produced using data from the  International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. This data were contributed by 65 sites across 15 countries.
+The results in this report have been produced using data from the  International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. These data were contributed by 22 sites across 14 countries.
 
-Up to 19 March 2020, data have been entered for 408 patients. The cohort is made up of 191 males and 147 females - sex is unreported for 70 cases. The median age (calculated based on reported ages) is 50 years. Follow-up is ongoing for 292 patients. 12 patients have died.
+Up to 19 March 2020, data have been entered for 91 patients. The cohort is made up of 43 males and 37 females - sex is unreported for 11 cases. The median age (calculated based on reported ages) is 50.5 years. Follow-up is ongoing for 52 patients.  
 
 Among this cohort, there was no significant difference in the duration from admission to outcome (either death or recovery) for males and females (p=0.68). The expected mean for the time from admission to outcome (either death or recovery) is 24.5 days (96% CI: 22.9, 27.1), accounting for censorship, i.e. unobserved outcomes. The number of days from (first) symptom onset to hospital admission has an expected mean of 7.1 (6.8, 7.7) and a variance of 38.5 (36.9, 49.4).  Of 41 patients with completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids.  33% received an antibiotic and 18% received antivirals.
+
 
 
 
@@ -135,6 +136,8 @@ violin.age.func(patient.data)
 ```
 
 
+
+
 ```{r out.width= "80%"}
 
 
@@ -159,12 +162,19 @@ treatment.use.plot(patient.data)
 ```
 
 
+**Figure 11**: Combinations of antimicrobial treatments given during hospital admission 
+
+```{r treatment2, echo=FALSE}
+upset.plot(patient.data)
+```
+
+
 # Statistical Analysis
 
 Blue curves show the Gamma distribution fit to the data. 
 
 
-**Figure 10**: Distribution of time from symptom onset to admission.
+**Figure 12**: Distribution of time from symptom onset to admission.
 
 ```{r onset.admission, out.width = '80%', fig.align= 'center'}
 
@@ -174,7 +184,7 @@ onset.adm.func(data)
 
 
 
-**Figure 11**: Distribution of time from admission to death or recovery.
+**Figure 13**: Distribution of time from admission to death or recovery.
 
 ```{r  adm.outcome, out.width = '80%', fig.align= 'center' }
 
@@ -307,7 +317,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 12**: Number of sites per country
+**Figure 14**: Number of sites per country
 
 ```{r recruitment1, echo=FALSE}
 
@@ -315,7 +325,7 @@ sites.by.country(patient.data)
 
 ```
 
-**Figure 13**: Distribution of patients by country and outcome
+**Figure 15**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
