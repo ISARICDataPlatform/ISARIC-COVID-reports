@@ -605,9 +605,9 @@ treatment.use.plot <- function(data){
   
   
   data2 <- data %>% 
-    select(-one_of(treatments$field)) %>%
+    dplyr::select(-one_of(treatments$field)) %>%
     left_join(treatment.columns, by="subjid") %>%
-    select(subjid, one_of(treatments$field))
+    dplyr::select(subjid, one_of(treatments$field))
   
   ntr <- ncol(data2) - 1
   
