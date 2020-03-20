@@ -997,6 +997,7 @@ surv_plot_func <- function(data){
 
 
 
+
 upset.plot <- function(patient.data){row_n <- nrow(patient.data)
 for (i in 1:row_n) {
   events <- patient.data$events[i]
@@ -1016,6 +1017,29 @@ for (i in 1:row_n) {
     details <- detail
   } else {
     details <- rbind(details, detail, deparse.level = 1)
+
+upset.plot <- function(patient.data){
+  row_n <- nrow(patient.data)
+  for (i in 1:row_n) {
+    events <- patient.data$events[i]
+    detail <- events[[1]]
+    detail <- subset(
+      detail, 
+      select = c(dsterm,
+                  antiviral_cmyn, antiviral_cmtrt, 
+                  antibiotic_cmyn, 
+                  corticost_cmyn, corticost_cmroute,
+                  antifung_cmyn)
+    )
+    detail$Pid_special <- i   
+    # This is a PID made for this table and does not correlate with other
+    # patient IDs
+    if (i == 1) {
+      details <- detail
+    } else {
+      details <- rbind(details, detail, deparse.level = 1)
+    }
+
   }
 }
 # If no dsterm result then not the form that will have treatment details
