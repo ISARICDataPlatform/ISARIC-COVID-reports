@@ -164,7 +164,7 @@ treatment.use.plot(patient.data)
 **Figure 11**: Recombinations of antimicrobial treatments given during hospital admission 
 
 ```{r treatment2, echo=FALSE}
-upset.plot(patient.data)
+treatment.upset(patient.data)
 ```
 
 
