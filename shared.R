@@ -45,42 +45,39 @@ admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admiss
 
 
 
-uk.data <- read_csv("data/CCPUKSARI_DATA_2020-03-17_1211-1.csv", guess_max = 10000) %>%
+uk.data <- read_csv("data/CCPUKSARI_DATA_2020-03-19_1327.csv", guess_max = 10000) %>%
   # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
-dplyr::mutate(oxy_vsorres = as.character(oxy_vsorres),
-         daily_hco3_lborres = as.character(daily_hco3_lborres),
-         daily_haematocrit_lborres = as.character(daily_haematocrit_lborres)) %>%
-dplyr::mutate(Country = "UK")
+  dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+  dplyr::mutate(Country = "UK")
 
 site.list <- read_csv("data/Site List & Data Dictionaries/REDCap_user_list_ 17MAR20.csv") %>% 
   dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
   dplyr::mutate(site.name = map_chr(`Site Number_1`, function(x) substr(x, 5, nchar(x)))) %>%
   dplyr::select(site.number, site.name, Country)
 
-row.data <- read_csv("data/ISARICnCoV_DATA_2020-03-17_1215.csv", guess_max = 10000) %>% 
+row.data <- read_csv("data/ISARICnCoV_DATA_2020-03-19_1326.csv", guess_max = 10000) %>% 
   # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
-  dplyr::mutate(oxy_vsorres = as.character(oxy_vsorres),
-         daily_hco3_lborres = as.character(daily_hco3_lborres),
-         daily_haematocrit_lborres = as.character(daily_haematocrit_lborres)) %>%
+  dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
   # different column names for some comorbidities
   dplyr::rename(chrincard = chroniccard_mhyn, 
-         modliv = modliver_mhyn, 
-         mildliver = mildliv_mhyn, 
-         chronichaemo_mhyn = chronhaemo_mhyn, 
-         diabetescom_mhyn = diabetiscomp_mhyn,
-         rheumatologic_mhyn = rheumatology_mhyr,
-         icu_hoendat = hoendat) %>%
+                modliv = modliver_mhyn, 
+                mildliver = mildliv_mhyn, 
+                chronichaemo_mhyn = chronhaemo_mhyn, 
+                diabetescom_mhyn = diabetiscomp_mhyn,
+                rheumatologic_mhyn = rheumatology_mhyr,
+                icu_hoendat = hoendat) %>%
   dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
   left_join(site.list, by = "site.number") %>%
   dplyr::select(-site.number)
 
 raw.data <- bind_rows(uk.data, row.data) %>%
-  dplyr::mutate(dsstdat = dmy(dsstdat), 
-         agedat = dmy(agedat), 
-         daily_dsstdat = dmy(daily_dsstdat), 
-         daily_lbdat = dmy(daily_lbdat),
-         hostdat = dmy(hostdat),
-         cestdat = dmy(cestdat))
+  dplyr::mutate(dsstdat = ymd(dsstdat), 
+                agedat = ymd(agedat), 
+                daily_dsstdat = ymd(daily_dsstdat), 
+                daily_lbdat = ymd(daily_lbdat),
+                hostdat = ymd(hostdat),
+                cestdat = ymd(cestdat),
+                dsstdtc = ymd(dsstdtc))
 
 demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
@@ -129,7 +126,7 @@ patient.data <- patient.data %>%
       return(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character())
     }
   })) %>%
-  dplyr::mutate(outcome.date = dmy(outcome.date)) %>%
+  dplyr::mutate(outcome.date = ymd(outcome.date)) %>%
   dplyr::mutate(death.date = map2_chr(outcome, outcome.date, function(x,y){
     if(is.na(y)){
       NA
@@ -163,8 +160,10 @@ patient.data <- patient.data %>%
   dplyr::mutate(admission.date = hostdat) %>%
   dplyr::mutate(enrollment.date = dsstdat) %>%
   dplyr::mutate(onset.date = cestdat) %>%
-  dplyr::mutate(icu.admission.date = icu_hostdat) %>%
-  dplyr::mutate(icu.discharge.date = icu_hoendat)
+  dplyr::mutate(ICU.admission.date = icu_hostdat) %>%
+  dplyr::mutate(ICU.discharge.date = icu_hoendat) %>%
+  dplyr::mutate(ICU.duration = hodur) %>%
+  dplyr::mutate(IMV.duration  = invasive_prdur)
 
 compareNA <- function(v1,v2) {
   same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
@@ -172,66 +171,122 @@ compareNA <- function(v1,v2) {
   return(same)
 }
 
+other.dates <- map(1:nrow(patient.data), function(i){
+  id = patient.data$subjid[i]
+  events.tibble <- patient.data$events[i][[1]]
+  
+  # the NIMV field for the daily form is daily_noninvasive_prtrt
+  
+  ever.NIMV <- patient.data$noninvasive_proccur[i] == 1
+  
+  NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% select(daily_dsstdat, daily_noninvasive_prtrt)
+  if(nrow(NIMV.rows) == 0){
+    NIMV.start.date <- NA
+    NIMV.end.date <- NA
+    multiple.NIMV.periods <- NA
+  } else if(!any(NIMV.rows$daily_noninvasive_prtrt == 1)){
+    NIMV.start.date <- NA
+    NIMV.end.date <- NA
+    multiple.NIMV.periods <- NA
+  } else {
+    NIMV.start.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 1) %>% slice(1) %>% pull(daily_dsstdat)
+    NIMV.last.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 1) %>% slice(n()) %>% pull(daily_dsstdat)
+    if(NIMV.last.date == NIMV.rows %>% slice(n()) %>% pull(daily_dsstdat)){
+      # Patient was on NIMV at last report
+      NIMV.end.date <- NA
+    } else {
+      # They were off NIMV at the next report
+      next.report.row <- max(which(NIMV.rows$daily_dsstdat == NIMV.last.date)) + 1
+      NIMV.end.date <- NIMV.rows$daily_dsstdat[next.report.row]
+    }
+    if(nrow(NIMV.rows)<=2){
+      multiple.NIMV.periods <- F
+    } else {
+      # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on NIMV, 
+      # then the patient went on NIMV multiple times
+      temp <- map_dbl(2:nrow(NIMV.rows), function(x)  NIMV.rows$daily_noninvasive_prtrt[x] - NIMV.rows$daily_noninvasive_prtrt[x-1] )
+      multiple.NIMV.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  NIMV.rows$daily_noninvasive_prtrt[1] == 1)
+    }
+  }
+  
+  # the IMV field for the daily form is daily_invasive_prtrt
+  
+  ever.IMV <- patient.data$daily_invasive_prtrt[i] == 1
+  
+  IMV.rows <- events.tibble %>% filter(!is.na(daily_invasive_prtrt)) %>% select(daily_dsstdat, daily_invasive_prtrt)
+  if(nrow(IMV.rows) == 0){
+    IMV.start.date <- NA
+    IMV.end.date <- NA
+    multiple.IMV.periods <- NA
+  } else if(!any(IMV.rows$daily_invasive_prtrt == 1)){
+    IMV.start.date <- NA
+    IMV.end.date <- NA
+    multiple.IMV.periods <- NA
+  } else {
+    IMV.start.date <- IMV.rows %>% filter(daily_invasive_prtrt == 1) %>% slice(1) %>% pull(daily_dsstdat)
+    IMV.last.date <- IMV.rows %>% filter(daily_invasive_prtrt == 1) %>% slice(n()) %>% pull(daily_dsstdat)
+    if(IMV.last.date == IMV.rows %>% slice(n()) %>% pull(daily_dsstdat)){
+      # Patient was on IMV at last report
+      IMV.end.date <- NA
+    } else {
+      # They were off IMV at the next report
+      next.report.row <- max(which(IMV.rows$daily_dsstdat == IMV.last.date)) + 1
+      IMV.end.date <- IMV.rows$daily_dsstdat[next.report.row]
+    }
+    if(nrow(IMV.rows)<=2){
+      multiple.IMV.periods <- F
+    } else {
+      # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on IMV, 
+      # then the patient went on IMV multiple times
+      temp <- map_dbl(2:nrow(IMV.rows), function(x)  IMV.rows$daily_invasive_prtrt[x] - IMV.rows$daily_invasive_prtrt[x-1] )
+      multiple.IMV.periods <- length(which(temp == -1)) > 1 | (length(which(temp == -1)) > 0 &  IMV.rows$daily_invasive_prtrt[1] == 1)
+    }
+  }
+  
+  list(subjid = id, ever.IMV = ever.IMV, IMV.start.date = IMV.start.date, IMV.end.date = IMV.end.date, multiple.IMV.periods = multiple.IMV.periods,
+       ever.NIMV = ever.NIMV, NIMV.start.date = NIMV.start.date, NIMV.end.date = NIMV.end.date, multiple.NIMV.periods = multiple.NIMV.periods)
+}) %>% bind_rows()
+
+patient.data <- patient.data %>% left_join(other.dates)
 
 ref.date = today()
 
-
-# other.dates <- map(1:nrow(patient.data), function(i){
-#   print(i)
-#   id = patient.data$subjid[i]
-#   events.tibble <- patient.data$events[i][[1]]
-# 
-#   # the NIMV field for the daily form is daily_noninvasive_prtrt
-#   
-#   ever.nimv <- patient.data$noninvasive_proccur == 2
-#   
-#   NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% select(daily_dsstdat, daily_noninvasive_prtrt)
-#   if(nrow(NIMV.rows) == 0){
-#     NIMV.start.date <- NA
-#     NIMV.end.date <- NA
-#     multiple.NIMV.periods <- NA
-#   } else if(!any(NIMV.rows$daily_noninvasive_prtrt == 2)){
-#     NIMV.start.date <- NA
-#     NIMV.end.date <- NA
-#     multiple.NIMV.periods <- NA
-#   } else {
-#     print(i)
-#     NIMV.start.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 2) %>% slice(1) %>% pull(daily_dsstdat)
-#     NIMV.start.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 2) %>% slice(n()) %>% pull(daily_dsstdat)
-#     
-#   }
-#   
-#   
-# })
-
-
-
 patient.data <- patient.data %>%
-  dplyr::mutate(Admit.Discharge.any = as.numeric(difftime(dsstdtc, hostdat,  unit="days")),
-         Onset.Hosp = as.numeric(difftime(hostdat, cestdat, unit="days"))) %>%
-  dplyr::mutate(Admit.Censored.any = map2_dbl(Admit.Discharge.any, hostdat, function(x,y){
+  dplyr::mutate(admission.to.exit = as.numeric(difftime(outcome.date, hostdat,  unit="days")),
+                onset.to.Admission = as.numeric(difftime(hostdat, cestdat, unit="days"))) %>%
+  dplyr::mutate(admission.to.censored = map2_dbl(admission.to.exit, hostdat, function(x,y){
     if(is.na(x)){
       as.numeric(difftime(ref.date, y,  unit="days"))}
     else{
       NA
     }
   })) %>%
-  dplyr::mutate(Admit.Death = pmap_dbl(list(dsstdtcyn, dsstdtc, hostdat), function(x, y, z){
+  dplyr::mutate(ademission.to.death = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
     if(compareNA(4,x )){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
       NA
     }
   })) %>%
-  dplyr::mutate(Admit.Recovered = pmap_dbl(list(dsstdtcyn, dsstdtc, hostdat), function(x, y, z){
+  dplyr::mutate(admission.to.recovery = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
     if(compareNA(1, x)){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
       NA
     }
+  })) %>%
+  dplyr::mutate(admission.to.ICU = map2_dbl(ICU.admission.date, admission.date, function(x,y){
+    as.numeric(difftime(x, y,  unit="days"))
+  })) %>%
+  dplyr::mutate(NIMV.duration = map2_dbl(NIMV.end.date, NIMV.start.date, function(x,y){
+    as.numeric(difftime(x, y,  unit="days"))
   }))
 
-# @todo CHECK THAT GENDERS ARE RIGHT
+save(patient.data, glue("patient_data_{today()}.rda"))
+
+
+##### GRAPH FUNCTIONS ##### 
+
 
 age.pyramid <- function(data){
   
@@ -256,7 +311,7 @@ age.pyramid <- function(data){
     geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Unresolved", "Death", "Discharge")) +
     xlab("Age group") +
     ylab("Count") +
     scale_x_discrete(drop = "F") +
@@ -294,7 +349,7 @@ sites.by.country <- function(data){
 outcomes.by.country <- function(data){
   ggplot(data) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Unresolved", "Death", "Discharge")) +
     xlab("Country") +
     ylab("Cases") 
 }
@@ -302,7 +357,7 @@ outcomes.by.country <- function(data){
 outcomes.by.admission.date <- function(data){
   ggplot(data) + geom_bar(aes(x = hostdat, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Discharge", "Unresolved")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Unresolved", "Death", "Discharge")) +
     xlab("Date") +
     ylab("Cases") 
 }
@@ -487,21 +542,20 @@ modified.km.plot <- function(data){
   
   data2 <- data %>%
     filter(outcome != "censored" & !is.na(outcome.date)) %>%
-    dplyr::select(subjid, hostdat, outcome.date, outcome) %>%
-    dplyr::mutate(admission.to.outcome = map2_dbl(hostdat, outcome.date, function(x,y) as.numeric(difftime(y, x,  unit="days"))))
+    dplyr::select(subjid, hostdat, outcome.date, outcome) 
   
-  timeline <- map(0:max(data2$admission.to.outcome), function(x){
-    outcome.date <- data2 %>% filter(admission.to.outcome <= x)
+  timeline <- map(0:max(data2$admission.to.exit), function(x){
+    outcome.date <- data2 %>% filter(admission.to.exit <= x)
     prop.dead <- nrow(outcome.date %>% filter(outcome == "death"))/total.patients
     prop.discharged <- nrow(outcome.date %>% filter(outcome == "discharge"))/total.patients
     list(day = x, prop.dead = prop.dead, prop.discharged = prop.discharged)
   }) %>% bind_rows() %>%
     dplyr::mutate(prop.not.discharged = 1-prop.discharged) %>%
     dplyr::select(-prop.discharged)
-    
-    
-    
-
+  
+  
+  
+  
   final.dead <- timeline %>%  pull(prop.dead) %>% max()
   final.not.discharged <- timeline %>% pull(prop.not.discharged) %>% min()
   
@@ -524,9 +578,9 @@ modified.km.plot <- function(data){
 
 
 hospital.fatality.ratio <- function(data){
-
-
-
+  
+  
+  
   # As I understand the method, we don't care about when people were admitted
   # for this plot, just the numbers that have been discharged and the number
   # who have died
@@ -538,7 +592,7 @@ hospital.fatality.ratio <- function(data){
   d.0 <- as.Date("2020-02-01")
   
   for (i in 0:60) {
-
+    
     d.i <- d.0 + i
     date <- d.0 + i
     disch <- sum(Dc_date == date, na.rm=TRUE)
@@ -615,3 +669,78 @@ hospital.fatality.ratio <- function(data){
   plot
   
 }
+
+# The following not currently in use
+
+## Violin plot by sex ####
+
+violin.sex.func <- function(data){
+  
+  # Analysis to be run on only entries with either Admit.hospexit.any date or Admit.censored dates
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  
+  # This is to include  dates for individuals still in hospital
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+  
+  vd <- tibble(Sex = data2$sex, length.of.stay = abs(data2$length.of.stay) )
+  
+  # by sex
+  
+  x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + geom_violin(trim=FALSE)+ geom_boxplot(width=0.1, fill="white")  +
+    labs(title=" ", x="Sex", y = "Days from admission to discharge") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) + 
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(x)
+}
+
+### Violin age ####
+
+
+
+violin.age.func <- function(data){
+  
+  # Analysis to be run on only entries with either Admit.hospexit.any date or Admit.censored dates
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  
+  data2 <- data2 %>%
+    mutate(new.agegp = cut(consolidated.age, c(0,10,20,30,40,50, 60, 70, 120), right = F)) %>%
+    mutate(length.of.stay = pmax(admission.to.exit, admission.to.censored, na.rm = T))
+  
+  
+  
+  
+  
+  
+  vdx<- tibble(subjid = data2$subjid, Age = data2$new.agegp, length_of_stay = abs(data2$length.of.stay) )
+  
+  
+  
+  vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + geom_violin(trim=FALSE)+ #geom_boxplot(width=0.1, fill="white")  +
+    labs(title="  ", x="Age group", y = "Days from admission to discharge") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) + 
+    scale_fill_discrete(drop = F) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(vd2)
+  
+}
+
