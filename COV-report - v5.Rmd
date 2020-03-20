@@ -186,7 +186,6 @@ upset.plot(patient.data)
 
 
 
-<<<<<<< HEAD
 ```{r treatment2, echo=FALSE}
 
 treatment.use.plot(patient.data)
@@ -400,7 +399,7 @@ To obtain estimates for the distributions of time from symptom onset to hospital
 * James Lee
 * Laura Merson
 * Sarah Moore
-* Pierro Ollario
+* Piero Olliaro
 * Daniel Plotkin
 * Mark Pritchard
 
