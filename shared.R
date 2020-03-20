@@ -692,6 +692,39 @@ modified.km.plot <- function(data){
 hospital.fatality.ratio <- function(data){
   
   
+  # Method from https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044
+  # Only uses individuals who have either died or been discharged
+  
+  row_n <- nrow(patient.data)
+  for (i in 1:row_n) {
+    events <- patient.data$events[i]
+    detail <- events[[1]]
+    detail$dsterm[is.na(detail$dsterm) == TRUE] <- 0
+    detail$Recovered.Date <- -500
+    detail$Recovered.Date[detail$dsterm == 1] <- detail$dsstdtc[detail$dsterm == 1]
+    detail$Died.Date <- -500
+    detail$Died.Date[detail$dsterm == 4] <- detail$dsstdtc[detail$dsterm == 4]  
+    
+    recovered <- as.Date(
+      max(detail$Recovered.Date, na.rm = TRUE),
+      origin = "1970-01-01"
+    )
+    died <- as.Date(
+      max(detail$Died.Date, na.rm = TRUE),
+      origin = "1970-01-01"
+    )
+    recovered[recovered == "1968-08-19"] <- NA
+    died[died == "1968-08-19"] <- NA
+    out <- data.frame(death.date = died, discharge.date = recovered)
+    # This is a PID made for this table and does not correlate with other
+    # patient IDs
+    if (i == 1) {
+      outcome <- out
+    } else {
+      outcome <- rbind(outcome, out, deparse.level = 1)
+    }
+  }
+  
   
   Dc_date <- out$discharge.date
   Died_date <- out$death.date
