@@ -136,7 +136,7 @@ violin.age.func(patient.data)
 ```
 
 
-**Figure 8**: Changing estimated hospital fatality ratio, based on patients with complete outcome data (methods from Wu et al., https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044).
+**Figure 8**: Estimated hospital fatality ratio based on patients with complete outcome data, showing changes to estimate over time. Shaded area represents 95% confidence interval. Methods from Wu *et al.*, https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044).
 
 ```{r out.width= "80%"}
 
