@@ -853,12 +853,75 @@ violin.age.func <- function(data){
 #violin.age.func(patient.data)
 
 
+
+
+########### Distribution plots ############
+
+#### Replace zeros with 0.5 (half a day) #######
+
+replacezeros <- function(admit.discharge){
+  
+  for (i in 1: length(admit.discharge)){
+    
+    if (admit.discharge[i]==0){
+      admit.discharge[i] <- 0.5
+    }
+  }
+  
+  return(admit.discharge) 
+}
+
+
+
+
+adm.outcome.func <- function(dat2 = data){
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  admit.discharge <- data2$length.of.stay
+  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+  admit.discharge <- replacezeros(admit.discharge)
+  
+  pos.cens <- which(data2$censored == 'TRUE')
+  
+  
+  left <- c(admit.discharge)
+  right <- replace(admit.discharge, pos.cens, values=NA )
+  censored_df <- data.frame(left, right)
+  fit <- fitdistcens(censored_df, dist = 'gamma')
+  t <- data.frame(x = admit.discharge)
+  
+  plot <- ggplot(data = t) + 
+    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+    labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
+  
+  return(plot)
+  
+}
+
+
+
+
+
+
+
 ########## Onset to admission #####
 
 
 onset.adm.func <- function(dat2 = data){
-  
-  
   
   admit.discharge <- dat2$onset.to.Admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
