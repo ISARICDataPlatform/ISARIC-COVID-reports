@@ -411,10 +411,11 @@ outcomes.by.country <- function(data){
 outcomes.by.admission.date <- function(data){
   data2 <- data %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
-  ggplot(data2) + geom_bar(aes(x = hostdat, fill = outcome), col = "black", width = 0.95) +
+  ggplot(data2) + geom_bar(aes(x = epiweek(hostdat), fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
-    xlab("Date") +
+    scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
+    xlab("Epidemiological week (2020)") +
     ylab("Cases") 
 }
 
