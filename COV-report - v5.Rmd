@@ -119,7 +119,7 @@ comorbidity.symptom.prevalence(patient.data)
 status.by.time.after.admission.2(patient.data)
 ```
 
-**Figure 6**: Distribution of length of hospital stay, according to patient sex.
+**Figure 6**: Distribution of length of hospital stay by 19/03/2020, according to patient sex. The hospital stay function is either time to death or recovery or time to censorship.
 
 ```{r stay.by.sex, out.width= "80%"}
 violin.sex.func(patient.data)
@@ -128,7 +128,7 @@ violin.sex.func(patient.data)
 
 ```
 
-**Figure 7**: Distribution of length of hospital stay, according to patient age group.
+**Figure 7**: Distribution of length of hospital stay by 19/03/2020, according to patient age group. The hospital stay function considers the time to death, recovery or censorship.
 
 ```{r  stay.by.age, out.width= "80%"}
 
