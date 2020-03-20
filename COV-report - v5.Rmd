@@ -33,23 +33,23 @@ library(glue)
 
 # Set versions
 
-uk.version <- 'CCPUKSARI_DATA_2020-03-19_1327.csv'
-intl.version <- 'ISARICnCoV_DATA_2020-03-19_1326.csv'
+#uk.version <- 'CCPUKSARI_DATA_2020-03-19_1327.csv'
+#intl.version <- 'ISARICnCoV_DATA_2020-03-19_1326.csv'
 
 # Define and set working directory 
 
-dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
-# dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
+#dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
+dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
 
-setwd(dir.path)
+setwd(dir.path2)
 # setwd(dir.path2)
 
 
 # Source files
-
-source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
-source("shiny/COVID-dashboard/functions2.R")
-data <- read.csv("data/data.v4.csv")
+source("Users/Hp/OneDrive - Nexus365/ISARIC-COVID-dashboard/shared.R" )
+#source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
+#source("shiny/COVID-dashboard/functions2.R")
+#data <- read.csv("data/data.v4.csv")
 
 ```
 
@@ -175,17 +175,16 @@ Blue curves show the Gamma distribution fit to data.
 
 ```{r onset.admission, out.width = '80%', fig.align= 'center'}
 
-onset.adm.func(data)
+onset.adm.func(patient.data)
 
 ```
 
 
-
-**Figure 13**: Distribution of time from admission to death or recovery.
+**Figure 13**: Distribution of time from admission to an outcome - either death or recovery.
 
 ```{r  adm.outcome, out.width = '80%', fig.align= 'center' }
 
-adm.outcome.func(data)
+adm.outcome.func(patient.data)
 
 ```
 
@@ -364,13 +363,23 @@ To obtain estimates for the distributions of time from symptom onset to hospital
 # ISARIC Team Members
 
 * Gail Carson
+* Emmanuelle A. Dankwa
+* Christl A. Donnelly
+* Christophe Fraser
+* Matthew Hall
 * Peter Horby
 * James Lee
 * Laura Merson
 * Sarah Moore
+* Piero Olliaro
 * Daniel Plotkin
 * Mark Pritchard
-* Christl A. Donnelly
-* Christophe Fraser
-* Matthew Hall
-* Emmanuelle A. Dankwa
+
+
+
+
+
+
+
+
+
