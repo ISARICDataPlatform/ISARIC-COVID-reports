@@ -1034,11 +1034,11 @@ upset.plot <- function(patient.data){
     detail <- events[[1]]
     detail <- subset(
       detail, 
-      select(dsterm,
-                      antiviral_cmyn, antiviral_cmtrt, 
-                      antibiotic_cmyn, 
-                      corticost_cmyn, corticost_cmroute,
-                      antifung_cmyn)
+      select = c(dsterm,
+                  antiviral_cmyn, antiviral_cmtrt, 
+                  antibiotic_cmyn, 
+                  corticost_cmyn, corticost_cmroute,
+                  antifung_cmyn)
     )
     detail$Pid_special <- i   
     # This is a PID made for this table and does not correlate with other
