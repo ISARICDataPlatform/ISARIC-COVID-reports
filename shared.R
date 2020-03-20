@@ -227,7 +227,7 @@ other.dates <- map(1:nrow(patient.data), function(i){
   
   ever.NIMV <- patient.data$noninvasive_proccur[i] == 1
   
-  NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% select(daily_dsstdat, daily_noninvasive_prtrt)
+  NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% dplyr::select(daily_dsstdat, daily_noninvasive_prtrt)
   if(nrow(NIMV.rows) == 0){
     NIMV.start.date <- NA
     NIMV.end.date <- NA
@@ -261,7 +261,7 @@ other.dates <- map(1:nrow(patient.data), function(i){
   
   ever.IMV <- patient.data$daily_invasive_prtrt[i] == 1
   
-  IMV.rows <- events.tibble %>% filter(!is.na(daily_invasive_prtrt)) %>% select(daily_dsstdat, daily_invasive_prtrt)
+  IMV.rows <- events.tibble %>% filter(!is.na(daily_invasive_prtrt)) %>% dplyr::select(daily_dsstdat, daily_invasive_prtrt)
   if(nrow(IMV.rows) == 0){
     IMV.start.date <- NA
     IMV.end.date <- NA
@@ -1003,11 +1003,11 @@ for (i in 1:row_n) {
   detail <- events[[1]]
   detail <- subset(
     detail, 
-    select = c(dsterm,
+    dplyr::select(c(dsterm,
                antiviral_cmyn, antiviral_cmtrt, 
                antibiotic_cmyn, 
                corticost_cmyn, corticost_cmroute,
-               antifung_cmyn)
+               antifung_cmyn))
   )
   detail$Pid_special <- i   
   # This is a PID made for this table and does not correlate with other
@@ -1045,7 +1045,7 @@ details$Corticosteroid <- details$corticost_cmyn
 
 # Plot 1 - not separating according to type of antiviral
 treatments <- details %>%
-  select(
+  dplyr::select(
     Pid_special, 
     Antiviral, 
     Antibiotic, 
@@ -1059,7 +1059,7 @@ treatments <- details %>%
   mutate(treatments.used = map2(Treatments, Presence, function(c,p){
     c[which(p)]
   })) %>%
-  select(-Treatments, -Presence)
+  dplyr::select(-Treatments, -Presence)
 
 p <- ggplot(treatments, aes(x = treatments.used)) + 
   geom_bar(fill = "deepskyblue3", col = "black") + 

@@ -16,7 +16,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
-library(magrittr)
+
 library(tidyverse)
 library(glue)
 library(viridis)
@@ -25,36 +25,31 @@ library(sf)
 library(rgeos)
 library(rnaturalearth)
 library(rnaturalearthdata)
+library(magrittr)
 library(binom)
 library(plyr)
 library(glue)
-library(survival)
-library(survminer)
-library(ggplot2)
-library(fitdistrplus)
-
-
 
 
 # Set versions
 
-#uk.version <- 'CCPUKSARI_DATA_2020-03-19_1327.csv'
-#intl.version <- 'ISARICnCoV_DATA_2020-03-19_1326.csv'
+uk.version <- 'CCPUKSARI_DATA_2020-03-19_1327.csv'
+intl.version <- 'ISARICnCoV_DATA_2020-03-19_1326.csv'
 
 # Define and set working directory 
 
-#dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
- dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
+dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
+# dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
 
-setwd(dir.path2)
+setwd(dir.path)
 # setwd(dir.path2)
 
 
 # Source files
-source("/Users/Hp/OneDrive - Nexus365/COVID Reports/shiny/COVID-dashboard/shared.R")
-#source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
-#source("shiny/COVID-dashboard/functions2.R")
-#data <- read.csv("data/data.v4.csv")
+
+source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
+source("shiny/COVID-dashboard/functions2.R")
+data <- read.csv("data/data.v4.csv")
 
 ```
 
@@ -71,14 +66,13 @@ source("/Users/Hp/OneDrive - Nexus365/COVID Reports/shiny/COVID-dashboard/shared
 
 # Summary
 
-The results in this report have been produced using data from the  International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. These data were contributed by 22 sites across 14 countries.
+The results in this report have been produced using data from the  International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. This data were contributed by 65 sites across 15 countries, 
 
 
-Up to 19 March 2020, data have been entered for 91 patients. The cohort is made up of 43 males and 37 females - sex is unreported for 11 cases. The median age (calculated based on reported ages) is 50.5 years. Follow-up is ongoing for 52 patients. 
+Up to 19 March 2020, data have been entered for 408 patients. The cohort is made up of 191 males and 147 females - sex is unreported for 70 cases. The median age (calculated based on reported ages) is 50 years. Follow-up is ongoing for 292 patients. 12 patients have died.
 
 
-Among this cohort, there was no significant difference in the duration from admission to outcome (either death or recovery) for males and females (p=0.29). The expected mean for the time from admission to outcome (either death or recovery) is 24.5 days (96% CI: 22.9, 27.1), accounting for censorship, i.e. unobserved outcomes. The number of days from (first) symptom onset to hospital admission has an expected mean of 7.1 (6.8, 7.7) and a variance of 38.5 (36.9, 49.4).  Of 41 patients with completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids.  33% received an antibiotic and 18% received antivirals.
-
+Among this cohort, there was no significant difference in the duration from admission to outcome (either death or recovery) for males and females (p=0.29). The expected mean for the time from admission to outcome (either death or recovery) is 33.2 days (96% CI: 30.96, 35.70), accounting for censorship, i.e. unobserved outcomes. The number of days from (first) symptom onset to hospital admission has an expected mean of 7.0 (6.5, 7.4) and a variance of 47.9 (41.6, 55.7). 
 
 
 
@@ -88,6 +82,7 @@ Among this cohort, there was no significant difference in the duration from admi
 **Figure 1**: Age and sex distribution of patients. Bar fills are outcome (death/discharge/censored) at the time of report.
 
 ```{r agepyramid, echo = FALSE}
+
 age.pyramid(patient.data)
 
 ```
@@ -111,7 +106,7 @@ comorbidities.upset(patient.data, 4)
 
 **Figure 4**: Prevalence of all recorded comorbidities and symptoms at admission, across all patients for whom this data was recorded
 
-```{r prevsympcov, echo = FALSE, out.width= "100%"}
+```{r prevsympcov, echo = FALSE, out.width= "80%"}
 
 comorbidity.symptom.prevalence(patient.data)
 
@@ -121,30 +116,24 @@ comorbidity.symptom.prevalence(patient.data)
 
 ```{r outcome.curve, out.width= "80%"}
 
+  
 status.by.time.after.admission.2(patient.data)
-
 ```
-
 
 **Figure 6**: Distribution of length of hospital stay, according to patient sex.
 
-
 ```{r stay.by.sex, out.width= "80%"}
-
 violin.sex.func(patient.data)
+
 
 
 ```
 
-
-
 **Figure 7**: Distribution of length of hospital stay, according to patient age group.
-
 
 ```{r  stay.by.age, out.width= "80%"}
 
 violin.age.func(patient.data)
-
 ```
 
 
@@ -156,42 +145,19 @@ hospital.fatality.ratio(patient.data)
 ```
 
 
-```{r out.width= "80%", eval = FALSE}
+```{r out.width= "80%"}
 
 
 hospital.fatality.ratio(patient.data)
 ```
 
 
-**Figure 8**: Patient outcomes according to epidemiological week (of 2020) of admission.
+All patients and outcomes by date of admission:
 
 ```{r recruitment3, echo=FALSE}
 
 outcomes.by.admission.date(patient.data)
-
 ```
-
-
-
-# Treatments
-
-
-Treatments used during hospital admission:
-
-```{r treatment, echo=FALSE, eval=FALSE}
-
-upset.plot(patient.data)
-
-```
-
-
-
-```{r treatment2, echo=FALSE}
-
-treatment.use.plot(patient.data)
-
-```
-
 
 
 # Statistical Analysis
@@ -203,7 +169,7 @@ Time from sympton onset to admission:
 
 ```{r onset.admission, out.width = '80%', fig.align= 'center'}
 
-onset.adm.func(patient.data)
+onset.adm.func(data)
 
 ```
 
@@ -213,7 +179,7 @@ Time from admission to hospital exit (either by recovery or death):
 
 ```{r  adm.outcome, out.width = '80%', fig.align= 'center' }
 
-adm.outcome.func(patient.data)
+adm.outcome.func(data)
 
 ```
 
@@ -379,7 +345,7 @@ To support the rapid implementation of standardised data collection and reportin
 Patient details were submitted electronically by participating sites to the ISARIC database.  Relevant background and presenting symptoms were recorded on the day of study recruitment.  Daily follow-up was then completed until recovery or death.  A final form was completed with details of treatments received and outcomes. All categories that represent fewer than five individuals have been suppressed to avoid the potential for identification of participants. 
 
 
-Graphs have been used to represent the age distribution of patience by sex and status (censored, death, recovered), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
+Graphs have been used to represent the age distribution of patience by sex and status (censores, death, recovered), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
 
 
 To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions were fitted to the observed data, allowing for censored observations. 
@@ -391,61 +357,13 @@ To obtain estimates for the distributions of time from symptom onset to hospital
 # ISARIC Team Members
 
 * Gail Carson
-* Emmanuelle A. Dankwa
-* Christl A. Donnelly
-* Christophe Fraser
-* Matthew Hall
 * Peter Horby
 * James Lee
 * Laura Merson
 * Sarah Moore
-* Piero Olliaro
 * Daniel Plotkin
 * Mark Pritchard
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* Christl A. Donnelly
+* Christophe Fraser
+* Matthew Hall
+* Emmanuelle A. Dankwa
