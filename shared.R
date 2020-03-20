@@ -987,6 +987,117 @@ surv_plot_func <- function(data){
   return(plot)
 }
 
+
+
+
+
+upset.plot <- function(patient.data){row_n <- nrow(patient.data)
+for (i in 1:row_n) {
+  events <- patient.data$events[i]
+  detail <- events[[1]]
+  detail <- subset(
+    detail, 
+    select = c(dsterm,
+               antiviral_cmyn, antiviral_cmtrt, 
+               antibiotic_cmyn, 
+               corticost_cmyn, corticost_cmroute,
+               antifung_cmyn)
+  )
+  detail$Pid_special <- i   
+  # This is a PID made for this table and does not correlate with other
+  # patient IDs
+  if (i == 1) {
+    details <- detail
+  } else {
+    details <- rbind(details, detail, deparse.level = 1)
+  }
+}
+# If no dsterm result then not the form that will have treatment details
+details$All_NA <- 1
+details$All_NA[is.na(details$dsterm) == FALSE] <- 0
+details <- subset(details, All_NA == 0)
+
+# Separate steroids according to route
+
+details$Oral_Steroid <- 
+  details$Intravenous_Steroid <- 
+  details$Inhaled_Steroid <- 
+  0
+details$Oral_Steroid[details$corticost_cmroute == 1] <- 1
+details$Intravenous_Steroid[details$corticost_cmroute == 2] <- 1
+details$Inhaled_Steroid[details$corticost_cmroute == 3] <- 1
+
+# 1 is Yes, set anything else to 0 (No)
+details$antiviral_cmyn[details$antiviral_cmyn != 1] <- 0
+details$antibiotic_cmyn[details$antibiotic_cmyn != 1] <- 0
+details$antifung_cmyn[details$antifung_cmyn != 1] <- 0
+details$corticost_cmyn[details$corticost_cmyn != 1] <- 0
+details$Antiviral <- details$antiviral_cmyn
+details$Antibiotic <- details$antibiotic_cmyn
+details$Antifungal <- details$antifung_cmyn
+details$Corticosteroid <- details$corticost_cmyn
+
+# Plot 1 - not separating according to type of antiviral
+treatments <- details %>%
+  select(
+    Pid_special, 
+    Antiviral, 
+    Antibiotic, 
+    Antifungal, 
+    Oral_Steroid, Intravenous_Steroid, Inhaled_Steroid
+  ) %>%
+  pivot_longer(2:7, names_to = "Treatment", values_to = "Present") %>%
+  mutate(Present = as.logical(Present)) %>%
+  group_by(Pid_special) %>%
+  dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
+  mutate(treatments.used = map2(Treatments, Presence, function(c,p){
+    c[which(p)]
+  })) %>%
+  select(-Treatments, -Presence)
+
+p <- ggplot(treatments, aes(x = treatments.used)) + 
+  geom_bar(fill = "deepskyblue3", col = "black") + 
+  theme_bw() +
+  xlab("Treatments used during hospital admission") +
+  ylab("Count") +
+  scale_x_upset() 
+
+
+return(p)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ######### Timeline plot ##############
 
 
@@ -1071,3 +1182,4 @@ status.by.time.after.admission.2 <- function(data){
     xlab("Days relative to admission") +
     ylab("Proportion")
 }
+
