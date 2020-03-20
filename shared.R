@@ -330,7 +330,7 @@ patient.data <- patient.data %>%
     as.numeric(difftime(x, y,  unit="days"))
   }))
 
-save(patient.data, file=glue("patient_data_{today()}.rda"))
+#save(patient.data, file=glue("patient_data_{today()}.rda"))
 
 
 ##### GRAPH FUNCTIONS ##### 
@@ -879,7 +879,7 @@ replacezeros <- function(admit.discharge){
 
 
 
-adm.outcome.func <- function(dat2 = data){
+adm.outcome.func <- function(data){
   
   data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
   
@@ -1070,21 +1070,6 @@ p <- ggplot(treatments, aes(x = treatments.used)) +
 
 return(p)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
