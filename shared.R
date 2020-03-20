@@ -593,21 +593,17 @@ treatment.use.plot <- function(data){
       }
     })) %>%
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
-    left_join(combined.labeller, by = c("Condition" = "field")) %>%
-    dplyr::select(-Condition) %>%
+    left_join(treatments, by = c("Treatment" = "field")) %>%
+    dplyr::select(-Treatment) %>%
     dplyr::mutate(prop.yes = Present/Total) %>%
     dplyr::mutate(prop.no = 1-prop.yes) %>%
-    arrange(type, prop.yes) %>%
+    arrange(prop.yes) %>%
     dplyr::mutate(Condition = as_factor(label)) %>%
-    pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
-    dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
-    dplyr::mutate(typepresent = glue("{type}_{affected}")) %>%
-    filter(label != "Other")
-  
+    pivot_longer(c(prop.yes, prop.no), names_to = "treated", values_to = "Proportion") %>%
+    dplyr::mutate(affected = map_lgl(treated, function(x) x == "prop.yes")) 
   
   ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
-    facet_wrap(~type, scales = "free") +
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
