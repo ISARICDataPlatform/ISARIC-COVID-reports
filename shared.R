@@ -343,7 +343,7 @@ age.pyramid <- function(data){
     dplyr::summarise(count = n()) %>%
     ungroup() %>%
     filter(!is.na(sex) & !is.na(agegp)) %>%
-    dplyr::mutate(outcome = factor(outcome)) %>%
+    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge"))) %>%
     dplyr::mutate(count = map2_dbl(count, sex, function(c, s){
       if(s == 1){
         -c
@@ -355,17 +355,20 @@ age.pyramid <- function(data){
       c("M", "F")[s]
     })) 
   
+  max.count = data2 %>% group_by(agegp, sex) %>% dplyr::summarise(sac = sum(abs(count))) %>% pull(sac) %>% max()
+  
   ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp, y=count, fill = outcome), stat = "identity", col = "black") +
     geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Unresolved", "Death", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
     xlab("Age group") +
     ylab("Count") +
     scale_x_discrete(drop = "F") +
     scale_y_continuous(
-      breaks = seq(-(ceiling(max(abs(data2$count))/10)*10), ceiling(max(abs(data2$count))/10)*10, by = 10),
-      labels = as.character(c(rev(seq(10, ceiling(max(abs(data2$count))/10)*10, by = 10)), 0, seq(10, ceiling(max(abs(data2$count))/10)*10, by= 10)))) +
+      breaks = seq(-(ceiling(max(abs(data2$count))/5)*5), ceiling(max(abs(data2$count))/5)*5, by = 5),
+      labels = as.character(c(rev(seq(5, ceiling(max(abs(data2$count))/5)*5, by = 5)), 0, seq(5, ceiling(max(abs(data2$count))/5)*5, by= 5))),
+      limits = c(-1.1*max.count, 1.1*max.count)) +
     annotation_custom(
       grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
       ymin = -max(data2$count)*1.1/2,      
@@ -397,7 +400,7 @@ sites.by.country <- function(data){
 outcomes.by.country <- function(data){
   ggplot(data) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Unresolved", "Death", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
     xlab("Country") +
     ylab("Cases") 
 }
@@ -405,7 +408,7 @@ outcomes.by.country <- function(data){
 outcomes.by.admission.date <- function(data){
   ggplot(data) + geom_bar(aes(x = hostdat, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Unresolved", "Death", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
     xlab("Date") +
     ylab("Cases") 
 }
