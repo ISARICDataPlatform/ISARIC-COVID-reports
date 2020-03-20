@@ -15,6 +15,7 @@ d.dict <- read_csv("data/Site List & Data Dictionaries/CCPUKSARI_DataDictionary_
 
 comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
 admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4")) %>% pull(field.name)
+treatment.colnames <- d.dict %>% filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
 
 comorbidities.labels <- d.dict %>% 
   filter(form.name == "comorbidities" & field.type == "radio") %>% 
@@ -58,9 +59,9 @@ treatment.labels[8] <- "Inhaled nitric oxide"
 treatment.labels[9] <- "Tracheostomy" 
 treatment.labels[14] <- "Other"
 
-
 comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
 admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
+treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 
 site.list <- read_csv("data/Site List & Data Dictionaries/REDCap_user_list_ 17MAR20.csv") %>% 
   dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
@@ -112,19 +113,19 @@ patient.data <- patient.data %>%
     if(is.null(x)){
       # no rows beyond the first - censored
       return(TRUE)
-    } else if(x %>% pull(redcap_event_name) %>% startsWith("dischargedeath") %>% any() %>% not()){
+    } else if(x %>% pull(redcap_event_name) %>% startsWith("discharge") %>% any() %>% not()){
       # still in site
       return(TRUE)
     } else {
       # Anything other than discharge or death is "censored"
-      return(x %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
+      return(x %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
     }
   })) %>%
   dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
     if(x){
       return("censored")
     } else {
-      return(switch(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% as.character(),
+      return(switch(y %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% as.character(),
                     "1" = "discharge",
                     "4" = "death"))
     }
@@ -133,17 +134,17 @@ patient.data <- patient.data %>%
     if(x){
       return(2)
     } else {
-      return(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtcyn))
+      return(y %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtcyn))
     }
   })) %>%
   dplyr::mutate(outcome.date = map2_chr(censored, events, function(x, y){
     if(x){
       return(NA)
     } else {
-      if(length(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character()) > 1){
+      if(length(y %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character()) > 1){
         stop("Multiple outcome dates?")
       }
-      return(y %>% filter(startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character())
+      return(y %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character())
     }
   })) %>%
   dplyr::mutate(outcome.date = ymd(outcome.date)) %>%
@@ -511,6 +512,62 @@ comorbidity.symptom.prevalence <- function(data){
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field), one_of(comorbidities$field)) 
+  
+  nconds <- ncol(data2) - 1
+  
+  combined.labeller <- bind_rows(comorbidities %>% add_column(type = "Comorbidities"), 
+                                 admission.symptoms %>% add_column(type = "Symptoms at admission"))
+  
+  data2 <- data2 %>%
+    pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
+    group_by(Condition) %>%
+    filter(!is.na(Present)) %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) %>%
+    dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
+    left_join(combined.labeller, by = c("Condition" = "field")) %>%
+    dplyr::select(-Condition) %>%
+    dplyr::mutate(prop.yes = Present/Total) %>%
+    dplyr::mutate(prop.no = 1-prop.yes) %>%
+    arrange(type, prop.yes) %>%
+    dplyr::mutate(Condition = as_factor(label)) %>%
+    pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
+    dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
+    dplyr::mutate(typepresent = glue("{type}_{affected}")) %>%
+    filter(label != "Other")
+  
+  
+  ggplot(data2) + 
+    geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    facet_wrap(~type, scales = "free") +
+    theme_bw() + 
+    coord_flip() + 
+    ylim(0, 1) +
+    scale_fill_brewer(palette = "Paired", name = "Condition\npresent", labels = c("No", "Yes")) +
+    theme(axis.text.y = element_text(size = 7))
+  
+}
+
+treatment.use.plot <- function(data){
+  
+  treatment.columns <- map(1:nrow(data), function(i){
+    data$events[i][[1]] %>% 
+      filter(startsWith(redcap_event_name, "dischargeoutcome")) %>%
+      dplyr::select( one_of(treatments$field)) %>%
+      add_column(subjid = data$subjid[i]) %>%
+      slice(1)
+  }) %>% bind_rows()
+  data2 <- data %>% left_join(treatment.columns, by="subjid") %>%
+    select(subjid, one_of(treatments$field))
   
   nconds <- ncol(data2) - 1
   
