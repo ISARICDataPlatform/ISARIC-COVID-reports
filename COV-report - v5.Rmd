@@ -80,14 +80,14 @@ Among this cohort, there was no significant difference in the duration from admi
 # Patient Characteristics
 
 
-Age distribution of patients:
+**Figure 1**: Age and sex distribution of patients. Bar fills are outcome (death/discharge/censored) at the time of report.
 
 ```{r agepyramid, echo = FALSE}
 age.pyramid(patient.data)
 
 ```
 
-Distribution of combinations of the four most common symptoms present at admission:
+**Figure 2**: The distribution of combinations of the four most common symptoms seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
 
 ```{r symptomcombos, echo=FALSE}
 
@@ -96,7 +96,7 @@ symptoms.upset(patient.data, 4)
 ```
 
 
-Distribution of combinations of the four most common comorbidities present at admission:
+**Figure 3**: The distribution of combinations of the four most common comorbidities seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity.
 
 ```{r comorbcombos, echo=FALSE}
 
@@ -104,7 +104,7 @@ comorbidities.upset(patient.data, 4)
 
 ```
 
-Prevalence of all recorded comorbidities and symptoms at admission:
+**Figure 4**: Prevalence of all recorded comorbidities and symptoms at admission, across all patients for whom this data was recorded
 
 ```{r prevsympcov, echo = FALSE, out.width= "100%"}
 
@@ -112,7 +112,7 @@ comorbidity.symptom.prevalence(patient.data)
 
 ```
 
-Distribution of patient statuses by time since admission:
+**Figure 5**: The distribution of patient status by number days after admission. "Transferred" patients were moved to another institution, where their final outcome cannot be determined. Patients with censored outcomes at the time of this report remain in the "Admitted" category.
 
 ```{r outcome.curve, out.width= "80%"}
 
@@ -120,8 +120,7 @@ status.by.time.after.admission.2(patient.data)
 
 ```
 
-
-Length of hospital stay by sex:
+**Figure 6**: Distribution of length of hospital stay, according to patient sex.
 
 ```{r stay.by.sex, out.width= "80%"}
 
@@ -131,7 +130,7 @@ violin.sex.func(patient.data)
 ```
 
 
-Length of hospital stay by age group:
+**Figure 7**: Distribution of length of hospital stay, according to patient age group.
 
 ```{r  stay.by.age, out.width= "80%"}
 
@@ -148,14 +147,14 @@ hospital.fatality.ratio(patient.data)
 ```
 
 
-```{r out.width= "80%"}
+```{r out.width= "80%", eval = FALSE}
 
 
 hospital.fatality.ratio(patient.data)
 ```
 
 
-All patients and outcomes by date of admission:
+**Figure 8**: Patient outcomes according to epidemiological week (of 2020) of admission.
 
 ```{r recruitment3, echo=FALSE}
 
@@ -170,7 +169,7 @@ outcomes.by.admission.date(patient.data)
 
 Treatments used during hospital admission:
 
-```{r treatment, echo=FALSE}
+```{r treatment, echo=FALSE, eval=FALSE}
 
 upset.plot(patient.data)
 
@@ -178,7 +177,7 @@ upset.plot(patient.data)
 
 
 
-```{r treatment, echo=FALSE}
+```{r treatment2, echo=FALSE, eval=FALSE}
 
 treatment.use.plot(patient.data)
 
