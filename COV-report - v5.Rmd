@@ -161,7 +161,7 @@ treatment.use.plot(patient.data)
 ```
 
 
-**Figure 11**: Combinations of antimicrobial treatments given during hospital admission 
+**Figure 11**: The distribution of combinations of antimicrobial treatments and steroids administed during hospital stay, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)
