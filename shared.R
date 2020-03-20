@@ -726,8 +726,8 @@ hospital.fatality.ratio <- function(data){
   }
   
   
-  Dc_date <- out$discharge.date
-  Died_date <- out$death.date
+  Dc_date <- outcome$discharge.date
+  Died_date <- outcome$death.date
   
   # Identify first and last events
   
