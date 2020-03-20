@@ -1,6 +1,7 @@
 library(tidyverse)
 library(lubridate)
 library(grid)
+library(magrittr)
 
 # Still not sure how best to let external groups point to their data. For now:
 
@@ -36,24 +37,41 @@ admission.symptoms.labels <- d.dict %>%
   as_tibble() %>%
   pull(2) %>%
   map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
-  map_chr(function(x) sub("\\s+$", "", x))
+  map_chr(function(x) sub("\\s+$", "", x)) 
+
 
 admission.symptoms.labels[26] <- "Bleeding (other)"
 
+treatment.labels <- d.dict %>% 
+  filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>%
+  pull(field.label) %>%
+  str_match(pattern = "6\\.[0-9]+[\\.]?[0-9]?[\\.]?\\s(.*)") %>%
+  as_tibble() %>%
+  pull(2) %>%
+  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
+  # I don't know why you can't figure this out nicely. Do it later.
+  map_chr(function(x) sub("\\s+$", "", x)) %>%
+  map_chr(function(x) sub("\\?+$", "", x)) %>%
+  map_chr(function(x) sub("\\s+$", "", x)) 
+
+treatment.labels[8] <- "Inhaled nitric oxide"
+treatment.labels[9] <- "Tracheostomy" 
+treatment.labels[14] <- "Other"
+
+
 comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
 admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
-
-
-
-uk.data <- read_csv("data/CCPUKSARI_DATA_2020-03-19_1327.csv", guess_max = 10000) %>%
-  # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
-  dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
-  dplyr::mutate(Country = "UK")
 
 site.list <- read_csv("data/Site List & Data Dictionaries/REDCap_user_list_ 17MAR20.csv") %>% 
   dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
   dplyr::mutate(site.name = map_chr(`Site Number_1`, function(x) substr(x, 5, nchar(x)))) %>%
   dplyr::select(site.number, site.name, Country)
+
+
+# uk.data <- read_csv("data/CCPUKSARI_DATA_2020-03-19_1327.csv", guess_max = 10000) %>%
+#   # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
+#   dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+#   dplyr::mutate(Country = "UK")
 
 row.data <- read_csv("data/ISARICnCoV_DATA_2020-03-19_1326.csv", guess_max = 10000) %>% 
   # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
@@ -68,9 +86,11 @@ row.data <- read_csv("data/ISARICnCoV_DATA_2020-03-19_1326.csv", guess_max = 100
                 icu_hoendat = hoendat) %>%
   dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
   left_join(site.list, by = "site.number") %>%
-  dplyr::select(-site.number)
+  dplyr::select(-site.number) %>%
+  add_column(agedat = NA)
 
-raw.data <- bind_rows(uk.data, row.data) %>%
+# raw.data <- bind_rows(uk.data, row.data) %>%
+raw.data <- bind_rows(row.data) %>%
   dplyr::mutate(dsstdat = ymd(dsstdat), 
                 agedat = ymd(agedat), 
                 daily_dsstdat = ymd(daily_dsstdat), 
