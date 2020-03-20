@@ -690,7 +690,7 @@ modified.km.plot <- function(data){
 }
 
 
-hospital.fatality.ratio <- function(data) {
+hospital.fatality.ratio <- function(patient.data) {
   
   # Method from https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044
   # Only uses individuals who have either died or been discharged
