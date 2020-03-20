@@ -197,7 +197,7 @@ patient.data <- patient.data %>%
       floor(decimal_date(doa) - decimal_date(dob))
     }
   })) %>%
-  dplyr::mutate(agegp = cut(consolidated.age, c(0,seq(10,90,by = 5),120), right = FALSE)) %>%
+  dplyr::mutate(agegp = cut(consolidated.age, c(seq(0,90,by = 5),120), right = FALSE)) %>%
   dplyr::mutate(agegp = fct_relabel(agegp, function(a){
     
     temp <- substr(a, 2, nchar(a) -1 )
@@ -398,7 +398,10 @@ sites.by.country <- function(data){
 }
 
 outcomes.by.country <- function(data){
-  ggplot(data) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
+  data2 <- data %>%
+    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
+  
+  ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
     xlab("Country") +
@@ -406,7 +409,9 @@ outcomes.by.country <- function(data){
 }
 
 outcomes.by.admission.date <- function(data){
-  ggplot(data) + geom_bar(aes(x = hostdat, fill = outcome), col = "black", width = 0.95) +
+  data2 <- data %>%
+    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
+  ggplot(data2) + geom_bar(aes(x = hostdat, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
     xlab("Date") +
@@ -546,7 +551,7 @@ comorbidity.symptom.prevalence <- function(data){
   nconds <- ncol(data2) - 1
   
   combined.labeller <- bind_rows(comorbidities %>% add_column(type = "Comorbidities"), 
-                                 admission.symptoms %>% add_column(type = "Symptoms at admission"))
+                                 admission.symptoms %>% add_column(type = "Symptoms at\nadmission"))
   
   data2 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
