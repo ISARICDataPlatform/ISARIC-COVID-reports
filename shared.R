@@ -109,6 +109,31 @@ event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events 
 patient.data <- demog.data %>% left_join(event.data)
 
 patient.data <- patient.data %>%
+  dplyr::mutate(exit.date = map_chr(events, function(x){
+    outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsstdtc)) 
+    if(nrow(outcome.rows) == 0){
+      return(NA)
+    } else if(nrow(outcome.rows) > 1) {
+      stop("Multiple exit dates?")
+    } else {
+      return(outcome.rows %>% slice(1) %>% pull(dsstdtc) %>% as.character())
+    }
+  })) %>%
+  dplyr::mutate(exit.code = map_chr(events, function(x){
+    outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm))
+    if(nrow(outcome.rows) == 0){
+      return(NA)
+    } else {
+      return(switch(outcome.rows %>% pull(dsterm) %>% as.character(),
+                    "1" = "discharge",
+                    "2" = "hospitalisation",
+                    "3" = "transfer",
+                    "4" = "death",
+                    "5" = "transfer.palliative",
+                    "6" = "unknown"))
+    }
+  })) %>%
+  dplyr::mutate(exit.date = ymd(exit.date)) %>%
   dplyr::mutate(censored = map_lgl(events, function(x){
     if(x %>% pull(redcap_event_name) %>% startsWith("discharge") %>% any() %>% not()){
       # still in site
@@ -123,7 +148,7 @@ patient.data <- patient.data %>%
       }
     }
   })) %>%
-  dplyr::mutate(outcome = pmap_chr(list(subjid, censored, events), function(i, x, y){
+  dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
     if(x){
       return("censored")
     } else {
@@ -138,7 +163,7 @@ patient.data <- patient.data %>%
     } else {
       return(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtcyn))
     }
-  })) %>%
+  }))  %>%
   dplyr::mutate(outcome.date = map2_chr(censored, events, function(x, y){
     if(x){
       return(NA)
@@ -275,8 +300,8 @@ patient.data <- patient.data %>% left_join(other.dates)
 ref.date = today()
 
 patient.data <- patient.data %>%
-  dplyr::mutate(admission.to.exit = as.numeric(difftime(outcome.date, hostdat,  unit="days")),
-                onset.to.Admission = as.numeric(difftime(hostdat, cestdat, unit="days"))) %>%
+  dplyr::mutate(admission.to.exit = as.numeric(difftime(exit.date, hostdat,  unit="days")),
+                onset.to.admission = as.numeric(difftime(hostdat, cestdat, unit="days"))) %>%
   dplyr::mutate(admission.to.censored = map2_dbl(admission.to.exit, hostdat, function(x,y){
     if(is.na(x)){
       as.numeric(difftime(ref.date, y,  unit="days"))}
@@ -611,6 +636,8 @@ treatment.use.plot <- function(data){
     theme(axis.text.y = element_text(size = 7))
   
 }
+
+
 
 modified.km.plot <- function(data){
   
