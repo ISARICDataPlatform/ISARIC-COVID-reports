@@ -136,7 +136,7 @@ violin.age.func(patient.data)
 ```
 
 
-**Figure 8**: Changing estimated hospital fatality ratio, based on patients with complete outcome data (methods from Wu et al., https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044).
+**Figure 8**: Estimated hospital fatality ratio based on patients with complete outcome data, showing changes to estimate over time. Shaded area represents 95% confidence interval. Methods from Wu *et al.*, https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044).
 
 ```{r out.width= "80%"}
 
@@ -161,7 +161,7 @@ treatment.use.plot(patient.data)
 ```
 
 
-**Figure 11**: Combinations of antimicrobial treatments given during hospital admission 
+**Figure 11**: The distribution of combinations of antimicrobial treatments and steroids administed during hospital stay, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)
