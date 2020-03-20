@@ -858,12 +858,75 @@ violin.age.func <- function(data){
 #violin.age.func(patient.data)
 
 
+
+
+########### Distribution plots ############
+
+#### Replace zeros with 0.5 (half a day) #######
+
+replacezeros <- function(admit.discharge){
+  
+  for (i in 1: length(admit.discharge)){
+    
+    if (admit.discharge[i]==0){
+      admit.discharge[i] <- 0.5
+    }
+  }
+  
+  return(admit.discharge) 
+}
+
+
+
+
+adm.outcome.func <- function(dat2 = data){
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  admit.discharge <- data2$length.of.stay
+  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+  admit.discharge <- replacezeros(admit.discharge)
+  
+  pos.cens <- which(data2$censored == 'TRUE')
+  
+  
+  left <- c(admit.discharge)
+  right <- replace(admit.discharge, pos.cens, values=NA )
+  censored_df <- data.frame(left, right)
+  fit <- fitdistcens(censored_df, dist = 'gamma')
+  t <- data.frame(x = admit.discharge)
+  
+  plot <- ggplot(data = t) + 
+    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+    labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
+  
+  return(plot)
+  
+}
+
+
+
+
+
+
+
 ########## Onset to admission #####
 
 
 onset.adm.func <- function(dat2 = data){
-  
-  
   
   admit.discharge <- dat2$onset.to.Admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
@@ -928,6 +991,117 @@ surv_plot_func <- function(data){
                        c("Male", "Female"), title = (main = ' '), ylab = '1 - Probability of hospital exit' , legend = c(0.8, 0.9))
   return(plot)
 }
+
+
+
+
+
+upset.plot <- function(patient.data){row_n <- nrow(patient.data)
+for (i in 1:row_n) {
+  events <- patient.data$events[i]
+  detail <- events[[1]]
+  detail <- subset(
+    detail, 
+    select = c(dsterm,
+               antiviral_cmyn, antiviral_cmtrt, 
+               antibiotic_cmyn, 
+               corticost_cmyn, corticost_cmroute,
+               antifung_cmyn)
+  )
+  detail$Pid_special <- i   
+  # This is a PID made for this table and does not correlate with other
+  # patient IDs
+  if (i == 1) {
+    details <- detail
+  } else {
+    details <- rbind(details, detail, deparse.level = 1)
+  }
+}
+# If no dsterm result then not the form that will have treatment details
+details$All_NA <- 1
+details$All_NA[is.na(details$dsterm) == FALSE] <- 0
+details <- subset(details, All_NA == 0)
+
+# Separate steroids according to route
+
+details$Oral_Steroid <- 
+  details$Intravenous_Steroid <- 
+  details$Inhaled_Steroid <- 
+  0
+details$Oral_Steroid[details$corticost_cmroute == 1] <- 1
+details$Intravenous_Steroid[details$corticost_cmroute == 2] <- 1
+details$Inhaled_Steroid[details$corticost_cmroute == 3] <- 1
+
+# 1 is Yes, set anything else to 0 (No)
+details$antiviral_cmyn[details$antiviral_cmyn != 1] <- 0
+details$antibiotic_cmyn[details$antibiotic_cmyn != 1] <- 0
+details$antifung_cmyn[details$antifung_cmyn != 1] <- 0
+details$corticost_cmyn[details$corticost_cmyn != 1] <- 0
+details$Antiviral <- details$antiviral_cmyn
+details$Antibiotic <- details$antibiotic_cmyn
+details$Antifungal <- details$antifung_cmyn
+details$Corticosteroid <- details$corticost_cmyn
+
+# Plot 1 - not separating according to type of antiviral
+treatments <- details %>%
+  select(
+    Pid_special, 
+    Antiviral, 
+    Antibiotic, 
+    Antifungal, 
+    Oral_Steroid, Intravenous_Steroid, Inhaled_Steroid
+  ) %>%
+  pivot_longer(2:7, names_to = "Treatment", values_to = "Present") %>%
+  mutate(Present = as.logical(Present)) %>%
+  group_by(Pid_special) %>%
+  dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
+  mutate(treatments.used = map2(Treatments, Presence, function(c,p){
+    c[which(p)]
+  })) %>%
+  select(-Treatments, -Presence)
+
+p <- ggplot(treatments, aes(x = treatments.used)) + 
+  geom_bar(fill = "deepskyblue3", col = "black") + 
+  theme_bw() +
+  xlab("Treatments used during hospital admission") +
+  ylab("Count") +
+  scale_x_upset() 
+
+
+return(p)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ######### Timeline plot ##############
 
@@ -1013,3 +1187,4 @@ status.by.time.after.admission.2 <- function(data){
     xlab("Days relative to admission") +
     ylab("Proportion")
 }
+
