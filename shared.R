@@ -1034,7 +1034,7 @@ upset.plot <- function(patient.data){
     detail <- events[[1]]
     detail <- subset(
       detail, 
-      dplyr::select(dsterm,
+      select(dsterm,
                       antiviral_cmyn, antiviral_cmtrt, 
                       antibiotic_cmyn, 
                       corticost_cmyn, corticost_cmroute,
