@@ -892,3 +892,88 @@ surv_plot_func <- function(data){
                        c("Male", "Female"), title = (main = ' '), ylab = '1 - Probability of hospital exit' , legend = c(0.8, 0.9))
   return(plot)
 }
+
+######### Timeline plot ##############
+
+
+status.by.time.after.admission <- function(data){
+  
+  data2 <- data %>%
+    dplyr::mutate(status = map_chr(exit.code, function(x){
+      ifelse(is.na(x), "censored", x)
+    })) %>%
+    dplyr::mutate(status = factor(status)) 
+  
+  
+  timings.wrangle <- data2 %>%
+    dplyr::select(subjid,
+                  status,
+                  # Admit.ICU,
+                  # Dur.ICU,
+                  censored,
+                  admission.to.exit) %>%
+    dplyr::mutate(hospital.start = 0) %>%
+    dplyr::mutate(hospital.end = admission.to.exit) %>%
+    # mutate(ICU.start = Admit.ICU) %>%
+    # mutate(ICU.end = Admit.ICU + Dur.ICU) %>%
+    dplyr::select(subjid,  ends_with("start"), ends_with("end"), censored, status) %>%
+    filter(hospital.end >= 0 | is.na(hospital.end))
+  # mutate(ever.ICU = !is.na(ICU.start)) 
+  
+  overall.start <- 0
+  overall.end <- max(timings.wrangle$hospital.end, na.rm = T)
+  
+  
+  complete.timeline <- map(1:nrow(timings.wrangle), function(pat.no){
+    times <- map(overall.start:overall.end, function(day){
+      # if(!timings.wrangle$ever.ICU[pat.no]){
+      if(is.na(timings.wrangle$hospital.end[pat.no])){
+        "Admitted"
+      } else if(day < timings.wrangle$hospital.end[pat.no]){
+        "Admitted"
+      } else if(timings.wrangle$status[pat.no] == "death"){
+        "Died"
+      } else if(timings.wrangle$status[pat.no] == "discharge"){
+        "Discharged"
+      } else {
+        "Transferred"
+      }
+      # } else {
+      # if(day >= timings.wrangle$ICU.start[pat.no] & day < timings.wrangle$ICU.end[pat.no]){
+      #   "ICU"
+      # } else if(timings.wrangle$Censored[pat.no]){
+      #   if(day >= timings.wrangle$ICU.end[pat.no]){
+      #     "Censored"
+      #   } else {
+      #     "Admitted"
+      #   }
+      # } else if(day < timings.wrangle$hospital.end[pat.no]){
+      #   "Admitted"
+      # } else if(timings.wrangle$Died[pat.no]){
+      #   "Dead"
+      # } else {
+      #   "Discharged"
+      # }
+      # }
+    })
+    names(times) <- glue::glue("day_{overall.start:overall.end}")
+    times$subjid <- timings.wrangle$subjid[pat.no]
+    times
+  }) %>%
+    bind_rows()
+  
+  n.days <- ncol(complete.timeline) - 1
+  
+  complete.timeline <- complete.timeline %>%
+    pivot_longer(1:n.days, names_to = "day", values_to = "status") %>%
+    dplyr::select(subjid, day, status) %>%
+    dplyr::mutate(day = map_dbl(day, function(x) as.numeric(str_split_fixed(x, "_", 2)[2]))) %>%
+    dplyr::mutate(status = factor(status, levels = c("Died", "Admitted", "Transferred", "Discharged"))) %>%
+    ungroup() 
+  
+  ggplot(complete.timeline) + geom_bar(aes(x = day, fill = status), position = "fill", col = "black") +
+    scale_fill_brewer(palette = "Set1", name  = "Status", drop = F) + 
+    theme_bw() + 
+    xlab("Days relative to admission") +
+    ylab("Proportion")
+}
