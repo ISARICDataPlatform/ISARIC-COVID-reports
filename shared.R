@@ -2,6 +2,7 @@ library(tidyverse)
 library(lubridate)
 library(grid)
 library(magrittr)
+library(binom)
 
 # Still not sure how best to let external groups point to their data. For now:
 
@@ -689,21 +690,56 @@ modified.km.plot <- function(data){
 }
 
 
-hospital.fatality.ratio <- function(data){
+hospital.fatality.ratio <- function(data) {
+  
+  # Method from https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044
+  # Only uses individuals who have either died or been discharged
+  
+  row_n <- nrow(patient.data)
+  for (i in 1:row_n) {
+    events <- patient.data$events[i]
+    detail <- events[[1]]
+    detail$dsterm[is.na(detail$dsterm) == TRUE] <- 0
+    detail$Recovered.Date <- -500
+    detail$Recovered.Date[detail$dsterm == 1] <- detail$dsstdtc[detail$dsterm == 1]
+    detail$Died.Date <- -500
+    detail$Died.Date[detail$dsterm == 4] <- detail$dsstdtc[detail$dsterm == 4]  
+    
+    recovered <- as.Date(
+      max(detail$Recovered.Date, na.rm = TRUE),
+      origin = "1970-01-01"
+    )
+    died <- as.Date(
+      max(detail$Died.Date, na.rm = TRUE),
+      origin = "1970-01-01"
+    )
+    recovered[recovered == "1968-08-19"] <- NA
+    died[died == "1968-08-19"] <- NA
+    out <- data.frame(death.date = died, discharge.date = recovered)
+    # This is a PID made for this table and does not correlate with other
+    # patient IDs
+    if (i == 1) {
+      outcome <- out
+    } else {
+      outcome <- rbind(outcome, out, deparse.level = 1)
+    }
+  }
   
   
+  Dc_date <- outcome$discharge.date
+  Died_date <- outcome$death.date
   
-  # As I understand the method, we don't care about when people were admitted
-  # for this plot, just the numbers that have been discharged and the number
-  # who have died
-  Dc_date <- data$discharge.date
-  Died_date <- data$death.date
+  # Identify first and last events
   
-  # First patient in my mock data recruited 1/2/2020
+  first <- min(Dc_date, Died_date, na.rm = TRUE)
+  last <- max(Dc_date, Died_date, na.rm = TRUE)
+  diff <- last - first
   
-  d.0 <- as.Date("2020-02-01")
+  # Plot to start after first event
   
-  for (i in 0:60) {
+  d.0 <- first
+  
+  for (i in 0:diff) {
     
     d.i <- d.0 + i
     date <- d.0 + i
@@ -746,13 +782,6 @@ hospital.fatality.ratio <- function(data){
   
   db <- cbind(db, bino, deparse.level = 0)
   
-  # With the example data I used the graph was dominated by a huge confidence
-  # interval yet the estimated mortality ended up around 2.5% so I trimmed
-  # the plot at 20%.  Obviously we might not want to do this with the real data.
-  
-  trim <- .2
-  
-  db$upper[db$upper > .2] <- trim
   
   line <- geom_line(
     data = db, 
@@ -771,14 +800,14 @@ hospital.fatality.ratio <- function(data){
   )
   yaxis <- scale_y_continuous(
     name = "Hospital fatality ratio", 
-    limits = c(0, trim)
+    limits = c(0, 1)
   )
-  plot <- ggplot(data = db) +
+  plt <- ggplot(data = db) +
     line +
     shade +
     yaxis + theme_bw()
   
-  plot
+  return(plt)
   
 }
 
@@ -996,29 +1025,7 @@ surv_plot_func <- function(data){
 
 
 
-
-
-upset.plot <- function(patient.data){row_n <- nrow(patient.data)
-for (i in 1:row_n) {
-  events <- patient.data$events[i]
-  detail <- events[[1]]
-  detail <- subset(
-    detail, 
-    dplyr::select(c(dsterm,
-               antiviral_cmyn, antiviral_cmtrt, 
-               antibiotic_cmyn, 
-               corticost_cmyn, corticost_cmroute,
-               antifung_cmyn))
-  )
-  detail$Pid_special <- i   
-  # This is a PID made for this table and does not correlate with other
-  # patient IDs
-  if (i == 1) {
-    details <- detail
-  } else {
-    details <- rbind(details, detail, deparse.level = 1)
-
-upset.plot <- function(patient.data){
+treatment.upset <- function(patient.data) {
   row_n <- nrow(patient.data)
   for (i in 1:row_n) {
     events <- patient.data$events[i]
@@ -1041,7 +1048,7 @@ upset.plot <- function(patient.data){
     }
 
   }
-}
+  
 # If no dsterm result then not the form that will have treatment details
 details$All_NA <- 1
 details$All_NA[is.na(details$dsterm) == FALSE] <- 0
