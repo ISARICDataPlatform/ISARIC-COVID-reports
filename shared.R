@@ -110,22 +110,24 @@ patient.data <- demog.data %>% left_join(event.data)
 
 patient.data <- patient.data %>%
   dplyr::mutate(censored = map_lgl(events, function(x){
-    if(is.null(x)){
-      # no rows beyond the first - censored
-      return(TRUE)
-    } else if(x %>% pull(redcap_event_name) %>% startsWith("discharge") %>% any() %>% not()){
+    if(x %>% pull(redcap_event_name) %>% startsWith("discharge") %>% any() %>% not()){
       # still in site
       return(TRUE)
     } else {
       # Anything other than discharge or death is "censored"
-      return(x %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
+      temp <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) 
+      if(nrow(temp) == 0){
+        return(TRUE)
+      } else {
+        return(temp %>% pull(dsterm)%>% match(c(1,4)) %>% is.na() %>% any())
+      }
     }
   })) %>%
-  dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
+  dplyr::mutate(outcome = pmap_chr(list(subjid, censored, events), function(i, x, y){
     if(x){
       return("censored")
     } else {
-      return(switch(y %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsterm) %>% as.character(),
+      return(switch(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsterm) %>% as.character(),
                     "1" = "discharge",
                     "4" = "death"))
     }
@@ -134,17 +136,17 @@ patient.data <- patient.data %>%
     if(x){
       return(2)
     } else {
-      return(y %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtcyn))
+      return(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtcyn))
     }
   })) %>%
   dplyr::mutate(outcome.date = map2_chr(censored, events, function(x, y){
     if(x){
       return(NA)
     } else {
-      if(length(y %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character()) > 1){
+      if(length(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtc) %>% as.character()) > 1){
         stop("Multiple outcome dates?")
       }
-      return(y %>% filter(startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) %>% pull(dsstdtc) %>% as.character())
+      return(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtc) %>% as.character())
     }
   })) %>%
   dplyr::mutate(outcome.date = ymd(outcome.date)) %>%
@@ -566,17 +568,18 @@ treatment.use.plot <- function(data){
       add_column(subjid = data$subjid[i]) %>%
       slice(1)
   }) %>% bind_rows()
-  data2 <- data %>% left_join(treatment.columns, by="subjid") %>%
+  
+  
+  data2 <- data %>% 
+    select(-one_of(treatments$field)) %>%
+    left_join(treatment.columns, by="subjid") %>%
     select(subjid, one_of(treatments$field))
   
-  nconds <- ncol(data2) - 1
-  
-  combined.labeller <- bind_rows(comorbidities %>% add_column(type = "Comorbidities"), 
-                                 admission.symptoms %>% add_column(type = "Symptoms at admission"))
+  ntr <- ncol(data2) - 1
   
   data2 <- data2 %>%
-    pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
-    group_by(Condition) %>%
+    pivot_longer(2:(ntr + 1), names_to = "Treatment", values_to = "Present") %>%
+    group_by(Treatment) %>%
     filter(!is.na(Present)) %>%
     dplyr::mutate(Present = map_lgl(Present, function(x){
       if(is.na(x)){
