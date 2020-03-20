@@ -87,15 +87,14 @@ Among this cohort, there was no significant difference in the duration from admi
 
 Age distribution of patients:
 
-```{r agepyramid, echo = FALSE, eval=FALSE}
-
+```{r agepyramid, echo = FALSE}
 age.pyramid(patient.data)
 
 ```
 
 Distribution of combinations of the four most common symptoms present at admission:
 
-```{r symptomcombos, echo=FALSE, eval=FALSE}
+```{r symptomcombos, echo=FALSE}
 
 symptoms.upset(patient.data, 4)
 
@@ -112,7 +111,7 @@ comorbidities.upset(patient.data, 4)
 
 Prevalence of all recorded comorbidities and symptoms at admission:
 
-```{r prevsympcov, echo = FALSE, out.width= "80%"}
+```{r prevsympcov, echo = FALSE, out.width= "100%"}
 
 comorbidity.symptom.prevalence(patient.data)
 
@@ -124,7 +123,10 @@ Distribution of patient statuses by time since admission:
 
 status.by.time.after.admission.2(patient.data)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 361e8f3b08ae6be072fe413f3fe08588aaee9cca
 ```
 
 
