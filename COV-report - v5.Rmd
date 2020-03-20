@@ -29,7 +29,7 @@ library(magrittr)
 library(binom)
 library(plyr)
 library(glue)
-
+library(fitdistrplus)
 
 # Set versions
 
@@ -38,16 +38,16 @@ library(glue)
 
 # Define and set working directory 
 
-#dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
-dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
+dir.path <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports"
+# dir.path2 <- "/Users/Hp/OneDrive - Nexus365/COVID Reports/"
 
-setwd(dir.path2)
+setwd(dir.path)
 # setwd(dir.path2)
 
 
 # Source files
-source("Users/Hp/OneDrive - Nexus365/ISARIC-COVID-dashboard/shared.R" )
-#source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
+# source("Users/Hp/OneDrive - Nexus365/ISARIC-COVID-dashboard/shared.R" )
+source("/Users/mdhall/ISARIC-COVID-dashboard/shared.R")
 #source("shiny/COVID-dashboard/functions2.R")
 #data <- read.csv("data/data.v4.csv")
 
@@ -161,7 +161,7 @@ treatment.use.plot(patient.data)
 ```
 
 
-**Figure 11**: Recombinations of antimicrobial treatments given during hospital admission 
+**Figure 11**: Combinations of antimicrobial treatments given during hospital admission 
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)
