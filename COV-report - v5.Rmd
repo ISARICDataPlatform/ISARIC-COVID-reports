@@ -196,10 +196,10 @@ treatment.use.plot(patient.data)
 
 # Statistical Analysis
 
-Histograms are used to display the observed data and black overlaying curves represent the maximum likelihood Gamma fit to the data. Histogram bins are labeled at the respective midpoints.
+Blue curves show the Gamma distribution fit to the data. 
 
 
-Time from sympton onset to admission:
+**Figure 11**: Distribution of time from symptom onset to admission.
 
 ```{r onset.admission, out.width = '80%', fig.align= 'center'}
 
@@ -209,7 +209,7 @@ onset.adm.func(patient.data)
 
 
 
-Time from admission to hospital exit (either by recovery or death): 
+*Figure 12**: Distribution of time from admission to death or recovery.
 
 ```{r  adm.outcome, out.width = '80%', fig.align= 'center' }
 
