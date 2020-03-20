@@ -908,7 +908,7 @@ adm.outcome.func <- function(dat2 = data){
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
     labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
   
-  return(plot)
+  return( plot)
   
 }
 
@@ -921,9 +921,9 @@ adm.outcome.func <- function(dat2 = data){
 ########## Onset to admission #####
 
 
-onset.adm.func <- function(dat2 = data){
+onset.adm.func <- function(data){
   
-  admit.discharge <- dat2$onset.to.Admission
+  admit.discharge <- data$onset.to.admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
   admit.discharge.2 <- replacezeros(admit.discharge)
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
