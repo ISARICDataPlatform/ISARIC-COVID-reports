@@ -781,6 +781,7 @@ violin.sex.func <- function(data){
   
   # Analysis to be run on only entries with either Admit.hospexit.any date or Admit.censored dates
   
+  
   data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
   
   # This is to include  dates for individuals still in hospital
@@ -797,7 +798,7 @@ violin.sex.func <- function(data){
   # by sex
   
   x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + geom_violin(trim=FALSE)+ geom_boxplot(width=0.1, fill="white")  +
-    labs(title=" ", x="Sex", y = "Days from admission to discharge") + 
+    labs(title=" ", x="Sex", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
@@ -809,6 +810,9 @@ violin.sex.func <- function(data){
   return(x)
 }
 
+
+
+#violin.sex.func(patient.data)
 ### Violin age ####
 
 
@@ -824,16 +828,12 @@ violin.age.func <- function(data){
     mutate(length.of.stay = pmax(admission.to.exit, admission.to.censored, na.rm = T))
   
   
-  
-  
-  
-  
   vdx<- tibble(subjid = data2$subjid, Age = data2$new.agegp, length_of_stay = abs(data2$length.of.stay) )
   
   
   
   vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + geom_violin(trim=FALSE)+ #geom_boxplot(width=0.1, fill="white")  +
-    labs(title="  ", x="Age group", y = "Days from admission to discharge") + 
+    labs(title="  ", x="Age group", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
@@ -847,3 +847,45 @@ violin.age.func <- function(data){
   
 }
 
+#violin.age.func(patient.data)
+
+
+
+
+
+
+
+
+########## Survival plot ######
+
+
+surv_plot_func <- function(data){
+  
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  
+  data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+  
+  vdy <- tibble(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), Censored = data2$censored )
+  
+  
+  fit <- survfit(Surv(length.of.stay, Censored) ~ sex, data = vdy)
+  #print(fit)
+  plot <- ggsurvplot(fit,
+                     pval = T, conf.int = T,
+                     risk.table = F, # Add risk table
+                     # risk.table.col = "strata", # Change risk table color by groups
+                     linetype = "strata", # Change line type by groups
+                     #surv.median.line = "hv", # Specify median survival
+                     ggtheme = theme_bw(), # Change ggplot2 theme
+                     palette = c('#D2691E', '#BA55D3'),
+                     legend.labs = 
+                       c("Male", "Female"), title = (main = ' '), ylab = '1 - Probability of hospital exit' , legend = c(0.8, 0.9))
+  return(plot)
+}
