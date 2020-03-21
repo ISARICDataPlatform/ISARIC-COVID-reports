@@ -1,0 +1,387 @@
+---
+title: "International Severe Acute Respiratory and Emerging Infections Consortium (ISARIC)"
+output:
+  html_document:
+    df_print: paged
+    number_sections: yes
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: no
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(glue)
+library(viridis)
+library(ggupset)
+library(sf)
+library(rgeos)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(magrittr)
+library(binom)
+library(plyr)
+library(glue)
+library(fitdistrplus)
+library(lubridate)
+library(grid)
+library(magrittr)
+library(binom)
+
+# file locations
+
+paths <- read_csv("paths.csv", col_names = F)
+
+code.path <- paths[[which(paths$X1 == "code.path"), 2]]
+data.path <- paths[[which(paths$X1 == "data.path"), 2]]
+data.dict.file <- paths[[which(paths$X1 == "data.dict.file"), 2]]
+site.list <- paths[[which(paths$X1 == "site.list"), 2]]
+uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
+row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
+
+
+# Source files
+
+source(glue("{code.path}/shared.R"))
+
+```
+
+<!-- <p style="font-family: times, serif; font-size:24pt> **International Severe Acute Respiratory and Emerging Infections Consortium (ISARIC)**</p> -->
+
+<!-- <f style="font-family: times, serif; font-size:11pt; font-style:italic"> - A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases</f> -->
+
+
+<f style="font-family: times, serif; font-size:11pt; font-style:italic"> - A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases</f>
+
+# COVID-19 Report: 19th March, 2020 {-}
+
+
+
+# Summary
+
+The results in this report have been produced using data from the  International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. These data were contributed by 22 sites across 14 countries.
+
+Up to 19 March 2020, data have been entered for 91 patients. The cohort is made up of 43 males and 37 females - sex is unreported for 11 cases. The median age (calculated based on reported ages) is 50.5 years. Follow-up is ongoing for 52 patients.  
+
+Among this cohort, there was no significant difference in the duration from admission to outcome (either death or recovery) for males and females (p=0.68). The expected mean for the time from admission to outcome (either death or recovery) is 24.5 days (96% CI: 22.9, 27.1), accounting for censorship, i.e. unobserved outcomes. The number of days from (first) symptom onset to hospital admission has an expected mean of 7.1 (6.8, 7.7) and a variance of 38.5 (36.9, 49.4).  Of 41 patients with completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids.  33% received an antibiotic and 18% received antivirals.
+
+
+
+
+# Patient Characteristics
+
+
+**Figure 1**: Age and sex distribution of patients. Bar fills are outcome (death/discharge/censored) at the time of report.
+
+```{r agepyramid, echo = FALSE}
+
+age.pyramid(patient.data)
+
+```
+
+**Figure 2**: The distribution of combinations of the four most common symptoms seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
+
+```{r symptomcombos, echo=FALSE}
+
+symptoms.upset(patient.data, 4)
+
+```
+
+
+**Figure 3**: The distribution of combinations of the four most common comorbidities seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity.
+
+```{r comorbcombos, echo=FALSE}
+
+comorbidities.upset(patient.data, 4)
+
+```
+
+**Figure 4**: Prevalence of all recorded comorbidities and symptoms at admission, across all patients for whom this data was recorded
+
+```{r prevsympcov, echo = FALSE, out.width= "80%"}
+
+comorbidity.symptom.prevalence(patient.data)
+
+```
+
+**Figure 5**: The distribution of patient status by number days after admission. "Transferred" patients were moved to another institution, where their final outcome cannot be determined. Patients with censored outcomes at the time of this report remain in the "Admitted" category.
+
+```{r outcome.curve, out.width= "80%"}
+
+  
+status.by.time.after.admission.2(patient.data)
+```
+
+**Figure 6**: Distribution of length of hospital stay by 19/03/2020, according to patient sex. The hospital stay function is either time to death or recovery or time to censorship.
+
+```{r stay.by.sex, out.width= "80%"}
+violin.sex.func(patient.data)
+
+
+
+```
+
+**Figure 7**: Distribution of length of hospital stay by 19/03/2020, according to patient age group. The hospital stay function considers the time to death, recovery or censorship.
+
+```{r  stay.by.age, out.width= "80%"}
+
+violin.age.func(patient.data)
+```
+
+
+**Figure 8**: Estimated hospital fatality ratio based on patients with complete outcome data, showing changes to estimate over time. Shaded area represents 95% confidence interval. Methods from Wu *et al.*, https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044).
+
+```{r out.width= "80%"}
+
+hospital.fatality.ratio(patient.data)
+
+```
+
+**Figure 9**: Patient outcomes by epidemiological week (of 2020) of admission
+
+```{r recruitment3, echo=FALSE}
+
+outcomes.by.admission.date(patient.data)
+```
+
+
+# Treatment
+
+**Figure 10**: Treatments used on all patients where this information was recorded
+
+```{r treatment1, echo=FALSE}
+treatment.use.plot(patient.data)
+```
+
+
+**Figure 11**: The distribution of combinations of antimicrobial treatments and steroids administed during hospital stay, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
+
+```{r treatment2, echo=FALSE}
+treatment.upset(patient.data)
+```
+
+
+# Statistical Analysis
+
+Blue curves show the Gamma distribution fit to two time-dependent data variables. 
+
+
+**Figure 12**: Distribution of time from symptom onset to admission.
+
+```{r onset.admission, out.width = '80%', fig.align= 'center'}
+
+onset.adm.func(patient.data)
+
+```
+
+
+**Figure 13**: Distribution of time from admission to an outcome - either death or recovery.
+
+
+```{r  adm.outcome, out.width = '80%', fig.align= 'center' }
+
+adm.outcome.func(patient.data)
+
+```
+
+
+
+
+```{r kpplot, out.width= "80%", include = FALSE}
+#Kaplan-Meier plot for the  probability of hospital exit discharge (by recovery or death), displayed by sex:
+#data -> df
+
+#surv.plot.func(patient.data)
+
+
+```
+
+
+
+
+
+```{r outcomelines, out.width="80%", include = FALSE}
+# Modified Kaplan-Meier curves for outcomes (death or discharge)**:
+# Non-parametric CFR estimates
+
+## Function to calculate case fatality ratio and uncertainty bounds.
+# casefat = function(t, f, conf=0.95){
+# 	###############################################################
+# 	# Survivor function and variance for combined endpoint
+# 
+# 	c0 = survfit(Surv(t, factor(as.numeric(f>0), 0:1, labels=c("0", "1")))~1)
+# 	si = which(c0$states!="1")
+# 	S0 = c0$pstate[,si]
+# 	V0 = (c0$std.err[,si])^2
+# 	n = length(V0)
+# 	if(V0[n]<1E-12){
+# 		V0[n]=V0[n-1]
+# 	}
+# 	nrisk = c0$n.risk[,si]
+# 
+# 	###############################################################
+# 	# CFR calculation
+# 
+# 	c = survfit(Surv(t, factor(f, 0:2, labels=c("0", "1", "2")))~1)
+# 	di = which(c$states=="1")
+# 	ri = which(c$states=="2")
+# 
+# 	# hazard contributions for each endpoint
+# 	h1 = c$n.event[,di]/nrisk
+# 	h2 = c$n.event[,ri]/nrisk
+# 
+# 	# c$pstate is cumulative incidence function for each endpoint
+# 	theta1 = max(c$pstate[,di])
+# 	theta2 = max(c$pstate[,ri])
+# 
+# 	cfr = theta1/(theta1+theta2)
+# 
+# 	###############################################################
+# 	# Variances
+# 
+# 	# Greenwood-like method
+# 	M = diag(V0)
+# 	for(j in 2:nrow(M)){
+# 		for(k in 1:(j-1)){
+# 			M[j, k] = V0[k]*S0[j]/S0[k]
+# 			M[k, j] = M[j, k]
+# 		}
+# 	}
+# 
+# 	v1 = as.numeric(sum((S0)^2*h1/pmax(nrisk, 1)) + (h1 %*% M %*% h1))
+# 	v2 = as.numeric(sum((S0)^2*h2/pmax(nrisk, 1)) + (h2 %*% M %*% h2))
+# 	cov12 = as.numeric((h1 %*% M %*% h2))
+# 
+# 	secfr = sqrt((theta2^2*v1 + theta1^2*v2 - 2*theta1*theta2*cov12))/(theta1+theta2)^2
+# 
+# 	###############################################################
+# 	# logit scale for CI
+# 
+# 	lc = log(cfr/(1-cfr))
+# 	sel = sqrt(v1/theta1^2 + v2/theta2^2 - 2*cov12/(theta1*theta2))
+# 	alpha = (1-conf)/2
+# 	za = -qnorm(alpha)
+# 	llc = lc-za*sel
+# 	ulc = lc+za*sel
+# 	lcfr = exp(llc)/(1+exp(llc))
+# 	ucfr = exp(ulc)/(1+exp(ulc))
+# 
+# 	###############################################################
+# 	# Two simple methods
+# 	Nt = c$n
+# 	Nd = sum(c$n.event[,di])
+# 	Nr = sum(c$n.event[,ri])
+# 
+# 	e1 = Nd/Nt
+# 	see1 = sqrt(e1*(1-e1)/Nt)
+# 	a1 = Nd+0.5
+# 	b1 = Nt-Nd+0.5
+# 	le1 = qbeta(0.025, shape1=a1, shape2=b1)
+# 	ue1 = qbeta(0.975, shape1=a1, shape2=b1)
+# 
+# 	e2 = Nd/(Nd+Nr)
+# 	see2 = sqrt(e2*(1-e2)/(Nd+Nr))
+# 	a2 = Nd+0.5
+# 	b2 = Nr+0.5
+# 	le2 = qbeta(alpha, shape1=a2, shape2=b2)
+# 	ue2 = qbeta(1-alpha, shape1=a2, shape2=b2)
+# 
+# 	###############################################################
+# 
+# 	return(list(cfr=cfr, secfr=secfr, logit_cfr=lc, se_logit_cfr=sel, lcfr=lcfr, ucfr=ucfr,
+# 				e1=e1, see1=see1, le1=le1, ue1=ue1,
+# 				e2=e2, see2=see2, le2=le2, ue2=ue2))
+# }
+# 
+# alldata$status2 <- revalue(as.factor(alldata$status), c('Recovered' ='2', 'Died' ='1', 'Censored' = '0'))
+# 
+# cfr_estims <-  casefat(alldata$Admission_to_outcome_2, as.numeric(levels(alldata$status2))[alldata$status2])
+# 
+# cfr <- cfr_estims$cfr
+# upper_cfr <- cfr_estims$ue2
+# lower_cfr <- cfr_estims$le2
+
+
+modified.km.plot(patient.data)
+
+```
+
+
+# Country Comparisons
+
+**Figure 14**: Number of sites per country
+
+```{r recruitment1, echo=FALSE}
+
+sites.by.country(patient.data)
+
+```
+
+**Figure 15**: Distribution of patients by country and outcome
+
+```{r recruitment2, echo=FALSE}
+
+outcomes.by.country(patient.data)
+
+```
+
+
+
+
+# Background
+
+
+In response to the emergence of novel coronavirus (COVID-19), ISARIC launched a portfolio of resources to accelerate outbreak research and response. All resources are designed to address the most critical public health questions, have undergone extensive review by international clinical experts, and are free for all to use. Resources are available on the [ISARIC website](https://isaric.tghn.org/) .
+
+The [ISARIC-WHO COVID-19 Case Record Form (CRF)](https://media.tghn.org/medialibrary/2020/03/ISARIC_COVID-19_CRF_V1.3_24Feb2020.pdf) enables the collection of standardised clinical data to inform patient management and the public health response. These forms should be used to collect data on suspected or confirmed cases of COVID-19.
+
+Following the launch of this this open resource, ISARIC received a massive response from the health and research communities. This form is now in use across dozens of countries and research consortia, aligning the collection of health data. The form is available in multiple languages. Data can be entered electronically to the data platform as below. ISARIC supports researchers to retain control of the data and samples they collect. All decisions regarding data use are made by the institutions that enter the data. We keep our contributors informed of any plans and welcome their input to ensure that we are generating the best science and promoting the interests of your patients, your institutions and your public health authorities. Feedback and suggestions are welcome anytime at [ncov@isaric.org](ncov@isaric.org)
+
+To support the rapid implementation of standardised data collection and reporting, ISARIC hosts a data platform that includes an electronic data capture system, a secure repository and an analytic framework. Data are entered to a web-based [REDCap](https://www.project-redcap.org/) data management system, securely stored, and used to inform regular reports as above. Data contributors are invited to input on the methods and contents of the reports, and are provided with the R code to execute analysis on their own data in the platform. For more information, visit the [ISARIC](https://isaric.tghn.org/covid-19-clinical-research-resources/) website.
+
+
+
+
+# Methods
+
+Patient details were submitted electronically by participating sites to the ISARIC database.  Relevant background and presenting symptoms were recorded on the day of study recruitment.  Daily follow-up was then completed until recovery or death.  A final form was completed with details of treatments received and outcomes. All categories that represent fewer than five individuals have been suppressed to avoid the potential for identification of participants. 
+
+
+Graphs have been used to represent the age distribution of patience by sex and status (censored, death, recovered), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
+
+
+To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions were fitted to the observed data, allowing for censored observations. 
+
+
+
+
+
+# ISARIC Team Members
+
+* Gail Carson
+* Emmanuelle A. Dankwa
+* Christl A. Donnelly
+* Christophe Fraser
+* Matthew Hall
+* Peter Horby
+* James Lee
+* Laura Merson
+* Sarah Moore
+* Piero Olliaro
+* Daniel Plotkin
+* Mark Pritchard
+
+
+
+
+
+
+
+
+
