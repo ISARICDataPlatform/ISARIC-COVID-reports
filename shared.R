@@ -1,16 +1,13 @@
-library(tidyverse)
-library(lubridate)
-library(grid)
-library(magrittr)
-library(binom)
 
-# Still not sure how best to let external groups point to their data. For now:
 
-#input.folder <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/"
+use.uk.data <- FALSE
+use.row.data <- TRUE
 
-#setwd(input.folder)
+if(!use.uk.data & !use.row.data){
+  stop("No data to be imported")
+}
 
-d.dict <- read_csv("data/Site List & Data Dictionaries/CCPUKSARI_DataDictionary_2020-03-17.csv") %>%
+d.dict <- read_csv(glue("{data.path}/{data.dict.file}")) %>%
   dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
   dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
 
@@ -64,35 +61,42 @@ comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.la
 admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
 treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 
-site.list <- read_csv("data/Site List & Data Dictionaries/REDCap_user_list_ 17MAR20.csv") %>% 
+site.list <- read_csv(glue("{data.path}/{site.list}")) %>% 
   dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
   dplyr::mutate(site.name = map_chr(`Site Number_1`, function(x) substr(x, 5, nchar(x)))) %>%
   dplyr::select(site.number, site.name, Country)
 
 
-# uk.data <- read_csv("data/CCPUKSARI_DATA_2020-03-19_1327.csv", guess_max = 10000) %>%
-#   # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
-#   dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
-#   dplyr::mutate(Country = "UK")
+if(use.uk.data){
+  uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
+    # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
+    dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+    dplyr::mutate(Country = "UK")
+} else {
+  uk.data <- NULL
+}
 
-row.data <- read_csv("data/ISARICnCoV_DATA_2020-03-19_1326.csv", guess_max = 10000) %>% 
-  # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
-  dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
-  # different column names for some comorbidities
-  dplyr::rename(chrincard = chroniccard_mhyn, 
-                modliv = modliver_mhyn, 
-                mildliver = mildliv_mhyn, 
-                chronichaemo_mhyn = chronhaemo_mhyn, 
-                diabetescom_mhyn = diabetiscomp_mhyn,
-                rheumatologic_mhyn = rheumatology_mhyr,
-                icu_hoendat = hoendat) %>%
-  dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
-  left_join(site.list, by = "site.number") %>%
-  dplyr::select(-site.number) %>%
-  add_column(agedat = NA)
+if(use.row.data){
+  row.data <- read_csv(glue("{data.path}/{row.data.file}"), guess_max = 10000) %>% 
+    # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
+    dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+    # different column names for some comorbidities
+    dplyr::rename(chrincard = chroniccard_mhyn, 
+                  modliv = modliver_mhyn, 
+                  mildliver = mildliv_mhyn, 
+                  chronichaemo_mhyn = chronhaemo_mhyn, 
+                  diabetescom_mhyn = diabetiscomp_mhyn,
+                  rheumatologic_mhyn = rheumatology_mhyr,
+                  icu_hoendat = hoendat) %>%
+    dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
+    left_join(site.list, by = "site.number") %>%
+    dplyr::select(-site.number) %>%
+    add_column(agedat = NA)
+} else {
+  row.data <- NULL
+}
 
-# raw.data <- bind_rows(uk.data, row.data) %>%
-raw.data <- bind_rows(row.data) %>%
+raw.data <- bind_rows(uk.data, row.data) %>%
   dplyr::mutate(dsstdat = ymd(dsstdat), 
                 agedat = ymd(agedat), 
                 daily_dsstdat = ymd(daily_dsstdat), 
