@@ -18,21 +18,6 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 library(tidyverse)
 library(glue)
-library(viridis)
-library(ggupset)
-library(sf)
-library(rgeos)
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(magrittr)
-library(binom)
-library(plyr)
-library(glue)
-library(fitdistrplus)
-library(lubridate)
-library(grid)
-library(magrittr)
-library(binom)
 
 # file locations
 
@@ -115,7 +100,7 @@ comorbidity.symptom.prevalence(patient.data)
 ```{r outcome.curve, out.width= "80%"}
 
   
-status.by.time.after.admission.2(patient.data)
+status.by.time.after.admission(patient.data)
 ```
 
 **Figure 6**: Distribution of length of hospital stay by 19/03/2020, according to patient sex. The hospital stay function is either time to death or recovery or time to censorship.
