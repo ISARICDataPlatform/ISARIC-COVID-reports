@@ -1,4 +1,21 @@
 
+library(viridis)
+library(ggupset)
+library(sf)
+library(rgeos)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(magrittr)
+library(binom)
+library(plyr)
+library(glue)
+library(fitdistrplus)
+library(lubridate)
+library(grid)
+library(magrittr)
+library(binom)
+
+# flags for inclusion of the two data files
 
 use.uk.data <- FALSE
 use.row.data <- TRUE
@@ -7,6 +24,8 @@ if(!use.uk.data & !use.row.data){
   stop("No data to be imported")
 }
 
+# read the data dictionary to get lists of columns for symptoms at admission, comorbidities, and treatments
+
 d.dict <- read_csv(glue("{data.path}/{data.dict.file}")) %>%
   dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
   dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
@@ -14,6 +33,8 @@ d.dict <- read_csv(glue("{data.path}/{data.dict.file}")) %>%
 comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
 admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4")) %>% pull(field.name)
 treatment.colnames <- d.dict %>% filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
+
+# COMORBIDITIES
 
 comorbidities.labels <- d.dict %>% 
   filter(form.name == "comorbidities" & field.type == "radio") %>% 
@@ -24,10 +45,12 @@ comorbidities.labels <- d.dict %>%
   map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
   map_chr(function(x) sub("\\s+$", "", x))
 
-# some things are best done by hand
+# At some point, farting around with regexes is more trouble than its worth
 
 comorbidities.labels[1] <- "Chronic cardiac disease"
 comorbidities.labels[18] <- "Other"
+
+# SYMPTOMS
 
 admission.symptoms.labels <- d.dict %>% 
   filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4")) %>% 
@@ -38,8 +61,9 @@ admission.symptoms.labels <- d.dict %>%
   map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
   map_chr(function(x) sub("\\s+$", "", x)) 
 
-
 admission.symptoms.labels[26] <- "Bleeding (other)"
+
+# TREATMENTS
 
 treatment.labels <- d.dict %>% 
   filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>%
@@ -57,9 +81,13 @@ treatment.labels[8] <- "Inhaled nitric oxide"
 treatment.labels[9] <- "Tracheostomy" 
 treatment.labels[14] <- "Other"
 
+# Lookup tables for the nice labels used in graphs
+
 comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
 admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
 treatments <- tibble(field = treatment.colnames, label = treatment.labels)
+
+# List of sites
 
 site.list <- read_csv(glue("{data.path}/{site.list}")) %>% 
   dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
@@ -69,7 +97,7 @@ site.list <- read_csv(glue("{data.path}/{site.list}")) %>%
 
 if(use.uk.data){
   uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
-    # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
+    # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     dplyr::mutate(Country = "UK")
 } else {
@@ -78,7 +106,7 @@ if(use.uk.data){
 
 if(use.row.data){
   row.data <- read_csv(glue("{data.path}/{row.data.file}"), guess_max = 10000) %>% 
-    # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now.
+    # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     # different column names for some comorbidities
     dplyr::rename(chrincard = chroniccard_mhyn, 
@@ -105,15 +133,20 @@ raw.data <- bind_rows(uk.data, row.data) %>%
                 cestdat = ymd(cestdat),
                 dsstdtc = ymd(dsstdtc))
 
+# Demographic data is in the first row
+
 demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
-# the events table needs a copy of the first row. Mad, but t
+# Clinical data is in subsequent rows but also _sometimes_ in the first row. So the events column still contains a copy of the first row.
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
 patient.data <- demog.data %>% left_join(event.data)
 
+# Add new columns with more self-explanatory names as needed
+
 patient.data <- patient.data %>%
+  # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
   dplyr::mutate(exit.date = map_chr(events, function(x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsstdtc)) 
     if(nrow(outcome.rows) == 0){
@@ -124,6 +157,8 @@ patient.data <- patient.data %>%
       return(outcome.rows %>% slice(1) %>% pull(dsstdtc) %>% as.character())
     }
   })) %>%
+  dplyr::mutate(exit.date = ymd(exit.date)) %>%
+  # exit code is the reason for leaving the site. Unsure what "hospitalisation" means but it's yet to appear in actual data
   dplyr::mutate(exit.code = map_chr(events, function(x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm))
     if(nrow(outcome.rows) == 0){
@@ -138,7 +173,7 @@ patient.data <- patient.data %>%
                     "6" = "unknown"))
     }
   })) %>%
-  dplyr::mutate(exit.date = ymd(exit.date)) %>%
+  # censorship occurs if either the patient is still in site or is moved offsite without a death or discharge code
   dplyr::mutate(censored = map_lgl(events, function(x){
     if(x %>% pull(redcap_event_name) %>% startsWith("discharge") %>% any() %>% not()){
       # still in site
@@ -153,6 +188,7 @@ patient.data <- patient.data %>%
       }
     }
   })) %>%
+  # outcome is just death or discharge
   dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
     if(x){
       return("censored")
@@ -179,14 +215,15 @@ patient.data <- patient.data %>%
       return(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtc) %>% as.character())
     }
   })) %>%
+  # oh for map_date!!!
   dplyr::mutate(outcome.date = ymd(outcome.date)) %>%
+  # Death and discharge dates are NA if the patient is not dead/discharged
   dplyr::mutate(death.date = map2_chr(outcome, outcome.date, function(x,y){
     if(is.na(y)){
       NA
     }
     ifelse(x=="death", as.character(y), NA)
   })) %>%
-  # oh for map_date!!!
   dplyr::mutate(death.date = ymd(death.date)) %>%
   dplyr::mutate(discharge.date = map2_chr(outcome, outcome.date, function(x,y){
     if(is.na(y)){
@@ -195,6 +232,7 @@ patient.data <- patient.data %>%
     ifelse(x=="discharge", as.character(y), NA)
   }))  %>%
   dplyr::mutate(discharge.date = ymd(discharge.date)) %>%
+  # Consolidated age is the exact age at enrollment if this is present. Otherwise it is taken from the estimated age column. 
   dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
     if(is.na(dob)){
       ageest
@@ -202,14 +240,24 @@ patient.data <- patient.data %>%
       floor(decimal_date(doa) - decimal_date(dob))
     }
   })) %>%
-  dplyr::mutate(agegp = cut(consolidated.age, c(seq(0,90,by = 5),120), right = FALSE)) %>%
-  dplyr::mutate(agegp = fct_relabel(agegp, function(a){
-    
+  # Age groups in five and ten year incerements
+  dplyr::mutate(agegp5 = cut(consolidated.age, c(seq(0,90,by = 5),120), right = FALSE)) %>%
+  dplyr::mutate(agegp5 = fct_relabel(agegp5, function(a){
+    # make nicer labels
     temp <- substr(a, 2, nchar(a) -1 )
     temp <- str_replace(temp, ",", "-")
     str_replace(temp, "90-120", "90+")
     
   })) %>%
+  dplyr::mutate(agegp10 = cut(consolidated.age, c(seq(0,70,by = 10),120), right = FALSE)) %>%
+  dplyr::mutate(agegp10 = fct_relabel(agegp10, function(a){
+    # make nicer labels
+    temp <- substr(a, 2, nchar(a) -1 )
+    temp <- str_replace(temp, ",", "-")
+    str_replace(temp, "70-120", "70+")
+    
+  })) %>%
+  # these are just for the sake of having more self-explanatory column names
   dplyr::mutate(admission.date = hostdat) %>%
   dplyr::mutate(enrollment.date = dsstdat) %>%
   dplyr::mutate(onset.date = cestdat) %>%
@@ -224,6 +272,8 @@ compareNA <- function(v1,v2) {
   return(same)
 }
 
+# More complicated date wrangling (IMV, NIMV)
+
 other.dates <- map(1:nrow(patient.data), function(i){
   id = patient.data$subjid[i]
   events.tibble <- patient.data$events[i][[1]]
@@ -232,12 +282,20 @@ other.dates <- map(1:nrow(patient.data), function(i){
   
   ever.NIMV <- patient.data$noninvasive_proccur[i] == 1
   
+  # rows in events that have an entry for NIMV
+  
   NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% dplyr::select(daily_dsstdat, daily_noninvasive_prtrt)
+  
+  # multiple.NIMV.periods indicates that the patient had more than one continuous episode of NIMV. Currently there are none of these. 
+  # They are not currently coherently handled, just flagged
+  
   if(nrow(NIMV.rows) == 0){
+    # no reference to NIMV
     NIMV.start.date <- NA
     NIMV.end.date <- NA
     multiple.NIMV.periods <- NA
   } else if(!any(NIMV.rows$daily_noninvasive_prtrt == 1)){
+    # no "yes" to NIMV
     NIMV.start.date <- NA
     NIMV.end.date <- NA
     multiple.NIMV.periods <- NA
@@ -263,15 +321,23 @@ other.dates <- map(1:nrow(patient.data), function(i){
   }
   
   # the IMV field for the daily form is daily_invasive_prtrt
-  
+
   ever.IMV <- patient.data$daily_invasive_prtrt[i] == 1
   
+  # rows in events that have an entry for NIMV
+  
   IMV.rows <- events.tibble %>% filter(!is.na(daily_invasive_prtrt)) %>% dplyr::select(daily_dsstdat, daily_invasive_prtrt)
+  
+  # multiple.IMV.periods indicates that the patient had more than one continuous episode of IMV. Currently there are none of these. 
+  # They are not currently coherently handled, just flagged
+  
   if(nrow(IMV.rows) == 0){
+    # no reference to IMV
     IMV.start.date <- NA
     IMV.end.date <- NA
     multiple.IMV.periods <- NA
   } else if(!any(IMV.rows$daily_invasive_prtrt == 1)){
+    # no "yes" to NIMV
     IMV.start.date <- NA
     IMV.end.date <- NA
     multiple.IMV.periods <- NA
@@ -302,7 +368,11 @@ other.dates <- map(1:nrow(patient.data), function(i){
 
 patient.data <- patient.data %>% left_join(other.dates)
 
+# @todo this script needs to be more aware of the date of the dataset
+
 ref.date = today()
+
+# calculation of time periods @todo NIMV, IMV
 
 patient.data <- patient.data %>%
   dplyr::mutate(admission.to.exit = as.numeric(difftime(exit.date, hostdat,  unit="days")),
@@ -314,7 +384,7 @@ patient.data <- patient.data %>%
       NA
     }
   })) %>%
-  dplyr::mutate(ademission.to.death = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
+  dplyr::mutate(admission.to.death = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
     if(compareNA(4,x )){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
@@ -335,19 +405,23 @@ patient.data <- patient.data %>%
     as.numeric(difftime(x, y,  unit="days"))
   }))
 
-#save(patient.data, file=glue("patient_data_{today()}.rda"))
+# save RDA @todo change this to keep only relevant columns
+
+save(patient.data, file=glue("patient_data_{today()}.rda"))
 
 
 ##### GRAPH FUNCTIONS ##### 
 
 
+# Age pyramid
+
 age.pyramid <- function(data){
   
   data2 <- data %>%
-    group_by(agegp, sex, outcome) %>%
+    group_by(agegp5, sex, outcome) %>%
     dplyr::summarise(count = n()) %>%
     ungroup() %>%
-    filter(!is.na(sex) & !is.na(agegp)) %>%
+    filter(!is.na(sex) & !is.na(agegp5)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge"))) %>%
     dplyr::mutate(count = map2_dbl(count, sex, function(c, s){
       if(s == 1){
@@ -360,10 +434,12 @@ age.pyramid <- function(data){
       c("M", "F")[s]
     })) 
   
-  max.count = data2 %>% group_by(agegp, sex) %>% dplyr::summarise(sac = sum(abs(count))) %>% pull(sac) %>% max()
+  # this is to get the axes right (maximum the same in both directions)
   
-  ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp, y=count, fill = outcome), stat = "identity", col = "black") +
-    geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp, y=count, fill = outcome),  stat = "identity", col = "black") +
+  max.count = data2 %>% group_by(agegp5, sex) %>% dplyr::summarise(sac = sum(abs(count))) %>% pull(sac) %>% max()
+  
+  ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp5, y=count, fill = outcome), stat = "identity", col = "black") +
+    geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
@@ -371,6 +447,7 @@ age.pyramid <- function(data){
     ylab("Count") +
     scale_x_discrete(drop = "F") +
     scale_y_continuous(
+      # currently in hard-coded increments of 5. @todo make this better
       breaks = seq(-(ceiling(max(abs(data2$count))/5)*5), ceiling(max(abs(data2$count))/5)*5, by = 5),
       labels = as.character(c(rev(seq(5, ceiling(max(abs(data2$count))/5)*5, by = 5)), 0, seq(5, ceiling(max(abs(data2$count))/5)*5, by= 5))),
       limits = c(-1.1*max.count, 1.1*max.count)) +
@@ -378,17 +455,19 @@ age.pyramid <- function(data){
       grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
       ymin = -max(data2$count)*1.1/2,      
       ymax = -max(data2$count)*1.1/2,
-      xmin = length(levels(data2$agegp))+1.5 ,         
-      xmax = length(levels(data2$agegp))+1.5) +
+      xmin = length(levels(data2$agegp5))+1.5 ,         
+      xmax = length(levels(data2$agegp5))+1.5) +
     annotation_custom(
       grob = textGrob(label = "Females", hjust = 0.5, gp = gpar(cex = 1.5)),
       ymin = max(data2$count)*1.1/2,      
       ymax = max(data2$count)*1.1/2,
-      xmin = length(levels(data2$agegp))+1.5,         
-      xmax = length(levels(data2$agegp))+1.5) +
+      xmin = length(levels(data2$agegp5))+1.5,         
+      xmax = length(levels(data2$agegp5))+1.5) +
     theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
   
 }
+
+# Distribution of sites by country
 
 sites.by.country <- function(data){
   data2 <- data %>%
@@ -402,6 +481,8 @@ sites.by.country <- function(data){
     ylab("Sites") 
 }
 
+# Distribution of patients and outcomes by country
+
 outcomes.by.country <- function(data){
   data2 <- data %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
@@ -412,6 +493,8 @@ outcomes.by.country <- function(data){
     xlab("Country") +
     ylab("Cases") 
 }
+
+# Outcomes by epi-week
 
 outcomes.by.admission.date <- function(data){
   data2 <- data %>%
@@ -424,7 +507,11 @@ outcomes.by.admission.date <- function(data){
     ylab("Cases") 
 }
 
+# Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
+
 comorbidities.upset <- function(data, max.comorbidities){
+  
+  # just the comorbidity columns
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(comorbidities$field)) 
@@ -444,6 +531,8 @@ comorbidities.upset <- function(data, max.comorbidities){
         NA
       }
     })) 
+  
+  # get the most common
   
   most.common <- data2 %>%        
     group_by(Condition) %>%
@@ -486,8 +575,11 @@ comorbidities.upset <- function(data, max.comorbidities){
     scale_x_upset() 
 }
 
+# Symptoms upset plot (max.symptoms is the n to list; this will be the n most frequent)
 
 symptoms.upset <- function(data, max.symptoms){
+  
+  # just the symptom columns
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field)) 
@@ -507,6 +599,8 @@ symptoms.upset <- function(data, max.symptoms){
         NA
       }
     })) 
+  
+  # find the most common
   
   most.common <- data2 %>%        
     group_by(Condition) %>%
@@ -548,6 +642,8 @@ symptoms.upset <- function(data, max.symptoms){
     ylab("Count") +
     scale_x_upset() 
 }
+
+# Prevalence of symptoms and comortbidities
 
 comorbidity.symptom.prevalence <- function(data){
   
@@ -597,6 +693,8 @@ comorbidity.symptom.prevalence <- function(data){
     theme(axis.text.y = element_text(size = 7))
   
 }
+
+# Raw proportions of patients undergoing each treatment
 
 treatment.use.plot <- function(data){
   
@@ -651,7 +749,7 @@ treatment.use.plot <- function(data){
   
 }
 
-
+# "modified KM plot" with death and 
 
 modified.km.plot <- function(data){
   
@@ -693,15 +791,16 @@ modified.km.plot <- function(data){
   
 }
 
+# hospital fataility ratio plot
 
-hospital.fatality.ratio <- function(patient.data) {
+hospital.fatality.ratio <- function(data) {
   
   # Method from https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044
   # Only uses individuals who have either died or been discharged
   
-  row_n <- nrow(patient.data)
+  row_n <- nrow(data)
   for (i in 1:row_n) {
-    events <- patient.data$events[i]
+    events <- data$events[i]
     detail <- events[[1]]
     detail$dsterm[is.na(detail$dsterm) == TRUE] <- 0
     detail$Recovered.Date <- -500
@@ -821,12 +920,11 @@ hospital.fatality.ratio <- function(patient.data) {
 
 violin.sex.func <- function(data){
   
-  # Analysis to be run on only entries with either Admit.hospexit.any date or Admit.censored dates
-  
+  # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
   data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
   
-  # This is to include  dates for individuals still in hospital
+  # This is to include dates for individuals still in hospital
   
   data2 <- data2 %>% 
     mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
@@ -861,18 +959,19 @@ violin.sex.func <- function(data){
 
 violin.age.func <- function(data){
   
-  # Analysis to be run on only entries with either Admit.hospexit.any date or Admit.censored dates
+  # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
   data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
   
   data2 <- data2 %>%
-    mutate(new.agegp = cut(consolidated.age, c(0,10,20,30,40,50, 60, 70, 120), right = F)) %>%
     mutate(length.of.stay = pmax(admission.to.exit, admission.to.censored, na.rm = T))
   
   
-  vdx<- tibble(subjid = data2$subjid, Age = data2$new.agegp, length_of_stay = abs(data2$length.of.stay) )
+  vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = abs(data2$length.of.stay) )
 
-  vdx <- vdx[-77, ]
+  # remove NAs (@todo for now?)
+  
+  vdx <- vdx %>% filter(!is.na(agegp10))
   
   vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + geom_violin(trim=FALSE)+ #geom_boxplot(width=0.1, fill="white")  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") + 
@@ -888,10 +987,6 @@ violin.age.func <- function(data){
   return(vd2)
   
 }
-
-#violin.age.func(patient.data)
-
-
 
 
 ########### Distribution plots ############
@@ -1026,13 +1121,13 @@ surv_plot_func <- function(data){
   return(plot)
 }
 
+# Upset plot for treatments @todo add maximum parameter?
 
 
-
-treatment.upset <- function(patient.data) {
-  row_n <- nrow(patient.data)
+treatment.upset <- function(data) {
+  row_n <- nrow(data)
   for (i in 1:row_n) {
-    events <- patient.data$events[i]
+    events <- data$events[i]
     detail <- events[[1]]
     detail <- subset(
       detail, 
@@ -1097,7 +1192,7 @@ treatment.upset <- function(patient.data) {
     dplyr::select(-Treatments, -Presence)
   
   p <- ggplot(treatments, aes(x = treatments.used)) + 
-    geom_bar(fill = "deepskyblue3", col = "black") + 
+    geom_bar(fill = "chartreuse4", col = "black") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
     ylab("Count") +
@@ -1108,16 +1203,15 @@ treatment.upset <- function(patient.data) {
 }
 
 ######### Timeline plot ##############
+# @todo add ICU. Add IMV.
 
-
-status.by.time.after.admission.2 <- function(data){
+status.by.time.after.admission <- function(data){
   
   data2 <- data %>%
     dplyr::mutate(status = map_chr(exit.code, function(x){
       ifelse(is.na(x), "censored", x)
     })) %>%
     dplyr::mutate(status = factor(status)) 
-  
   
   timings.wrangle <- data2 %>%
     dplyr::select(subjid,
@@ -1136,7 +1230,8 @@ status.by.time.after.admission.2 <- function(data){
   
   overall.start <- 0
   overall.end <- max(timings.wrangle$hospital.end, na.rm = T)
-  
+
+  # this generates a table of the status of every patient on every day
   
   complete.timeline <- map(1:nrow(timings.wrangle), function(pat.no){
     times <- map(overall.start:overall.end, function(day){
