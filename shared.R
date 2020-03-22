@@ -1,4 +1,3 @@
-
 library(viridis)
 library(ggupset)
 library(sf)
@@ -89,11 +88,108 @@ treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 
 # List of sites
 
-site.list <- read_csv(glue("{data.path}/{site.list}")) %>% 
+site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>% 
   dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
-  dplyr::mutate(site.name = map_chr(`Site Number_1`, function(x) substr(x, 5, nchar(x)))) %>%
-  dplyr::select(site.number, site.name, Country)
-
+  dplyr::mutate(site.name = map_chr(`Site Number_1`, function(x) {
+    sub("^\\s+", "", substr(x, 5, nchar(x)))
+    })) %>%
+  dplyr::select(site.number, site.name, Country) %>%
+  filter(!is.na(site.number)) %>%
+  dplyr::rename(country.code = Country) %>%
+  mutate(Country = map_chr(country.code, function(x){
+    switch(x,
+           "GBR" = "UK",
+           "VNM" = "Viet Nam",
+           "CAN" = "Canada",
+           "SAU" = "Saudi Arabia",
+           "USA" = "USA",
+           "MEX" = "Mexico",
+           "IRL" = "Ireland",
+           "KOR" = "South Korea",
+           "FRA" = "France",
+           "FIN" = "Finland",
+           "DEN" = "Denmark",
+           "HKG" = "Hong Kong",
+           "KHM" = "Cambodia",
+           "IND" = "India",
+           "NZL" = "New Zealand",
+           "AUS" = "Australia",
+           "MDG" = "Madagascar",
+           "NSW" = "Australia",
+           "MAL" = "Malawi",
+           "RWA" = "Rwanda",
+           "HK" = "Hong Kong",
+           "KEN" = "Kenya",
+           "PAK" = "Pakistan",
+           "SPA" = "Spain",
+           "POL" = "Poland",
+           "ALG" = "Algeria",
+           "ISR" = "Israel",
+           "SLV" = "Slovenia",
+           "GER" = "Germany",
+           "KIR" = "Kiribati",
+           "LEB" = "Lebanon",
+           "CHN" = "China",
+           "MYA" = "Burma",
+           "NL" = "Netherlands",
+           "NOR" = "Norway",
+           "ITA" = "Italy",
+           "JPN" = "Japan",
+           "NED" = "Netherlands",
+           "SIN" = "Singapore",
+           "BAH" = "Bahrain",
+           "ROM" = "Romania",
+           "IRE" = "Ireland",
+           "BEL" = "Belgium",
+           "SLO" = "Slovakia")
+  })) %>%
+  mutate(flag.url = map_chr(country.code, function(x){
+    switch(x,
+           "GBR" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/gb.svg",
+           "VNM" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/vn.svg",
+           "CAN" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/ca.svg",
+           "SAU" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/sa.svg",
+           "USA" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/us.svg",
+           "MEX" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/mx.svg",
+           "IRL" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/ie.svg",
+           "KOR" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/kr.svg",
+           "FRA" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/fr.svg",
+           "FIN" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/fi.svg",
+           "DEN" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/dk.svg",
+           "HKG" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/hk.svg",
+           "KHM" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/kh.svg",
+           "IND" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/in.svg",
+           "NZL" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/nz.svg",
+           "AUS" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/au.svg",
+           "MDG" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/mg.svg",
+           "NSW" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/au.svg",
+           "MAL" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/mw.svg",
+           "RWA" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/rw.svg",
+           "HK" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/hk.svg",
+           "KEN" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/ke.svg",
+           "PAK" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/pk.svg",
+           "SPA" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/es.svg",
+           "POL" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/pl.svg",
+           "ALG" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/dz.svg",
+           "ISR" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/il.svg",
+           "SLV" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/si.svg",
+           "GER" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/de.svg",
+           "KIR" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/ki.svg",
+           "LEB" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/lb.svg",
+           "CHN" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/cn.svg",
+           "MYA" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/mm.svg",
+           "NL" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/nl.svg",
+           "NOR" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/no.svg",
+           "ITA" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/it.svg",
+           "JPN" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/jp.svg",
+           "NED" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/nl.svg",
+           "SIN" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/sg.svg",
+           "BAH" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/bh.svg",
+           "ROM" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/nl.svg",
+           "IRE" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/ro.svg",
+           "BEL" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/be.svg",
+           "SLO" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/sk.svg")
+  }))
 
 if(use.uk.data){
   uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
@@ -125,13 +221,13 @@ if(use.row.data){
 }
 
 raw.data <- bind_rows(uk.data, row.data) %>%
-  dplyr::mutate(dsstdat = ymd(dsstdat), 
-                agedat = ymd(agedat), 
-                daily_dsstdat = ymd(daily_dsstdat), 
-                daily_lbdat = ymd(daily_lbdat),
-                hostdat = ymd(hostdat),
-                cestdat = ymd(cestdat),
-                dsstdtc = ymd(dsstdtc))
+  dplyr::mutate(dsstdat = dmy(dsstdat), 
+                agedat = dmy(agedat), 
+                daily_dsstdat = dmy(daily_dsstdat), 
+                daily_lbdat = dmy(daily_lbdat),
+                hostdat = dmy(hostdat),
+                cestdat = dmy(cestdat),
+                dsstdtc = dmy(dsstdtc))
 
 # Demographic data is in the first row
 
