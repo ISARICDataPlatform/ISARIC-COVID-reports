@@ -245,6 +245,10 @@ patient.data <- demog.data %>% left_join(event.data)
 # Add new columns with more self-explanatory names as needed
 
 patient.data <- patient.data %>%
+  # check if symptoms, comorbidities and treatments were actually recorded
+  dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
+  dplyr::mutate(comorbidities.recorded = pmap_lgl(list(!!!rlang::parse_exprs(comorbidities$field)), ~any(!is.na(c(...))))) %>%
+  dplyr::mutate(treatments.recorded = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...))))) %>%
   # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
   dplyr::mutate(exit.date = map_chr(events, function(x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsstdtc)) 
@@ -514,7 +518,7 @@ save(patient.data, file=glue("patient_data_{today()}.rda"))
 
 # Age pyramid
 
-age.pyramid <- function(data){
+age.pyramid <- function(data, ...){
 
   data2 <- data %>%
     group_by(agegp5, sex, outcome) %>%
@@ -568,7 +572,7 @@ age.pyramid <- function(data){
 
 # Distribution of sites by country
 
-sites.by.country <- function(data){
+sites.by.country <- function(data, ...){
   data2 <- data %>%
     group_by(Country, redcap_data_access_group) %>%
     dplyr::summarise(n.sites = 1) %>%
@@ -582,7 +586,7 @@ sites.by.country <- function(data){
 
 # Distribution of patients and outcomes by country
 
-outcomes.by.country <- function(data){
+outcomes.by.country <- function(data, ...){
   data2 <- data %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
   
@@ -595,7 +599,7 @@ outcomes.by.country <- function(data){
 
 # Outcomes by epi-week
 
-outcomes.by.admission.date <- function(data){
+outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
   ggplot(data2) + geom_bar(aes(x = epiweek(hostdat), fill = outcome), col = "black", width = 0.95) +
@@ -608,8 +612,8 @@ outcomes.by.admission.date <- function(data){
 
 # Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
 
-comorbidities.upset <- function(data, max.comorbidities){
-  
+comorbidities.upset <- function(data, max.comorbidities, ...){
+
   # just the comorbidity columns
   
   data2 <- data %>%
@@ -676,7 +680,9 @@ comorbidities.upset <- function(data, max.comorbidities){
 
 # Symptoms upset plot (max.symptoms is the n to list; this will be the n most frequent)
 
-symptoms.upset <- function(data, max.symptoms=4){
+
+symptoms.upset <- function(data, max.symptoms, ...){
+
   
   # just the symptom columns
   
@@ -744,7 +750,7 @@ symptoms.upset <- function(data, max.symptoms=4){
 
 # Prevalence of symptoms and comortbidities
 
-comorbidity.symptom.prevalence <- function(data){
+comorbidity.symptom.prevalence <- function(data, ...){
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field), one_of(comorbidities$field)) 
@@ -795,7 +801,7 @@ comorbidity.symptom.prevalence <- function(data){
 
 # Raw proportions of patients undergoing each treatment
 
-treatment.use.plot <- function(data){
+treatment.use.plot <- function(data, ...){
   
   treatment.columns <- map(1:nrow(data), function(i){
     data$events[i][[1]] %>% 
@@ -850,7 +856,7 @@ treatment.use.plot <- function(data){
 
 # "modified KM plot" with death and 
 
-modified.km.plot <- function(data){
+modified.km.plot <- function(data, ...){
   
   total.patients <- nrow(data)
   
@@ -893,14 +899,9 @@ modified.km.plot <- function(data){
 
 
 
-# Figure caption: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The case 
-# fatality ratio (black) is based on the cummulative incidence function of deaths and recoveries so far. For a completed epidemic,
-# the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani et. al. (2005).
 
+hospital.fatality.ratio <- function(data, ...) {
 
-
-
-modified.km.plot <- function(data){
   
   # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
   
@@ -1016,7 +1017,7 @@ hospital.fatality.ratio <- function(data){
 
 ## Violin plot by sex ####
 
-violin.sex.func <- function(data){
+violin.sex.func <- function(data, ...){
   
   # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
@@ -1055,7 +1056,7 @@ violin.sex.func <- function(data){
 
 
 
-violin.age.func <- function(data){
+violin.age.func <- function(data, ...){
   
   # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
@@ -1089,10 +1090,143 @@ violin.age.func <- function(data){
 
 
 
+########### Distribution plots ############
+
+#### Function to round 0 days to 0.5 (half a day) #######
+
+round.zeros <- function(x){
+  
+  for (i in 1: length(x)){
+    
+    if (x[i]==0){
+      x[i] <- 0.5
+    }
+  }
+  
+  return(x) 
+}
+
+
+
+########### Admission to outcome #########
+
+
+adm.outcome.func <- function(data){
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  admit.discharge <- data2$length.of.stay
+  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+  admit.discharge <- round.zeros(admit.discharge)
+  
+  pos.cens <- which(data2$censored == 'TRUE')
+  
+  
+  left <- c(admit.discharge)
+  right <- replace(admit.discharge, pos.cens, values=NA )
+  censored_df <- data.frame(left, right)
+  fit <- fitdistcens(censored_df, dist = 'gamma')
+  t <- data.frame(x = admit.discharge)
+  
+  plt <- ggplot(data = t) + 
+    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+    labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
+  
+  return(list(plt=plt, fit=fit))
+  
+}
+
+
+
+
+########## Onset to admission #####
+
+
+onset.adm.func <- function(data){
+  
+  admit.discharge <- data$onset.to.admission
+  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+  admit.discharge.2 <- round.zeros(admit.discharge)
+  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
+  
+  # Plot 
+  
+  library(ggplot2)
+  t <- data.frame(x=admit.discharge)
+  plt <- ggplot(data = t) + 
+    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+    labs(y = 'Density', x = 'Time from symptom onset to admission', title = ' ')
+  
+  return(list(plt=plt, fit=fit))
+  
+  
+}
+
+
+
+
+
+
+
+########## Survival plot ######
+
+
+surv_plot_func <- function(data, ...){
+  
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  
+  data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+  
+  vdy <- tibble(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), Censored = data2$censored )
+  
+  
+  fit <- survfit(Surv(length.of.stay, Censored) ~ sex, data = vdy)
+  #print(fit)
+  plot <- ggsurvplot(fit,
+                     pval = T, conf.int = T,
+                     risk.table = F, # Add risk table
+                     # risk.table.col = "strata", # Change risk table color by groups
+                     linetype = "strata", # Change line type by groups
+                     #surv.median.line = "hv", # Specify median survival
+                     ggtheme = theme_bw(), # Change ggplot2 theme
+                     palette = c('#D2691E', '#BA55D3'),
+                     legend.labs = 
+                       c("Male", "Female"), title = (main = ' '), ylab = '1 - Probability of hospital exit' , legend = c(0.8, 0.9))
+  return(plot)
+}
+
 # Upset plot for treatments @todo add maximum parameter?
 
 
-treatment.upset <- function(data) {
+treatment.upset <- function(data, ...) {
   row_n <- nrow(data)
   for (i in 1:row_n) {
     events <- data$events[i]
@@ -1173,7 +1307,7 @@ treatment.upset <- function(data) {
 ######### Timeline plot ##############
 # @todo add ICU. Add IMV.
 
-status.by.time.after.admission <- function(data){
+status.by.time.after.admission <- function(data, ...){
   
   data2 <- data %>%
     dplyr::mutate(status = map_chr(exit.code, function(x){
