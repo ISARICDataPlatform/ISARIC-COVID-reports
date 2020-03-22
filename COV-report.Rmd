@@ -26,7 +26,7 @@ paths <- read_csv("paths.csv", col_names = F)
 code.path <- paths[[which(paths$X1 == "code.path"), 2]]
 data.path <- paths[[which(paths$X1 == "data.path"), 2]]
 data.dict.file <- paths[[which(paths$X1 == "data.dict.file"), 2]]
-site.list <- paths[[which(paths$X1 == "site.list"), 2]]
+site.list.file <- paths[[which(paths$X1 == "site.list.file"), 2]]
 uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
 row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
 
@@ -34,6 +34,7 @@ row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
 # Source files
 
 source(glue("{code.path}/shared.R"))
+source(glue("{code.path}/output.R"))
 
 ```
 
@@ -50,11 +51,23 @@ source(glue("{code.path}/shared.R"))
 
 # Summary
 
-The results in this report have been produced using data from the  International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. These data were contributed by 22 sites across 14 countries.
+The results in this report have been produced using data from the International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. These data were contributed by **`r de$N.sites`** sites across **`r de$N.countries`** countries.
 
-Up to 19 March 2020, data have been entered for 91 patients. The cohort is made up of 43 males and 37 females - sex is unreported for 11 cases. The median age (calculated based on reported ages) is 50.5 years. Follow-up is ongoing for 52 patients.  
+To date, data have been entered for **`r de$N.cases`** patients. 
 
-Among this cohort, there was no significant difference in the duration from admission to outcome (either death or recovery) for males and females (p=0.68). The expected mean for the time from admission to outcome (either death or recovery) is 24.5 days (96% CI: 22.9, 27.1), accounting for censorship, i.e. unobserved outcomes. The number of days from (first) symptom onset to hospital admission has an expected mean of 7.1 (6.8, 7.7) and a variance of 38.5 (36.9, 49.4).  Of 41 patients with completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids.  33% received an antibiotic and 18% received antivirals.
+The cohort is made up of `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
+
+The median age (calculated based on reported ages) is `r de$median.age` years. The minimum and maximum observed ages in this cohort are `r de$min.age`  and `r de$max.age` years respectively. 
+
+Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients.
+
+For this cohort, the expected mean for the time from admission to outcome (either death or recovery) is `r de$mean.adm.to.outcome` days (95% CI: `r de$adm.outcome.lower`, `r de$adm.outcome.upper`), accounting for censorship, i.e. unobserved outcomes. 
+
+The number of days from (first) symptom onset to hospital admission has an expected mean of `r de$mean.onset.to.adm`(95% CI: `r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) and a variance of `r de$var.onset.to.adm` (95% CI: `r de$var.onset.to.adm.lower`, `r de$var.onset.to.adm.upper`). 
+
+The estimate for the case fatality rate, accounting for censorship, is `r de$cfr` (95% CI: `r de$cfr.lower`, `r de$cfr.upper`). Considering only cases with completed outcomes, the estimate for the CFR is `r de$hfr` (95% CI: `r de$hfr.lower`, `r de$hfr.upper`). To avoid ambiguity, the latter estimate is hereafter referred to as the hospital fatality ratio.
+
+Of 41 patients with completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids. 33% received an antibiotic and 18% received antivirals.
 
 
 
@@ -120,11 +133,11 @@ violin.age.func(patient.data)
 ```
 
 
-**Figure 8**: Estimated hospital fatality ratio based on patients with complete outcome data, showing changes to estimate over time. Shaded area represents 95% confidence interval. Methods from Wu *et al.*, https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044).
+**Figure 8**: Estimated hospital fatality ratio based on patients with complete outcome data, showing changes to estimate over time. Shaded area represents 95% confidence interval. Methods from Wu *et al.*(2020).
 
 ```{r out.width= "80%"}
 
-hospital.fatality.ratio(patient.data)
+hospital.fatality.ratio(patient.data)$plt
 
 ```
 
@@ -159,9 +172,9 @@ Blue curves show the Gamma distribution fit to two time-dependent data variables
 
 **Figure 12**: Distribution of time from symptom onset to admission.
 
-```{r onset.admission, out.width = '80%', fig.align= 'center'}
+```{r onset.admission, out.width = '80%'}
 
-onset.adm.func(patient.data)
+onset.adm.func(patient.data)$plt
 
 ```
 
@@ -169,129 +182,19 @@ onset.adm.func(patient.data)
 **Figure 13**: Distribution of time from admission to an outcome - either death or recovery.
 
 
-```{r  adm.outcome, out.width = '80%', fig.align= 'center' }
+```{r  adm.outcome, out.width = '80%'}
 
-adm.outcome.func(patient.data)
-
-```
-
-
-
-
-```{r kpplot, out.width= "80%", include = FALSE}
-#Kaplan-Meier plot for the  probability of hospital exit discharge (by recovery or death), displayed by sex:
-#data -> df
-
-#surv.plot.func(patient.data)
-
+adm.outcome.func(patient.data)$plt
 
 ```
 
 
 
+**Figure 14**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The case  fatality ratio (black) is based on the cumulative incidence function of deaths and recoveries so far. For a completed epidemic,
+the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
-```{r outcomelines, out.width="80%", include = FALSE}
-# Modified Kaplan-Meier curves for outcomes (death or discharge)**:
-# Non-parametric CFR estimates
-
-## Function to calculate case fatality ratio and uncertainty bounds.
-# casefat = function(t, f, conf=0.95){
-# 	###############################################################
-# 	# Survivor function and variance for combined endpoint
-# 
-# 	c0 = survfit(Surv(t, factor(as.numeric(f>0), 0:1, labels=c("0", "1")))~1)
-# 	si = which(c0$states!="1")
-# 	S0 = c0$pstate[,si]
-# 	V0 = (c0$std.err[,si])^2
-# 	n = length(V0)
-# 	if(V0[n]<1E-12){
-# 		V0[n]=V0[n-1]
-# 	}
-# 	nrisk = c0$n.risk[,si]
-# 
-# 	###############################################################
-# 	# CFR calculation
-# 
-# 	c = survfit(Surv(t, factor(f, 0:2, labels=c("0", "1", "2")))~1)
-# 	di = which(c$states=="1")
-# 	ri = which(c$states=="2")
-# 
-# 	# hazard contributions for each endpoint
-# 	h1 = c$n.event[,di]/nrisk
-# 	h2 = c$n.event[,ri]/nrisk
-# 
-# 	# c$pstate is cumulative incidence function for each endpoint
-# 	theta1 = max(c$pstate[,di])
-# 	theta2 = max(c$pstate[,ri])
-# 
-# 	cfr = theta1/(theta1+theta2)
-# 
-# 	###############################################################
-# 	# Variances
-# 
-# 	# Greenwood-like method
-# 	M = diag(V0)
-# 	for(j in 2:nrow(M)){
-# 		for(k in 1:(j-1)){
-# 			M[j, k] = V0[k]*S0[j]/S0[k]
-# 			M[k, j] = M[j, k]
-# 		}
-# 	}
-# 
-# 	v1 = as.numeric(sum((S0)^2*h1/pmax(nrisk, 1)) + (h1 %*% M %*% h1))
-# 	v2 = as.numeric(sum((S0)^2*h2/pmax(nrisk, 1)) + (h2 %*% M %*% h2))
-# 	cov12 = as.numeric((h1 %*% M %*% h2))
-# 
-# 	secfr = sqrt((theta2^2*v1 + theta1^2*v2 - 2*theta1*theta2*cov12))/(theta1+theta2)^2
-# 
-# 	###############################################################
-# 	# logit scale for CI
-# 
-# 	lc = log(cfr/(1-cfr))
-# 	sel = sqrt(v1/theta1^2 + v2/theta2^2 - 2*cov12/(theta1*theta2))
-# 	alpha = (1-conf)/2
-# 	za = -qnorm(alpha)
-# 	llc = lc-za*sel
-# 	ulc = lc+za*sel
-# 	lcfr = exp(llc)/(1+exp(llc))
-# 	ucfr = exp(ulc)/(1+exp(ulc))
-# 
-# 	###############################################################
-# 	# Two simple methods
-# 	Nt = c$n
-# 	Nd = sum(c$n.event[,di])
-# 	Nr = sum(c$n.event[,ri])
-# 
-# 	e1 = Nd/Nt
-# 	see1 = sqrt(e1*(1-e1)/Nt)
-# 	a1 = Nd+0.5
-# 	b1 = Nt-Nd+0.5
-# 	le1 = qbeta(0.025, shape1=a1, shape2=b1)
-# 	ue1 = qbeta(0.975, shape1=a1, shape2=b1)
-# 
-# 	e2 = Nd/(Nd+Nr)
-# 	see2 = sqrt(e2*(1-e2)/(Nd+Nr))
-# 	a2 = Nd+0.5
-# 	b2 = Nr+0.5
-# 	le2 = qbeta(alpha, shape1=a2, shape2=b2)
-# 	ue2 = qbeta(1-alpha, shape1=a2, shape2=b2)
-# 
-# 	###############################################################
-# 
-# 	return(list(cfr=cfr, secfr=secfr, logit_cfr=lc, se_logit_cfr=sel, lcfr=lcfr, ucfr=ucfr,
-# 				e1=e1, see1=see1, le1=le1, ue1=ue1,
-# 				e2=e2, see2=see2, le2=le2, ue2=ue2))
-# }
-# 
-# alldata$status2 <- revalue(as.factor(alldata$status), c('Recovered' ='2', 'Died' ='1', 'Censored' = '0'))
-# 
-# cfr_estims <-  casefat(alldata$Admission_to_outcome_2, as.numeric(levels(alldata$status2))[alldata$status2])
-# 
-# cfr <- cfr_estims$cfr
-# upper_cfr <- cfr_estims$ue2
-# lower_cfr <- cfr_estims$le2
-
+```{r outcomelines, out.width="80%"}
 
 modified.km.plot(patient.data)
 
@@ -300,7 +203,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 14**: Number of sites per country
+**Figure 15**: Number of sites per country
 
 ```{r recruitment1, echo=FALSE}
 
@@ -308,7 +211,7 @@ sites.by.country(patient.data)
 
 ```
 
-**Figure 15**: Distribution of patients by country and outcome
+**Figure 16**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
@@ -337,13 +240,15 @@ To support the rapid implementation of standardised data collection and reportin
 
 Patient details were submitted electronically by participating sites to the ISARIC database.  Relevant background and presenting symptoms were recorded on the day of study recruitment.  Daily follow-up was then completed until recovery or death.  A final form was completed with details of treatments received and outcomes. All categories that represent fewer than five individuals have been suppressed to avoid the potential for identification of participants. 
 
-
 Graphs have been used to represent the age distribution of patience by sex and status (censored, death, recovered), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
 
+Using a non-parametric Kaplan-Meier-based method (Ghani *et al.*, 2005), the case- fatality ratio (CFR) was estimated, as well as probabilities for death and recovery. The CFR is calculated using the formula a/a+b, where a and b are the values of the cumulative incidence function for deaths and recoveries respectively, estimated at the last observed time point. In a competing risk context (i.e. where there are multiple endpoints),  the cumulative incidence function for an endpoint is equal to the product of the hazard function for that endpoint and the survival function assuming a composite endpoint. It is worth noting that this method assumes that future deaths and recoveries will occur with the same relative probabilities as have been observed so far. Binomial confidence intervals for the CFR were obtained by a normal approximation (See Ghani *et al.*, (2005)).
 
-To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions were fitted to the observed data, allowing for censored observations. 
+At each time point, the hospital fatality ratio was calculated as the ratio of deaths to the sum of deaths and recoveries until the reference point (Wu *et al.*, 2020). This method is based on observed outcomes only. Over time, the uncertainty around the estimate decreases due to an increase in completed outcomes. Exact binomial confidence intervals are plotted along with the risk estimate at each time point. 
 
+To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions were fitted to the observed data, accounting for censorship. Parameters were estimated by a maximum likelihood procedure and confidence intervals for the means and variances were obtained by bootstrap.  
 
+All analysis were performed using the R statistical software (R Core Team, 2019).
 
 
 
@@ -364,6 +269,14 @@ To obtain estimates for the distributions of time from symptom onset to hospital
 
 
 
+
+# References
+
+1.	A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griffin, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).  Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, American Journal of Epidemiology, 162(5), 479 - 486. [doi:10.1093/aje/kwi230](https://doi.org/10.1093/aje/kwi230).
+
+2.	R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria.
+
+3.	Wu Peng, Hao Xinxin, Lau Eric H Y, Wong Jessica Y, Leung Kathy S M, Wu Joseph T, Cowling Benjamin J, Leung Gabriel M. Real-time tentative assessment of the epidemiological characteristics of novel coronavirus infections in Wuhan, China, as at 22 January 2020 (2020). Euro Surveill., 25(3):pii=2000044. [doi:10.2807/1560-7917.ES.2020.25.3.2000044](https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044).
 
 
 
