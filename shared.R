@@ -13,6 +13,9 @@ library(lubridate)
 library(grid)
 library(magrittr)
 library(binom)
+library(boot)
+library(survival)
+library(survminer)
 
 # flags for inclusion of the two data files
 
@@ -673,7 +676,7 @@ comorbidities.upset <- function(data, max.comorbidities){
 
 # Symptoms upset plot (max.symptoms is the n to list; this will be the n most frequent)
 
-symptoms.upset <- function(data, max.symptoms){
+symptoms.upset <- function(data, max.symptoms=4){
   
   # just the symptom columns
   
@@ -731,7 +734,7 @@ symptoms.upset <- function(data, max.symptoms){
     })) %>%
     dplyr::select(-Conditions, -Presence)
   
-  ggplot(data3, aes(x = conditions.present)) + 
+ ggplot(data3, aes(x = conditions.present)) + 
     geom_bar(fill = "deepskyblue3", col = "black") + 
     theme_bw() +
     xlab("Symptoms present at admission") +
@@ -840,7 +843,7 @@ treatment.use.plot <- function(data){
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
-    scale_fill_brewer(palette = "Paired", name = "Condition\npresent", labels = c("No", "Yes")) +
+    scale_fill_brewer(palette = "Paired", name = "Treatment", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
 }
@@ -887,71 +890,78 @@ modified.km.plot <- function(data){
   
 }
 
-# hospital fataility ratio plot
 
-hospital.fatality.ratio <- function(data) {
+
+
+# Figure caption: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The case 
+# fatality ratio (black) is based on the cummulative incidence function of deaths and recoveries so far. For a completed epidemic,
+# the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani et. al. (2005).
+
+
+
+
+modified.km.plot <- function(data){
   
+  # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
+  
+  # Exclude rows which no entries for length of stay
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  # c$pstate is cumulative incidence function for each endpoint
+  c <- casefat2(data)$c
+  Fd <- c$pstate[,which(c$states=="death")] # death
+  Fr <- c$pstate[,which(c$states=="discharge")] # recovery
+  cfr <- casefat2(data)$cfr
+  
+  
+  # Plot
+  df <- data.frame(day = rep(c$time,3), value = c(1-Fr, Fd, rep(cfr,length(Fd))), 
+                   status =factor(c(rep('discharge', length(Fd)), rep('death', length(Fd)), rep('cfr', length(Fd))),
+                                  levels = c("death", "discharge", "cfr")
+                   ))
+  ggplot(data = df)+
+    geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
+    theme_bw()+
+    scale_colour_manual(values = c("#e41a1c",  "#377eb8", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
+    scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
+    xlab("Days after admission") +
+    ylab("Cumulative probability")
+  
+}
+
+
+
+
+
+
+
+hospital.fatality.ratio <- function(data){
+  library(binom)
   # Method from https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044
   # Only uses individuals who have either died or been discharged
-  
-  row_n <- nrow(data)
-  for (i in 1:row_n) {
-    events <- data$events[i]
-    detail <- events[[1]]
-    detail$dsterm[is.na(detail$dsterm) == TRUE] <- 0
-    detail$Recovered.Date <- -500
-    detail$Recovered.Date[detail$dsterm == 1] <- detail$dsstdtc[detail$dsterm == 1]
-    detail$Died.Date <- -500
-    detail$Died.Date[detail$dsterm == 4] <- detail$dsstdtc[detail$dsterm == 4]  
-    
-    recovered <- as.Date(
-      max(detail$Recovered.Date, na.rm = TRUE),
-      origin = "1970-01-01"
-    )
-    died <- as.Date(
-      max(detail$Died.Date, na.rm = TRUE),
-      origin = "1970-01-01"
-    )
-    recovered[recovered == "1968-08-19"] <- NA
-    died[died == "1968-08-19"] <- NA
-    out <- data.frame(death.date = died, discharge.date = recovered)
-    # This is a PID made for this table and does not correlate with other
-    # patient IDs
-    if (i == 1) {
-      outcome <- out
-    } else {
-      outcome <- rbind(outcome, out, deparse.level = 1)
-    }
-  }
-  
-  
-  Dc_date <- outcome$discharge.date
-  Died_date <- outcome$death.date
-  
+  Dc_date <- data$discharge.date
+  Died_date <- data$death.date
   # Identify first and last events
-  
   first <- min(Dc_date, Died_date, na.rm = TRUE)
   last <- max(Dc_date, Died_date, na.rm = TRUE)
   diff <- last - first
-  
   # Plot to start after first event
-  
   d.0 <- first
-  
   for (i in 0:diff) {
-    
     d.i <- d.0 + i
     date <- d.0 + i
     disch <- sum(Dc_date == date, na.rm=TRUE)
     died <- sum(Died_date == date, na.rm=TRUE)
-    
     db.i <- data.frame(Row = i, Date = date, Dc = disch, Died = died)
     db.i$Dc[is.na(db.i$Dc) == TRUE] <- 0
     db.i$Died[is.na(db.i$Died) == TRUE] <- 0
-    
     db.i$Dc_c <- 0
     db.i$Died_c <- 0
-    
     if (i == 0) {
       db <- db.i
       db$Dc_c <- db$Dc
@@ -962,15 +972,10 @@ hospital.fatality.ratio <- function(data) {
       db$Died_c[i + 1] <- db$Died_c[i] + db$Died[i + 1]
     }
   }
-  
   db$Events <- db$Dc_c + db$Died_c
-  
   # Discard rows before the first patients with events
-  
   db <- subset(db, Events > 0)
-  
   # hospital fatality risk = (fatal cases)/(fatal cases+recovered cases)
-  
   db$Hfr <- db$Died_c / db$Events
   bino <- binom.confint(
     db$Died_c, 
@@ -978,10 +983,7 @@ hospital.fatality.ratio <- function(data) {
     conf.level = .95, 
     methods = "exact"
   )
-  
   db <- cbind(db, bino, deparse.level = 0)
-  
-  
   line <- geom_line(
     data = db, 
     stat = "identity", 
@@ -1006,11 +1008,11 @@ hospital.fatality.ratio <- function(data) {
     shade +
     yaxis + theme_bw()
   
-  return(plt)
+  return(list(plt=plt, db=db))
   
 }
 
-# The following not currently in use
+
 
 ## Violin plot by sex ####
 
@@ -1085,137 +1087,7 @@ violin.age.func <- function(data){
 }
 
 
-########### Distribution plots ############
 
-#### Replace zeros with 0.5 (half a day) #######
-
-replacezeros <- function(admit.discharge){
-  
-  for (i in 1: length(admit.discharge)){
-    
-    if (admit.discharge[i]==0){
-      admit.discharge[i] <- 0.5
-    }
-  }
-  
-  return(admit.discharge) 
-}
-
-
-
-
-adm.outcome.func <- function(data){
-  
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
-  
-  data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
-      max(x, y, na.rm = T)
-    }))
-  
-  admit.discharge <- data2$length.of.stay
-  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge <- replacezeros(admit.discharge)
-  
-  pos.cens <- which(data2$censored == 'TRUE')
-  
-  
-  left <- c(admit.discharge)
-  right <- replace(admit.discharge, pos.cens, values=NA )
-  censored_df <- data.frame(left, right)
-  fit <- fitdistcens(censored_df, dist = 'gamma')
-  t <- data.frame(x = admit.discharge)
-  
-  plot <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
-  
-  return( plot)
-  
-}
-
-
-
-
-
-
-
-########## Onset to admission #####
-
-
-onset.adm.func <- function(data){
-  
-  admit.discharge <- data$onset.to.admission
-  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- replacezeros(admit.discharge)
-  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
-  
-  # Plot 
-  
-  library(ggplot2)
-  t <- data.frame(x=admit.discharge)
-  plot <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time from symptom onset to admission', title = ' ')
-  
-  return(plot)
-}
-
-
-
-
-
-
-
-########## Survival plot ######
-
-
-surv_plot_func <- function(data){
-  
-  
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
-  
-  data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
-      max(x, y, na.rm = T)
-    }))
-  
-  
-  data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
-  
-  vdy <- tibble(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), Censored = data2$censored )
-  
-  
-  fit <- survfit(Surv(length.of.stay, Censored) ~ sex, data = vdy)
-  #print(fit)
-  plot <- ggsurvplot(fit,
-                     pval = T, conf.int = T,
-                     risk.table = F, # Add risk table
-                     # risk.table.col = "strata", # Change risk table color by groups
-                     linetype = "strata", # Change line type by groups
-                     #surv.median.line = "hv", # Specify median survival
-                     ggtheme = theme_bw(), # Change ggplot2 theme
-                     palette = c('#D2691E', '#BA55D3'),
-                     legend.labs = 
-                       c("Male", "Female"), title = (main = ' '), ylab = '1 - Probability of hospital exit' , legend = c(0.8, 0.9))
-  return(plot)
-}
 
 # Upset plot for treatments @todo add maximum parameter?
 
@@ -1382,4 +1254,277 @@ status.by.time.after.admission <- function(data){
     xlab("Days relative to admission") +
     ylab("Proportion")
 }
+
+
+
+
+###### Required libraries #####
+library(boot)
+
+
+##############################################################################
+# Function below calculates mean and variance estimates and confidence intervals (by bootstrap) for the following time-based distributions.
+# Onset to admission
+# Admission to outcome (death/ recovery)
+# Admission to ICU; ICU duration
+# Admission to NIMV; NIMV duration
+# Admission to IMV; IMV duration
+
+
+# For bootstrap
+samp.mean <- function(x, i) {mean(x[i])} 
+samp.var <- function(x, i){var(x[i])}
+
+fit.summary.gamma <- function(fit){
+  
+  m <- fit$estimate[['shape']]/fit$estimate[['rate']]       # mean
+  v <- fit$estimate[['shape']]/(fit$estimate[['rate']])^2   # variance
+  
+  set.seed(101)
+  # Sample
+  X = rgamma(1e3, shape = fit$estimate[['shape']], rate = fit$estimate[['rate']] )
+  # Bootstrap (mean)
+  bm <- boot(data = X , statistic = samp.mean, R=1000)
+  # CI
+  lower.m <-  boot.ci(bm, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
+  upper.m <-  boot.ci(bm, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
+  # Bootstrap (variance)
+  bv <- boot(data = X, statistic = samp.var, R=1000 )
+  # CI
+  lower.v <- boot.ci(bv, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
+  upper.v <- boot.ci(bv, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
+  
+  
+  return(list(m=m, lower.m = lower.m, upper.m = upper.m,  v=v, 
+              lower.v = lower.v, upper.v = upper.v))
+  
+}
+
+
+
+casefat2 <-  function(data, conf=0.95){
+  
+  # Function for the estimation of the case fatality ratio based on the nonparametric KM-like method by
+  # Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
+  
+  #############################################################
+  
+  # Modify data
+  
+  # Exclude rows which no entries for length of stay
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  
+  t <- abs(data2$length.of.stay)  # time
+  f <- as.factor(data2$outcome)   # status
+  
+  ###############################################################
+  # CFR calculation
+  
+  c = survfit(Surv(t, f)~1)
+  di = which(c$states=="death")  # deaths
+  ri = which(c$states=="discharge")  # recoveries
+  
+  
+  # c$pstate is cumulative incidence function for each endpoint
+  theta1 = max(c$pstate[,di])
+  theta2 = max(c$pstate[,ri])
+  
+  cfr = theta1/(theta1+theta2)
+  
+  ###############################################################
+  # Survivor function and variance for combined endpoint 
+  
+  f.end <- revalue(f, c(death = 'endpoint', discharge = 'endpoint'))
+  
+  c0 = survfit(Surv(t, f.end)~1)
+  si = which(c0$states!="endpoint")
+  S0 = c0$pstate[,si]
+  V0 = (c0$std.err[,si])^2
+  n = length(V0)
+  if(V0[n]<1E-12){
+    V0[n]=V0[n-1]
+  }
+  nrisk = c0$n.risk[,si]
+  
+  
+  # hazard contributions for each endpoint
+  h1 = c$n.event[,di]/nrisk
+  h2 = c$n.event[,ri]/nrisk
+  
+  
+  ###############################################################
+  # Variances
+  
+  # Greenwood-like method
+  M = diag(V0)
+  for(j in 2:nrow(M)){
+    for(k in 1:(j-1)){
+      M[j, k] = V0[k]*S0[j]/S0[k]
+      M[k, j] = M[j, k]
+    }
+  }
+  
+  v1 = as.numeric(sum((S0)^2*h1/pmax(nrisk, 1)) + (h1 %*% M %*% h1))
+  v2 = as.numeric(sum((S0)^2*h2/pmax(nrisk, 1)) + (h2 %*% M %*% h2))
+  cov12 = as.numeric((h1 %*% M %*% h2))
+  
+  secfr = sqrt((theta2^2*v1 + theta1^2*v2 - 2*theta1*theta2*cov12))/(theta1+theta2)^2
+  
+  
+  
+  ###############################################################
+  # logit scale for CI
+  
+  lc = log(cfr/(1-cfr))
+  sel = sqrt(v1/theta1^2 + v2/theta2^2 - 2*cov12/(theta1*theta2))
+  alpha = (1-conf)/2
+  za = -qnorm(alpha)
+  llc = lc-za*sel
+  ulc = lc+za*sel
+  lcfr = exp(llc)/(1+exp(llc))
+  ucfr = exp(ulc)/(1+exp(ulc))
+  
+  
+  
+  ###############################################################
+  
+  # Two simple methods
+  Nt = c$n
+  Nd = sum(c$n.event[,di])
+  Nr = sum(c$n.event[,ri])
+  
+  e1 = Nd/Nt
+  see1 = sqrt(e1*(1-e1)/Nt)
+  a1 = Nd+0.5
+  b1 = Nt-Nd+0.5
+  le1 = qbeta(0.025, shape1=a1, shape2=b1)
+  ue1 = qbeta(0.975, shape1=a1, shape2=b1)
+  
+  
+  e2 = Nd/(Nd+Nr)
+  see2 = sqrt(e2*(1-e2)/(Nd+Nr))
+  a2 = Nd+0.5
+  b2 = Nr+0.5
+  alpha = (1-conf)/2
+  le2 = qbeta(alpha, shape1=a2, shape2=b2)
+  ue2 = qbeta(1-alpha, shape1=a2, shape2=b2)
+  
+  
+  ###############################################################
+  
+  return(list(cfr=cfr, secfr=secfr, lcfr = lcfr, ucfr = ucfr, c=c,
+              e1=e1, see1=see1, le1=le1, ue1=ue1,
+              e2=e2, see2=see2, le2=le2, ue2=ue2))
+  
+}
+
+
+
+########### Distribution plots ############
+
+#### Function to round 0 days to 0.5 (half a day) #######
+
+round.zeros <- function(x){
+  
+  for (i in 1: length(x)){
+    
+    if (x[i]==0){
+      x[i] <- 0.5
+    }
+  }
+  
+  return(x) 
+}
+
+
+
+########### Admission to outcome #########
+
+
+adm.outcome.func <- function(data){
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  admit.discharge <- data2$length.of.stay
+  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+  admit.discharge <- round.zeros(admit.discharge)
+  
+  pos.cens <- which(data2$censored == 'TRUE')
+  
+  
+  left <- c(admit.discharge)
+  right <- replace(admit.discharge, pos.cens, values=NA )
+  censored_df <- data.frame(left, right)
+  fit <- fitdistcens(censored_df, dist = 'gamma')
+  t <- data.frame(x = admit.discharge)
+  
+  plt <- ggplot(data = t) + 
+    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+    labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
+  
+  return(list(plt=plt, fit=fit))
+  
+}
+
+
+
+
+########## Onset to admission #####
+
+
+onset.adm.func <- function(data){
+  
+  admit.discharge <- data$onset.to.admission
+  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+  admit.discharge.2 <- round.zeros(admit.discharge)
+  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
+  
+  # Plot 
+  
+  library(ggplot2)
+  t <- data.frame(x=admit.discharge)
+  plt <- ggplot(data = t) + 
+    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+    labs(y = 'Density', x = 'Time from symptom onset to admission', title = ' ')
+  
+  return(list(plt=plt, fit=fit))
+  
+  
+}
+
+
+
+
+
+
+
+
+
 
