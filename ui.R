@@ -9,7 +9,11 @@
 
 library(shinydashboard)
 library(shinyWidgets)
+library(shinyTree)
 library(leaflet)
+
+countries.flags.sites <- read_csv("current_countries.csv")
+
 
 dbHeader <- dashboardHeader(title = "COVID-19 Analysis Report",
                             tags$li(a(href = 'http://isaric.tghn.org/',
@@ -32,150 +36,121 @@ dashboardPage( skin = "black",
                  sidebarMenu(
                    menuItem("Summary", tabName = "Summary", icon = icon("align-justify")),
                    menuItem("Patient Characteristics", tabName = "patients", icon = icon("th")),
-                   menuItem("Hospital Outcomes", tabName = "outcomes", icon = icon("th")),
+                   menuItem("Timelines and Outcomes", tabName = "outcomes", icon = icon("th")),
                    menuItem("Statistical Analysis", tabName = "stats", icon = icon("chart-bar")),
                    menuItem("Country Comparisons", tabName = "ccomp", icon = icon("globe")),
                    menuItem("Maps", tabName = "Maps", icon = icon("map")),
                    menuItem("Clusters", tabName = "Clusters", icon = icon("project-diagram")),
                    menuItem("Methods", tabName = "Methods", icon = icon("wrench")),
                    menuItem("References", tabName = "References", icon = icon("list")),
-                   menuItem("Team", tabName = "Team", icon = icon("users"))),
-                 
+                   menuItem("Team", tabName = "Team", icon = icon("users"))
+                 ),
                  
                  hr(),
                  fluidRow(column(3, verbatimTextOutput("value")))
                ),
                dashboardBody(
                  tags$head(tags$style(HTML('
-            /* logo */
-                          .skin-black .main-header .logo {
-                              color: #F70656;
-                              font-weight: bold;
-                              }
-            /* active selected tab in the sidebarmenu */
-                                .skin-black .main-sidebar .sidebar .sidebar-menu .active a{
-                                  color: #F70656;
-                                  border-left-color: #F70656;
-                                }
-    '))),
+                 .btn-custom {background-color: #F70656; color:  #FFFFFF;}
+                 .skin-black .main-header .logo {color: #F70656; font-weight: bold;}
+                 .skin-black .main-sidebar .sidebar .sidebar-menu .active a {color: #F70656; border-left-color: #F70656;}
+                 .irs-bar, .irs-bar-edge, .irs-single, .irs-to, .irs-from, .irs-grid-pol {background: #F70656; border-color: #F70656;}'
+                 ))),
                  
+                 dropdown(
+                   inputId = "controls",
+                   icon = icon("gear"),
+                   size = "sm",
+                   status = "custom",
+                   tooltip = tooltipOptions(title = "Click for data settings"),
+                   options = list(`style` = "btm-custom"),
+                   tags$h3("Controls"),
+                   awesomeCheckboxGroup(
+                     inputId = "sex", label = "Gender", status = "custom",
+                     choices = list("Male" = 1, "Female" = 2, "Unknown" = NA),
+                     selected = c("Male","Female","Unknown")
+                   ),
+                   sliderInput(inputId = "agegp5", label = "Age group",
+                               min = 0, max = 90, step = 5, value = c(0,120), dragRange = T),
+                   
+                   
+                   pickerInput(
+                     inputId = "Country",
+                     label = "Country", 
+                     choices = countries.flags.sites$Country,
+                     selected = countries.flags.sites$Country,
+                     options = list(
+                       `actions-box` = TRUE), 
+                     choicesOpt = list(
+                       subtext = glue("{countries.flags.sites$site.count} sites")
+                     ),
+                     multiple = TRUE
+                   ),
+                   awesomeCheckboxGroup(
+                     inputId = "outcome", label = "Outcome", status = 'custom',
+                     choices = list("Death" = "death", "Censored" = "censored", "Discharge" = "discharge"),
+                     selected = c("death","censored","discharge")
+                   )
+                 ),
+                 hr(),
                  tabItems(
                    tabItem(tabName = "Summary",
-                           includeMarkdown("markdown/summary.md")
-                   ),
-                   
-                   
+                           fluidRow(
+                             # @todo source this from the same origin as the text in the Rmd
+                             box(width = 12, title  = "ISARIC COVID-19 Report Dashboard", solidHeader = T,
+                                 "The results in this report have been produced using data from the International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 
+                                 database up to 19 March 2020. These data were contributed by 22 sites across 14 countries.",
+                                 br(),br(),
+                                 "Up to 19 March 2020, data have been entered for 91 patients. The cohort is made up of 43 males and 37 females - sex is unreported for 11 cases. The median age 
+                                 (calculated based on reported ages) is 50.5 years. Follow-up is ongoing for 52 patients.",
+                                 br(),br(),
+                                 "Among this cohort, there was no significant difference in the duration from admission to outcome (either death or recovery) for males and females (p=0.68). 
+                                 The expected mean for the time from admission to outcome (either death or recovery) is 24.5 days (96% CI: 22.9, 27.1), accounting for censorship, i.e. unobserved outcomes. 
+                                 The number of days from (first) symptom onset to hospital admission has an expected mean of 7.1 (6.8, 7.7) and a variance of 38.5 (36.9, 49.4). Of 41 patients with 
+                                 completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids. 
+                                 33% received an antibiotic and 18% received antivirals.")
+                           )),
                    tabItem(tabName = "patients",
-                           
                            fluidRow(
-                             uiOutput("sites_value_box"),
-                             uiOutput("cases_value_box")
-                           ),
-                           
-                           fluidRow(
-                             box(
-                               
-                               checkboxGroupButtons(
-                                 inputId = "countries", label = NULL,
-                                 choices = list("Country A" = "Country A", "Country B" = "Country B", "Country C" = "Country C"),
-                                 justified = TRUE, status = "primary",
-                                 checkIcon = list(yes = icon("ok", lib = "glyphicon"), no = icon("remove", lib = "glyphicon")),
-                                 selected = c("Country A","Country B","Country C")
-                               ), width = 12
-                             )
+                             box(plotOutput("agePyramid", height = "300px"), 
+                                 "Bar fills are outcome (death/discharge/censored) at the time of report.", 
+                                 width = 6, height = 400, solidHeader = T, title = 'Age and sex distribution of patients'),
+                             box(plotOutput("comorbiditySymptomPrevalence", height = "300px"), 
+                                 "Only patients for whom all these data was recorded are included.",
+                                 title = "Prevalence of all recorded comorbidities and symptoms at admission",
+                                 width = 6, height = 400, solidHeader = T)
                            ),
                            fluidRow(
-                             box(plotOutput("plot1"), width = 12, title = "Age distribution of patients")),
-                           fluidRow(
-                             box(plotOutput("plot2"), width = 12, title = "Symptoms and combinations of symptoms present at admission")),
-                           fluidRow(
-                             box(plotOutput("plot3"), width = 12, title = "Comorbidities and combinations of comorbidities present at admission")),
-                           fluidRow(
-                             box(plotOutput("plot4"), width = 12, title = "Simple prevalence of symptoms and comorbidities"))
+                             box(plotOutput("comorbiditiesUpset", height = "300px"),
+                                 "Only patients for whom all these data was recorded are included. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity.",
+                                 title ="Combinations of the four most common comorbidities seen at admission",
+                                 width = 6, height = 400,  solidHeader = T),
+                             box(plotOutput("symptomsUpset", height = "300px"), 
+                                 "Only patients for whom all these data was recorded are included. Filled and empty circles below the x-axis indiciate the presence or absence of each symptom",
+                                 title ="Combinations of the four most common symptoms seen at admission",
+                                 width = 6,  height = 400, solidHeader = T)
+                           )
                    ),
-                   
                    tabItem(tabName = "outcomes",
-                           
                            fluidRow(
-                             box(
-                               checkboxGroupButtons(
-                                 inputId = "countries2", label = NULL,
-                                 choices = list("Country A" = "Country A", "Country B" = "Country B", "Country C" = "Country C"),
-                                 justified = TRUE, status = "primary",
-                                 checkIcon = list(yes = icon("ok", lib = "glyphicon"), no = icon("remove", lib = "glyphicon")),
-                                 selected = c("Country A","Country B","Country C")
-                               ), width = 12
-                             )
+                             box(plotOutput("violinAgeFunc", height = "300px"),
+                                 "Data up to 19/03/2020. Hospital stay considers the time to death, recovery or censorship.",
+                                 width = 6, height = 400, solidHeader = T, title = 'Distribution of length of hospital stay by patient age group'),
+                             box(plotOutput("statusByTimeAfterAdmission", height = "300px"),
+                                 "“Transferred” patients were moved to another institution, where their final outcome cannot be determined. 
+                                 Patients with censored outcomes at the time of this report remain in the “Admitted” category.",
+                                 width = 6, height = 400, solidHeader = T, title = 'Patient outcome by number of days after admission')
                            ),
                            fluidRow(
-                             box(plotOutput("plot5"), width = 12, title = "Distribution of patient status by time since admission")),
-                           fluidRow(
-                             box(plotOutput("plot6"), width = 12, title = "Length of hospital stay by sex")),
-                           fluidRow(
-                             box(plotOutput("plot7"), width = 12, title = "Length of hospital stay by age group")),
-                           fluidRow(
-                             box(plotOutput("plot8"), width = 12, title = "Hospital fatality ratio (based only on completed outcomes)")),
-                           fluidRow(
-                             box(plotOutput("plot9"), width = 12, title = "Patient outcomes by date of admission"))
-                   ),
-                   tabItem(tabName = "Clusters",
-                           fluidRow(
-                             box(plotOutput("plot10"), width = 12, title = "Hospital timeline for cluster X"))
-                   ),
-                   tabItem(tabName = "ccomp",
-                           fluidRow(
-                             box(plotOutput("plot11"), width = 12, title = "Number of sites per country")),
-                           fluidRow(
-                             box(plotOutput("plot12"), width = 12, title = "All patients by country and outcome"))
-                   ),
-                   tabItem(tabName = "Methods",
-                           includeMarkdown("markdown/methods.md")
-                   ),
-                   tabItem(tabName = "References",
-                           includeMarkdown("markdown/references.md")
-                   ),
-                   tabItem(tabName = "Team",
-                           includeMarkdown("markdown/team.md")
-                   ),
-                   tabItem(tabName = "stats",
-                           fluidRow(box(includeMarkdown("markdown/statsintro.md"), width = 12, title = "Distributional plots")),
-                           fluidRow(
-                             box(plotOutput("onsetAdmissionPlot"), width = 12, title = "Time from symptom onset to admission")),
-                           fluidRow(
-                             box(plotOutput("admissionICUPlot"), width = 12, title = "Time from admission to ICU entry")),
-                           fluidRow(
-                             box(plotOutput("admissionDischargePlot"), width = 12, title = "Time from admission to discharge")),
-                           fluidRow(
-                             box(plotOutput("ICUDurationPlot"), width = 12, title = "Duration of ICU stay")),
-                           fluidRow(
-                             box(plotOutput("NIMVDurationPlot"), width = 12, title = "Duration of NIMV")),
-                           fluidRow(
-                             box(plotOutput("IMVDurationPlot"), width = 12, title = "Duration of IMV")),
-                           fluidRow(
-                             box(plotOutput("kmplot1"), width = 12, title = "'Survival' curves and 95% confidence intervals for time to discharge (by sex)")),
-                           fluidRow(
-                             box(plotOutput("kmplot2"), width = 12, title = "Modified Kaplan-Meier curves for outcomes (death or discharge)"))
-                           
-                   ),
-                   tabItem(tabName = "Maps",
-                           fluidPage(
-                             box(
-                               leafletOutput("map1"),
-                               p(), width = 12, title = "Distribution of cases by local authority")
+                             box(plotOutput("violinSexFunc", height = "300px"),
+                                 "Data up to 19/03/2020. Hospital stay considers the time to death, recovery or censorship.",
+                                 width = 4, height = 400, solidHeader = T, title = 'Distribution of length of hospital stay by patient sex'),
+                             box(plotOutput("outcomesByAdmissionDate", height = "300px"),
+                                 width = 4, height = 400, solidHeader = T, title = 'Patient outcomes by epidemiological week of admission'),
+                             # box(plotOutput("outcomesByAdmissionDate", height = "300px"),
+                             #     width = 4, height = 400, solidHeader = T, title = 'Patient outcomes by epidemiological week (of 2020) of admission')
                            )
                    )
                  )
                )
 )
-
-
-# customHeaderPanel <- function(title,windowTitle=title){
-#   tagList(
-#     tags$head(
-#       tags$title(windowTitle),
-#       tags$link(rel="stylesheet", type="text/css",
-#                 href="app.css"),
-#       tags$h1(a(href="isaric.tghn.org/"))
-#     )
-#   )
-# }
