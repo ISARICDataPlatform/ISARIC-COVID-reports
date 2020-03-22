@@ -252,20 +252,37 @@ All analysis were performed using the R statistical software (R Core Team, 2019)
 
 
 
+# Caveats
+
+## Caveat to all data
+
+Patient data is collected and uploaded from start of admission, however a complete patient data set is not available until the episode of care is complete. This causes a predictable lag in available data influenced by the duration of admission which is greatest for the sickest patients, and accentuated during the up-phase of the outbreak.
+
+
+## Caveat to UK data
+
+In the UK, up to 10th March 2020, people with positive swabs were admitted to hospital as part of the containment strategy. Many of these people had recently been abroad, particularly Italy. Since 11th March 2020, admission is mostly based upon need for treatment of COVID-19 disease. This may explain the younger age of the UK group and the fewer comorbidities reported when compared with reports from China and Italy.
+
+
+
 # ISARIC Team Members
 
 * Gail Carson
 * Emmanuelle A. Dankwa
+* AnneMarie Docherty 
 * Christl A. Donnelly
 * Christophe Fraser
 * Matthew Hall
 * Peter Horby
+* Kalynn Kennon
 * James Lee
 * Laura Merson
 * Sarah Moore
 * Piero Olliaro
 * Daniel Plotkin
 * Mark Pritchard
+* Calum Semple 
+
 
 
 
