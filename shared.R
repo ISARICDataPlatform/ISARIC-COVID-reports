@@ -854,7 +854,7 @@ treatment.use.plot <- function(data, ...){
   
 }
 
-# "modified KM plot" with death and 
+## "modified KM plot" ##
 
 modified.km.plot <- function(data, ...){
   
@@ -896,9 +896,7 @@ modified.km.plot <- function(data, ...){
   
 }
 
-
-
-
+### hospital fataility ratio plot ###
 
 hospital.fatality.ratio <- function(data, ...) {
 
@@ -1036,7 +1034,7 @@ violin.sex.func <- function(data, ...){
   
   # by sex
   
-  x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + geom_violin(trim=FALSE)+ geom_boxplot(width=0.1, fill="white")  +
+  x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + geom_violin(trim=FALSE, scale = "width")+ geom_boxplot(width=0.1, fill="white")  +
     labs(title=" ", x="Sex", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -1072,7 +1070,7 @@ violin.age.func <- function(data, ...){
   
   vdx <- vdx %>% filter(!is.na(Age))
   
-  vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + geom_violin(trim=FALSE)+ #geom_boxplot(width=0.1, fill="white")  +
+  vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + geom_violin(trim=FALSE, scale = "width")+ #geom_boxplot(width=0.1, fill="white")  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
