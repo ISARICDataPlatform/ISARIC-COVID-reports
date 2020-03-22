@@ -512,7 +512,7 @@ save(patient.data, file=glue("patient_data_{today()}.rda"))
 # Age pyramid
 
 age.pyramid <- function(data){
-  
+
   data2 <- data %>%
     group_by(agegp5, sex, outcome) %>%
     dplyr::summarise(count = n()) %>%
@@ -1067,7 +1067,7 @@ violin.age.func <- function(data){
 
   # remove NAs (@todo for now?)
   
-  vdx <- vdx %>% filter(!is.na(agegp10))
+  vdx <- vdx %>% filter(!is.na(Age))
   
   vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + geom_violin(trim=FALSE)+ #geom_boxplot(width=0.1, fill="white")  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") + 
