@@ -1225,6 +1225,7 @@ surv_plot_func <- function(data, ...){
 
 
 treatment.upset <- function(data, ...) {
+  library(tidyr); library(tidyverse)
   row_n <- nrow(data)
   for (i in 1:row_n) {
     events <- data$events[i]
@@ -1251,8 +1252,12 @@ treatment.upset <- function(data, ...) {
   # If no dsterm result then not the form that will have treatment details
   details$All_NA <- 1
   details$All_NA[is.na(details$dsterm) == FALSE] <- 0
+  details$All_NA[is.na(details$antiviral_cmyn) == TRUE & 
+                   is.na(details$antibiotic_cmyn) == TRUE & 
+                   is.na(details$antifung_cmyn) == TRUE & 
+                   is.na(details$corticost_cmyn) == TRUE] <- 1
   details <- subset(details, All_NA == 0)
-  
+
   # Separate steroids according to route
   
   details$Oral_Steroid <- 
@@ -1264,10 +1269,14 @@ treatment.upset <- function(data, ...) {
   details$Inhaled_Steroid[details$corticost_cmroute == 3] <- 1
   
   # 1 is Yes, set anything else to 0 (No)
-  details$antiviral_cmyn[details$antiviral_cmyn != 1] <- 0
-  details$antibiotic_cmyn[details$antibiotic_cmyn != 1] <- 0
-  details$antifung_cmyn[details$antifung_cmyn != 1] <- 0
-  details$corticost_cmyn[details$corticost_cmyn != 1] <- 0
+  details$antiviral_cmyn[details$antiviral_cmyn != 1 | 
+                          is.na(details$antiviral_cmyn) == TRUE] <- 0
+  details$antibiotic_cmyn[details$antibiotic_cmyn != 1 | 
+                          is.na(details$antibiotic_cmyn) == TRUE] <- 0
+  details$antifung_cmyn[details$antifung_cmyn != 1 | 
+                          is.na(details$antifung_cmyn) == TRUE] <- 0
+  details$corticost_cmyn[details$corticost_cmyn != 1 | 
+                          is.na(details$corticost_cmyn) == TRUE] <- 0
   details$Antiviral <- details$antiviral_cmyn
   details$Antibiotic <- details$antibiotic_cmyn
   details$Antifungal <- details$antifung_cmyn
@@ -1298,8 +1307,20 @@ treatment.upset <- function(data, ...) {
     ylab("Count") +
     scale_x_upset() 
   
+  # Counts
   
-  return(p)
+  N.treat <- nrow(details)
+  N.abx <- sum(details$Antibiotic, na.rm = FALSE)
+  N.av <- sum(details$Antiviral, na.rm = FALSE)
+  details = details %>%
+    rowwise() %>%
+    mutate(Any = max(Antiviral, Antibiotic, Antifungal, Corticosteroid))
+  details$None <- 1 - details$Any
+  N.none <- sum(details$None, na.rm = FALSE)
+  
+  df = data.frame(All = N.treat, Abx = N.abx, Av = N.av, None = N.none)
+  
+  return(list(p = p, df = df))
 }
 
 ######### Timeline plot ##############

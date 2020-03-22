@@ -23,7 +23,7 @@ d.e <- function(data, ...){
   N.recoveries <- summary(as.factor(data$outcome))[[3]]   # recoveries -count
   N.outcomes <- N.deaths+N.recoveries         # outcomes-count (deaths+recoveries)
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
-  
+  N.healthworkers <- summary(as.factor(patient.data$healthwork_erterm))[[1]]
   
   # Distribution estimates
   
@@ -53,6 +53,15 @@ d.e <- function(data, ...){
   hfr.upper <- round(db[nrow(db), 'upper'], 2)
   hfr.lower <- round(db[nrow(db), 'lower'], 2)
   
+  # Treatments data
+  df <- treatment.upset(data)$df
+  n.treat <- df$All
+  p.none <- 100 * df$None / df$All %>%
+    round(1)
+  p.abx <- 100 * df$Abx / df$All %>%
+    round(1)
+  p.av <- 100 * df$Av / df$All %>%
+    round(1)
   
   return(list(N.cases = N.cases,
               N.var = N.var,
@@ -68,6 +77,7 @@ d.e <- function(data, ...){
               N.deaths = N.deaths,
               N.recoveries = N.recoveries,
               N.outcomes = N.outcomes,
+              N.healthworkers = N.healthworkers,
               
               mean.adm.to.outcome =  mean.adm.to.outcome,
               adm.outcome.lower =  adm.outcome.lower,
@@ -87,8 +97,13 @@ d.e <- function(data, ...){
              
               hfr = hfr,
               hfr.lower = hfr.lower,
-              hfr.upper =  hfr.upper
+              hfr.upper =  hfr.upper,
               #N.ICU = N.ICU
+              
+              n.treat = n.treat,
+              p.none = p.none,
+              p.abx = p.abx,
+              p.av = p.av
   ))
   
 }
