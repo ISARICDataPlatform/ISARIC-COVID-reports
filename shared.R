@@ -889,7 +889,44 @@ treatment.use.plot <- function(data, ...){
 
 ## "modified KM plot" ##
 
-modified.km.plot <- function(data, ...){
+
+modified.km.plot <- function(data, ...) {
+
+  
+  # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
+  
+  # Exclude rows which no entries for length of stay
+  
+  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  data2 <- data2 %>% 
+    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  
+  # c$pstate is cumulative incidence function for each endpoint
+  c <- casefat2(data)$c
+  Fd <- c$pstate[,which(c$states=="death")] # death
+  Fr <- c$pstate[,which(c$states=="discharge")] # recovery
+  cfr <- casefat2(data)$cfr
+  
+  
+  # Plot
+  df <- data.frame(day = rep(c$time,3), value = c(1-Fr, Fd, rep(cfr,length(Fd))), 
+                   status =factor(c(rep('discharge', length(Fd)), rep('death', length(Fd)), rep('cfr', length(Fd))),
+                                  levels = c("death", "discharge", "cfr")
+                   ))
+  ggplot(data = df)+
+    geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
+    theme_bw()+
+    scale_colour_manual(values = c("#e41a1c",  "#377eb8", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
+    scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
+    xlab("Days after admission") +
+    ylab("Cumulative probability")
+  
+}
+
+
+modified.km.plot.1 <- function(data, ...){
   
   total.patients <- nrow(data)
   
@@ -928,46 +965,6 @@ modified.km.plot <- function(data, ...){
     ylab("Cumulative probability")
   
 }
-
-### hospital fataility ratio plot ###
-
-hospital.fatality.ratio <- function(data, ...) {
-
-  
-  # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
-  
-  # Exclude rows which no entries for length of stay
-  
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
-  data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
-      max(x, y, na.rm = T)
-    }))
-  
-  # c$pstate is cumulative incidence function for each endpoint
-  c <- casefat2(data)$c
-  Fd <- c$pstate[,which(c$states=="death")] # death
-  Fr <- c$pstate[,which(c$states=="discharge")] # recovery
-  cfr <- casefat2(data)$cfr
-  
-  
-  # Plot
-  df <- data.frame(day = rep(c$time,3), value = c(1-Fr, Fd, rep(cfr,length(Fd))), 
-                   status =factor(c(rep('discharge', length(Fd)), rep('death', length(Fd)), rep('cfr', length(Fd))),
-                                  levels = c("death", "discharge", "cfr")
-                   ))
-  ggplot(data = df)+
-    geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
-    theme_bw()+
-    scale_colour_manual(values = c("#e41a1c",  "#377eb8", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
-    scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
-    xlab("Days after admission") +
-    ylab("Cumulative probability")
-  
-}
-
-
-
 
 
 
