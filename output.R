@@ -23,7 +23,7 @@ d.e <- function(data, ...){
   N.recoveries <- summary(as.factor(data$outcome))[[3]]   # recoveries -count
   N.outcomes <- N.deaths+N.recoveries         # outcomes-count (deaths+recoveries)
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
-  
+  N.healthworkers <- summary(as.factor(patient.data$healthwork_erterm))[[1]]
   
   # Distribution estimates
   
@@ -68,6 +68,7 @@ d.e <- function(data, ...){
               N.deaths = N.deaths,
               N.recoveries = N.recoveries,
               N.outcomes = N.outcomes,
+              N.healthworkers = N.healthworkers,
               
               mean.adm.to.outcome =  mean.adm.to.outcome,
               adm.outcome.lower =  adm.outcome.lower,
