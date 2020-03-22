@@ -67,7 +67,7 @@ The number of days from (first) symptom onset to hospital admission has an expec
 
 The estimate for the case fatality rate, accounting for censorship, is `r de$cfr` (95% CI: `r de$cfr.lower`, `r de$cfr.upper`). Considering only cases with completed outcomes, the estimate for the CFR is `r de$hfr` (95% CI: `r de$hfr.lower`, `r de$hfr.upper`). To avoid ambiguity, the latter estimate is hereafter referred to as the hospital fatality ratio.
 
-Of 41 patients with completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids. 33% received an antibiotic and 18% received antivirals.
+Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals.
 
 
 
