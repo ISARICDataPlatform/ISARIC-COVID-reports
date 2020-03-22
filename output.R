@@ -97,8 +97,13 @@ d.e <- function(data, ...){
              
               hfr = hfr,
               hfr.lower = hfr.lower,
-              hfr.upper =  hfr.upper
+              hfr.upper =  hfr.upper,
               #N.ICU = N.ICU
+              
+              n.treat = n.treat,
+              p.none = p.none,
+              p.abx = p.abx,
+              p.av = p.av
   ))
   
 }
