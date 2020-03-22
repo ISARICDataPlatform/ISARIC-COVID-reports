@@ -53,6 +53,15 @@ d.e <- function(data, ...){
   hfr.upper <- round(db[nrow(db), 'upper'], 2)
   hfr.lower <- round(db[nrow(db), 'lower'], 2)
   
+  # Treatments data
+  df <- treatment.upset(data)$df
+  n.treat <- df$All
+  p.none <- 100 * df$None / df$All %>%
+    round(1)
+  p.abx <- 100 * df$Abx / df$All %>%
+    round(1)
+  p.av <- 100 * df$Av / df$All %>%
+    round(1)
   
   return(list(N.cases = N.cases,
               N.var = N.var,
