@@ -478,6 +478,9 @@ ref.date = today()
 # calculation of time periods @todo NIMV, IMV
 
 patient.data <- patient.data %>%
+  dplyr::mutate(NIMV.duration = map2_dbl(NIMV.end.date, NIMV.start.date, function(x,y){
+    as.numeric(difftime(x, y,  unit="days"))
+  })) %>%
   dplyr::mutate(admission.to.exit = as.numeric(difftime(exit.date, hostdat,  unit="days")),
                 onset.to.admission = as.numeric(difftime(hostdat, cestdat, unit="days"))) %>%
   dplyr::mutate(admission.to.censored = map2_dbl(admission.to.exit, hostdat, function(x,y){
@@ -503,14 +506,44 @@ patient.data <- patient.data %>%
   })) %>%
   dplyr::mutate(admission.to.ICU = map2_dbl(ICU.admission.date, admission.date, function(x,y){
     as.numeric(difftime(x, y,  unit="days"))
-  })) %>%
-  dplyr::mutate(NIMV.duration = map2_dbl(NIMV.end.date, NIMV.start.date, function(x,y){
-    as.numeric(difftime(x, y,  unit="days"))
-  }))
-
+  })) 
 # save RDA @todo change this to keep only relevant columns
 
-save(patient.data, file=glue("patient_data_{today()}.rda"))
+trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
+                                                Country,
+                                                country.code,
+                                                site.name,
+                                                sex,
+                                                consolidated.age,
+                                                agegp5,
+                                                agegp10,
+                                                one_of(admission.symptoms$field),
+                                                one_of(comorbidities$field),
+                                                one_of(treatments$field),
+                                                admission.date,
+                                                enrollment.date,
+                                                onset.date,
+                                                ICU.admission.date,
+                                                ICU.discharge.date,
+                                                ICU.duration,
+                                                IMV.duration,
+                                                ever.IMV,
+                                                IMV.start.date,
+                                                IMV.end.date,
+                                                multiple.IMV.periods,
+                                                ever.NIMV,
+                                                NIMV.start.date,
+                                                NIMV.end.date,
+                                                NIMV.duration,
+                                                admission.to.exit,
+                                                onset.to.admission,
+                                                admission.to.censored,
+                                                admission.to.death,
+                                                admission.to.recovery,
+                                                admission.to.ICU
+                                                )
+
+write_csv(trimmed.patient.data, glue("patient_data_{today()}.csv"))
 
 
 ##### GRAPH FUNCTIONS ##### 
@@ -606,7 +639,7 @@ outcomes.by.admission.date <- function(data, ...){
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
     scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
-    xlab("Epidemiological week (2020)") +
+    xlab("Epidemiological week, 2020") +
     ylab("Cases") 
 }
 
@@ -1026,15 +1059,18 @@ violin.sex.func <- function(data, ...){
   data2 <- data2 %>% 
     mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
       max(x, y, na.rm = T)
-    }))
-  
-  data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+    })) %>%
+    mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
+    mutate(sex = factor(sex, levels = c("Male", "Female")))
   
   vd <- tibble(Sex = data2$sex, length.of.stay = abs(data2$length.of.stay) )
-  
+
   # by sex
   
-  x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + geom_violin(trim=FALSE, scale = "width")+ geom_boxplot(width=0.1, fill="white")  +
+  x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
+    geom_violin(trim=FALSE, scale = "width")+ 
+    geom_boxplot(width=0.1, fill="white")  +
+    scale_fill_discrete(drop = F) +
     labs(title=" ", x="Sex", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -1048,8 +1084,6 @@ violin.sex.func <- function(data, ...){
 }
 
 
-
-#violin.sex.func(patient.data)
 ### Violin age ####
 
 
