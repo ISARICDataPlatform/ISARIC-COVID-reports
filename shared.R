@@ -242,6 +242,10 @@ patient.data <- demog.data %>% left_join(event.data)
 # Add new columns with more self-explanatory names as needed
 
 patient.data <- patient.data %>%
+  # check if symptoms, comorbidities and treatments were actually recorded
+  dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
+  dplyr::mutate(comorbidities.recorded = pmap_lgl(list(!!!rlang::parse_exprs(comorbidities$field)), ~any(!is.na(c(...))))) %>%
+  dplyr::mutate(treatments.recorded = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...))))) %>%
   # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
   dplyr::mutate(exit.date = map_chr(events, function(x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsstdtc)) 
@@ -511,7 +515,7 @@ save(patient.data, file=glue("patient_data_{today()}.rda"))
 
 # Age pyramid
 
-age.pyramid <- function(data){
+age.pyramid <- function(data, ...){
 
   data2 <- data %>%
     group_by(agegp5, sex, outcome) %>%
@@ -565,7 +569,7 @@ age.pyramid <- function(data){
 
 # Distribution of sites by country
 
-sites.by.country <- function(data){
+sites.by.country <- function(data, ...){
   data2 <- data %>%
     group_by(Country, redcap_data_access_group) %>%
     dplyr::summarise(n.sites = 1) %>%
@@ -579,7 +583,7 @@ sites.by.country <- function(data){
 
 # Distribution of patients and outcomes by country
 
-outcomes.by.country <- function(data){
+outcomes.by.country <- function(data, ...){
   data2 <- data %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
   
@@ -592,7 +596,7 @@ outcomes.by.country <- function(data){
 
 # Outcomes by epi-week
 
-outcomes.by.admission.date <- function(data){
+outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
   ggplot(data2) + geom_bar(aes(x = epiweek(hostdat), fill = outcome), col = "black", width = 0.95) +
@@ -605,8 +609,8 @@ outcomes.by.admission.date <- function(data){
 
 # Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
 
-comorbidities.upset <- function(data, max.comorbidities){
-  
+comorbidities.upset <- function(data, max.comorbidities, ...){
+
   # just the comorbidity columns
   
   data2 <- data %>%
@@ -673,7 +677,7 @@ comorbidities.upset <- function(data, max.comorbidities){
 
 # Symptoms upset plot (max.symptoms is the n to list; this will be the n most frequent)
 
-symptoms.upset <- function(data, max.symptoms){
+symptoms.upset <- function(data, max.symptoms, ...){
   
   # just the symptom columns
   
@@ -741,7 +745,7 @@ symptoms.upset <- function(data, max.symptoms){
 
 # Prevalence of symptoms and comortbidities
 
-comorbidity.symptom.prevalence <- function(data){
+comorbidity.symptom.prevalence <- function(data, ...){
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field), one_of(comorbidities$field)) 
@@ -792,7 +796,7 @@ comorbidity.symptom.prevalence <- function(data){
 
 # Raw proportions of patients undergoing each treatment
 
-treatment.use.plot <- function(data){
+treatment.use.plot <- function(data, ...){
   
   treatment.columns <- map(1:nrow(data), function(i){
     data$events[i][[1]] %>% 
@@ -847,7 +851,7 @@ treatment.use.plot <- function(data){
 
 # "modified KM plot" with death and 
 
-modified.km.plot <- function(data){
+modified.km.plot <- function(data, ...){
   
   total.patients <- nrow(data)
   
@@ -889,7 +893,7 @@ modified.km.plot <- function(data){
 
 # hospital fataility ratio plot
 
-hospital.fatality.ratio <- function(data) {
+hospital.fatality.ratio <- function(data, ...) {
   
   # Method from https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044
   # Only uses individuals who have either died or been discharged
@@ -1014,7 +1018,7 @@ hospital.fatality.ratio <- function(data) {
 
 ## Violin plot by sex ####
 
-violin.sex.func <- function(data){
+violin.sex.func <- function(data, ...){
   
   # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
@@ -1053,7 +1057,7 @@ violin.sex.func <- function(data){
 
 
 
-violin.age.func <- function(data){
+violin.age.func <- function(data, ...){
   
   # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
@@ -1104,7 +1108,7 @@ replacezeros <- function(admit.discharge){
 
 
 
-adm.outcome.func <- function(data){
+adm.outcome.func <- function(data, ...){
   
   data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
   
@@ -1151,7 +1155,7 @@ adm.outcome.func <- function(data){
 ########## Onset to admission #####
 
 
-onset.adm.func <- function(data){
+onset.adm.func <- function(data, ...){
   
   admit.discharge <- data$onset.to.admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
@@ -1186,7 +1190,7 @@ onset.adm.func <- function(data){
 ########## Survival plot ######
 
 
-surv_plot_func <- function(data){
+surv_plot_func <- function(data, ...){
   
   
   data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
@@ -1220,7 +1224,7 @@ surv_plot_func <- function(data){
 # Upset plot for treatments @todo add maximum parameter?
 
 
-treatment.upset <- function(data) {
+treatment.upset <- function(data, ...) {
   row_n <- nrow(data)
   for (i in 1:row_n) {
     events <- data$events[i]
@@ -1301,7 +1305,7 @@ treatment.upset <- function(data) {
 ######### Timeline plot ##############
 # @todo add ICU. Add IMV.
 
-status.by.time.after.admission <- function(data){
+status.by.time.after.admission <- function(data, ...){
   
   data2 <- data %>%
     dplyr::mutate(status = map_chr(exit.code, function(x){
