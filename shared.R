@@ -396,7 +396,7 @@ patient.data <- patient.data %>%
   }))  %>%
   dplyr::mutate(discharge.date = ymd(discharge.date)) %>%
   # Consolidated age is the exact age at enrollment if this is present. Otherwise it is taken from the estimated age column. 
-  dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
+  dplyr::mutate(consolidated.age = pmap_dbl(list(ymd(age_estimateyears), agedat, dsstdat), function(ageest, dob, doa){
     if(is.na(dob)){
       ageest
     } else {
@@ -679,7 +679,7 @@ sites.by.country <- function(data, ...){
   ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
     theme_bw() +
     xlab("Country") +
-    ylab("Sites") 
+    ylab("Sites") + theme(axis.text.x = element_text(angle = 90, hjust=1))
 }
 
 # Distribution of patients and outcomes by country
@@ -692,7 +692,7 @@ outcomes.by.country <- function(data, ...){
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
     xlab("Country") +
-    ylab("Cases") 
+    ylab("Cases") + theme(axis.text.x = element_text(angle = 90, hjust=1))
 }
 
 # Outcomes by epi-week
