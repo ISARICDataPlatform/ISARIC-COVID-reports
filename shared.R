@@ -19,7 +19,7 @@ library(survminer)
 
 # flags for inclusion of the two data files
 
-use.uk.data <- TRUE
+use.uk.data <- FALSE
 embargo.limit <- '2020-03-09'
 use.row.data <- TRUE
 use.eot.data <- TRUE
@@ -396,7 +396,7 @@ patient.data <- patient.data %>%
   }))  %>%
   dplyr::mutate(discharge.date = ymd(discharge.date)) %>%
   # Consolidated age is the exact age at enrollment if this is present. Otherwise it is taken from the estimated age column. 
-  dplyr::mutate(consolidated.age = pmap_dbl(list(ymd(age_estimateyears), agedat, dsstdat), function(ageest, dob, doa){
+  dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
     if(is.na(dob)){
       ageest
     } else {
