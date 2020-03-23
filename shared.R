@@ -235,11 +235,11 @@ if(use.row.data){
     
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
-    dplyr::mutate_at(vars(ends_with("dat")), dmy) %>%
-    dplyr::mutate(hostdat_transfer = dmy(hostdat_transfer),
-                  erendat_2 = dmy(erendat_2),
-                  dsstdtc = dmy(dsstdtc),
-                  date = dmy(date)) %>%
+    dplyr::mutate_at(vars(ends_with("dat")), ymd) %>%              # contains() raises flags
+    dplyr::mutate(hostdat_transfer = ymd(hostdat_transfer),
+                  erendat_2 = ymd(erendat_2),
+                  dsstdtc = ymd(dsstdtc),
+                  date = ymd(date)) %>%
     # different column names for some comorbidities
     dplyr::rename(chrincard = chroniccard_mhyn, 
                   modliv = modliver_mhyn, 
@@ -260,13 +260,13 @@ if(use.row.data){
 
 
 raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
-   dplyr::mutate(dsstdat = dmy(dsstdat),
-                agedat = dmy(agedat), 
-               daily_dsstdat = dmy(daily_dsstdat), 
-               daily_lbdat = dmy(daily_lbdat),
-               hostdat = dmy(hostdat),
-               cestdat = dmy(cestdat),
-               dsstdtc = dmy(dsstdtc))
+   dplyr::mutate(dsstdat = ymd(dsstdat),
+                agedat = ymd(agedat), 
+               daily_dsstdat = ymd(daily_dsstdat), 
+               daily_lbdat = ymd(daily_lbdat),
+               hostdat = ymd(hostdat),
+               cestdat = ymd(cestdat),
+               dsstdtc = ymd(dsstdtc))
 
 # Demographic data is in the first row
 
