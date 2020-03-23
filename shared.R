@@ -958,6 +958,7 @@ modified.km.plot <- function(data, ...) {
                    ))
   ggplot(data = df)+
     geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
+    xlim(0, 20)+
     theme_bw()+
     scale_colour_manual(values = c("#e41a1c",  "#377eb8", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
     scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
@@ -1743,6 +1744,7 @@ onset.adm.func <- function(data){
   
   
 }
+
 
 
 
