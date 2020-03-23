@@ -659,7 +659,7 @@ age.pyramid <- function(data, ...){
       xmin = length(levels(data2$agegp5))+1.5 ,         
       xmax = length(levels(data2$agegp5))+1.5) +
     annotation_custom(
-      grob = textGrob(label = "Females", hjust = 0.5, gp = gpar(cex = 1.5)),
+      grob = textGrob(label = "Females", hjust = 0.4, gp = gpar(cex = 1.5)),
       ymin = max(data2$count)*1.1/2,      
       ymax = max(data2$count)*1.1/2,
       xmin = length(levels(data2$agegp5))+1.5,         
