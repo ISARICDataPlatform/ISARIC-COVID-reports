@@ -198,7 +198,6 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
 
 if(use.uk.data){
   uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
-    filter(is.na(dsstdat) | dsstdat >= as.Date(embargo.limit)) %>%  # exclude all cases on or after embargo limit
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     dplyr::mutate(Country = "UK") %>%
@@ -265,7 +264,8 @@ raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
                 daily_lbdat = ymd(daily_lbdat),
                 hostdat = ymd(hostdat),
                 cestdat = ymd(cestdat),
-                dsstdtc = ymd(dsstdtc))
+                dsstdtc = ymd(dsstdtc)) %>%
+  filter(dsstdat >= as.Date(embargo.limit))   # exclude all cases on or after embargo limit
 
 # Demographic data is in the first row
 
