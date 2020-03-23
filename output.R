@@ -56,12 +56,12 @@ d.e <- function(data, ...){
   # Treatments data
   df <- treatment.upset(data)$df
   n.treat <- df$All
-  p.none <- 100 * df$None / df$All %>%
-    round(1)
-  p.abx <- 100 * df$Abx / df$All %>%
-    round(1)
-  p.av <- 100 * df$Av / df$All %>%
-    round(1)
+  p.none <- 100 * df$None / df$All 
+  p.none <- paste(sprintf("%.1f", p.none))
+  p.abx <- 100 * df$Abx / df$All 
+  p.abx <- paste(sprintf("%.1f", p.abx))
+  p.av <- 100 * df$Av / df$All
+  p.av <- paste(sprintf("%.1f", p.av))
   
   return(list(N.cases = N.cases,
               N.var = N.var,
