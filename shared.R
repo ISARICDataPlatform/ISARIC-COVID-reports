@@ -1050,6 +1050,8 @@ hospital.fatality.ratio <- function(data){
   Died_date <- data$death.date
   # Identify first and last events
   first <- min(Dc_date, Died_date, na.rm = TRUE)
+  # Set start date as 1 March 2020
+  first <- as.Date("2020-03-01")
   last <- max(Dc_date, Died_date, na.rm = TRUE)
   diff <- last - first
   # Plot to start after first event
@@ -1108,7 +1110,44 @@ hospital.fatality.ratio <- function(data){
   plt <- ggplot(data = db) +
     line +
     shade +
-    yaxis + theme_bw()
+    ylab("Hospital fatality ratio") + 
+    theme_bw() + 
+    theme(
+      axis.ticks.x = element_blank(), 
+      axis.text.x = element_blank(), 
+      axis.title.x = element_blank(),
+      plot.margin = unit(c(1,1,3,2), "lines")
+    ) + 
+    coord_cartesian(
+      xlim = c(first, last), 
+      ylim = c(0, 1), 
+      default = TRUE, clip = "off"
+    )
+  
+  # Make data table to go at bottom
+  number_rows <- as.integer(as.numeric(1 + (last - first) / 5)) 
+  rows <- 1:number_rows
+  dates <- as.Date((rows -1) * 5, origin = "2020-03-01")
+  dt <- data.frame(rows = rows, dates = dates)
+  dt <- merge(dt,  db, by.x = "dates", by.y = "Date")
+  dt$Discharged <- dt$Dc_c
+  dt_Died <- dt$Died_c
+  dt <- subset(dt, select = c(dates, Discharged, Died))
+  
+  # I've not been able to get geom_text outside the plotting area
+  
+  for (i in 1:number_rows) {
+    print_date <- format(dt$date[i], format = "%d %b")
+    plt <- plt + 
+      annotate("text", x = dt$date[i], y = -.1, label = print_date) +
+      annotate("text", x = dt$date[i], y = -.15, label = paste(dt$Discharged[i])) +
+      annotate("text", x = dt$date[i], y = -.2, label = paste(dt$Died[i]))
+  }
+  
+  plt <- plt +
+    annotate("text", x = first - 3, y = -.1, label = "Date") +
+    annotate("text", x = first - 3, y = -.15, label = "Discharged") +
+    annotate("text", x = first - 3, y = -.2, label = "Died")
   
   return(list(plt=plt, db=db))
   
@@ -1393,9 +1432,9 @@ treatment.upset <- function(data, ...) {
       Antiviral, 
       Antibiotic, 
       Antifungal, 
-      Oral_Steroid, Intravenous_Steroid, Inhaled_Steroid
+      Corticosteroid
     ) %>%
-    pivot_longer(2:7, names_to = "Treatment", values_to = "Present") %>%
+    pivot_longer(2:5, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) %>%
     group_by(Pid_special) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
@@ -1404,8 +1443,13 @@ treatment.upset <- function(data, ...) {
     })) %>%
     dplyr::select(-Treatments, -Presence)
   
-  p <- ggplot(treatments, aes(x = treatments.used)) + 
-    geom_bar(fill = "chartreuse4", col = "black") + 
+  # Upset would stack multiple proportions on top of each other, so to get
+  # proportions, simply need each cell to be allocated a value of n^-1
+  n_row <- nrow(treatments)
+  treatments$prop <- 1 / n_row
+  
+  p <- ggplot(treatments, aes(x = treatments.used, y = prop)) + 
+    geom_col(fill = "chartreuse4") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
     ylab("Count") +
