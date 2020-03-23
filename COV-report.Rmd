@@ -29,6 +29,8 @@ data.dict.file <- paths[[which(paths$X1 == "data.dict.file"), 2]]
 site.list.file <- paths[[which(paths$X1 == "site.list.file"), 2]]
 uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
 row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
+eot.data.file <- paths[[which(paths$X1 == "eot.data.file"), 2]]
+
 
 
 # Source files

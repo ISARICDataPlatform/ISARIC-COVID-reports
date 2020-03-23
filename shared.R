@@ -24,8 +24,7 @@ embargo.limit <- '2020-03-09'
 use.row.data <- TRUE
 use.eot.data <- TRUE
 
-
-if(!use.uk.data & !use.row.data){
+if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
 }
 
@@ -256,9 +255,6 @@ if(use.row.data){
   row.data <- NULL
 }
 
-
-
-
 raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
    dplyr::mutate(dsstdat = ymd(dsstdat),
                 agedat = ymd(agedat), 
@@ -422,8 +418,11 @@ other.dates <- map(1:nrow(patient.data), function(i){
   ever.NIMV <- patient.data$noninvasive_proccur[i] == 1
   
   # rows in events that have an entry for NIMV
+  # sometimes there is a daily_noninvasive_prtrt/daily_invasive_prtrt but no daily_dsstdat. This seems to only happen on the first line, but check @todo
   
-  NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% dplyr::select(daily_dsstdat, daily_noninvasive_prtrt)
+  NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% dplyr::select(dsstdat, daily_dsstdat, daily_noninvasive_prtrt) %>%
+    mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
+    mutate(consolidated.dssdat = ymd(consolidated.dssdat))
   
   # multiple.NIMV.periods indicates that the patient had more than one continuous episode of NIMV. Currently there are none of these. 
   # They are not currently coherently handled, just flagged
@@ -439,15 +438,15 @@ other.dates <- map(1:nrow(patient.data), function(i){
     NIMV.end.date <- NA
     multiple.NIMV.periods <- NA
   } else {
-    NIMV.start.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 1) %>% slice(1) %>% pull(daily_dsstdat)
-    NIMV.last.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 1) %>% slice(n()) %>% pull(daily_dsstdat)
-    if(NIMV.last.date == NIMV.rows %>% slice(n()) %>% pull(daily_dsstdat)){
+    NIMV.start.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 1) %>% slice(1) %>% pull(consolidated.dssdat)
+    NIMV.last.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
+    if(NIMV.last.date == NIMV.rows %>% slice(n()) %>% pull(consolidated.dssdat)){
       # Patient was on NIMV at last report
       NIMV.end.date <- NA
     } else {
       # They were off NIMV at the next report
-      next.report.row <- max(which(NIMV.rows$daily_dsstdat == NIMV.last.date)) + 1
-      NIMV.end.date <- NIMV.rows$daily_dsstdat[next.report.row]
+      next.report.row <- max(which(NIMV.rows$consolidated.dssdat == NIMV.last.date)) + 1
+      NIMV.end.date <- NIMV.rows$consolidated.dssdat[next.report.row]
     }
     if(nrow(NIMV.rows)<=2){
       multiple.NIMV.periods <- F
@@ -465,7 +464,9 @@ other.dates <- map(1:nrow(patient.data), function(i){
   
   # rows in events that have an entry for NIMV
   
-  IMV.rows <- events.tibble %>% filter(!is.na(daily_invasive_prtrt)) %>% dplyr::select(daily_dsstdat, daily_invasive_prtrt)
+  IMV.rows <- events.tibble %>% filter(!is.na(daily_invasive_prtrt)) %>% dplyr::select(dsstdat, daily_dsstdat, daily_invasive_prtrt) %>%
+    mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
+    mutate(consolidated.dssdat = ymd(consolidated.dssdat))
   
   # multiple.IMV.periods indicates that the patient had more than one continuous episode of IMV. Currently there are none of these. 
   # They are not currently coherently handled, just flagged
@@ -481,15 +482,15 @@ other.dates <- map(1:nrow(patient.data), function(i){
     IMV.end.date <- NA
     multiple.IMV.periods <- NA
   } else {
-    IMV.start.date <- IMV.rows %>% filter(daily_invasive_prtrt == 1) %>% slice(1) %>% pull(daily_dsstdat)
-    IMV.last.date <- IMV.rows %>% filter(daily_invasive_prtrt == 1) %>% slice(n()) %>% pull(daily_dsstdat)
-    if(IMV.last.date == IMV.rows %>% slice(n()) %>% pull(daily_dsstdat)){
+    IMV.start.date <- IMV.rows %>% filter(daily_invasive_prtrt == 1) %>% slice(1) %>% pull(consolidated.dssdat)
+    IMV.last.date <- IMV.rows %>% filter(daily_invasive_prtrt == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
+    if(IMV.last.date == IMV.rows %>% slice(n()) %>% pull(consolidated.dssdat)){
       # Patient was on IMV at last report
       IMV.end.date <- NA
     } else {
       # They were off IMV at the next report
-      next.report.row <- max(which(IMV.rows$daily_dsstdat == IMV.last.date)) + 1
-      IMV.end.date <- IMV.rows$daily_dsstdat[next.report.row]
+      next.report.row <- max(which(IMV.rows$consolidated.dssdat == IMV.last.date)) + 1
+      IMV.end.date <- IMV.rows$consolidated.dssdat[next.report.row]
     }
     if(nrow(IMV.rows)<=2){
       multiple.IMV.periods <- F
