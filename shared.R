@@ -101,6 +101,7 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
   dplyr::select(site.number, site.name, Country) %>%
   filter(!is.na(site.number)) %>%
   dplyr::rename(country.code = Country) %>%
+  filter(!is.na(country.code)) %>%
   mutate(Country = map_chr(country.code, function(x){
     switch(x,
            "GBR" = "UK",
@@ -146,7 +147,19 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
            "ROM" = "Romania",
            "IRE" = "Ireland",
            "BEL" = "Belgium",
-           "SLO" = "Slovakia")
+           "SLO" = "Slovakia",
+           "AUT" = "Austria",
+           "CZE" = "Czechia",
+           "DOM" = "Dominican Republic",
+           "GRE" = "Greece",
+           "IRA" = "Iran",
+           "JAP" = "Japan",
+           "POR" = "Portugal",
+           "SK" = "South Korea",
+           "SWE" = "Sweden",
+           "TUR" = "Turkey",
+           "UK" = "UK"
+           )
   })) %>%
   mutate(flag.url = map_chr(country.code, function(x){
     switch(x,
@@ -193,7 +206,18 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
            "ROM" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/nl.svg",
            "IRE" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/ro.svg",
            "BEL" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/be.svg",
-           "SLO" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/sk.svg")
+           "SLO" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/sk.svg",
+           "AUT" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/at.svg",
+           "CZE" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/cz.svg",
+           "DOM" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/do.svg",
+           "GRE" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/gr.svg",
+           "IRA" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/ir.svg",
+           "JAP" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/jp.svg",
+           "POR" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/pt.svg",
+           "SK" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/kr.svg",
+           "SWE" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/se.svg",
+           "TUR" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/tr.svg",
+           "UK" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/gb.svg")
   }))
 
 if(use.uk.data){
