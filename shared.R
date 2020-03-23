@@ -19,8 +19,11 @@ library(survminer)
 
 # flags for inclusion of the two data files
 
-use.uk.data <- FALSE
+use.uk.data <- TRUE
+embargo.limit <- '2020-03-09'
 use.row.data <- TRUE
+use.eot.data <- TRUE
+
 
 if(!use.uk.data & !use.row.data){
   stop("No data to be imported")
@@ -196,6 +199,7 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
 
 if(use.uk.data){
   uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
+    filter(dsstdat >= as.Date(embargo.limit)) %>%  # exclude all cases on or after embargo limit 
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     dplyr::mutate(Country = "UK")
@@ -203,10 +207,39 @@ if(use.uk.data){
   uk.data <- NULL
 }
 
+
+if(use.eot.data){
+eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 10000)  %>% 
+dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+  dplyr::rename(chrincard = chroniccard_mhyn, 
+                modliv = modliver_mhyn, 
+                mildliver = mildliv_mhyn, 
+                chronichaemo_mhyn = chronhaemo_mhyn, 
+                diabetescom_mhyn = diabetiscomp_mhyn,
+                rheumatologic_mhyn = rheumatology_mhyr) %>%
+  dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
+  left_join(site.list, by = "site.number") %>%
+  dplyr::select(-site.number) %>%
+  add_column(agedat = NA)
+}else{
+  eot.data <- NULL
+}
+
+
+# Manual date correction
+
 if(use.row.data){
   row.data <- read_csv(glue("{data.path}/{row.data.file}"), guess_max = 10000) %>% 
+    
+    mutate(daily_lbdat = replace(daily_lbdat, 306,"01/01/2020")) %>% # NOTE MANUAL DATE CORRECTION
+    
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+    dplyr::mutate_at(vars(ends_with("dat")), dmy) %>%
+    dplyr::mutate(hostdat_transfer = dmy(hostdat_transfer),
+                  erendat_2 = dmy(erendat_2),
+                  dsstdtc = dmy(dsstdtc),
+                  date = dmy(date)) %>%
     # different column names for some comorbidities
     dplyr::rename(chrincard = chroniccard_mhyn, 
                   modliv = modliver_mhyn, 
@@ -215,7 +248,7 @@ if(use.row.data){
                   diabetescom_mhyn = diabetiscomp_mhyn,
                   rheumatologic_mhyn = rheumatology_mhyr,
                   icu_hoendat = hoendat) %>%
-    dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
+  dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
     dplyr::select(-site.number) %>%
     add_column(agedat = NA)
@@ -223,14 +256,17 @@ if(use.row.data){
   row.data <- NULL
 }
 
-raw.data <- bind_rows(uk.data, row.data) %>%
-  dplyr::mutate(dsstdat = dmy(dsstdat), 
+
+
+
+raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
+   dplyr::mutate(dsstdat = dmy(dsstdat),
                 agedat = dmy(agedat), 
-                daily_dsstdat = dmy(daily_dsstdat), 
-                daily_lbdat = dmy(daily_lbdat),
-                hostdat = dmy(hostdat),
-                cestdat = dmy(cestdat),
-                dsstdtc = dmy(dsstdtc))
+               daily_dsstdat = dmy(daily_dsstdat), 
+               daily_lbdat = dmy(daily_lbdat),
+               hostdat = dmy(hostdat),
+               cestdat = dmy(cestdat),
+               dsstdtc = dmy(dsstdtc))
 
 # Demographic data is in the first row
 
