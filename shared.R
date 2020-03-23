@@ -201,7 +201,8 @@ if(use.uk.data){
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     dplyr::mutate(Country = "UK") %>%
-    dplyr::mutate(data.source = "UK")
+    dplyr::mutate(data.source = "UK") %>%
+    filter(daily_dsstdat < as.Date(embargo.limit))
 } else {
   uk.data <- NULL
 }
@@ -264,8 +265,7 @@ raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
                 daily_lbdat = ymd(daily_lbdat),
                 hostdat = ymd(hostdat),
                 cestdat = ymd(cestdat),
-                dsstdtc = ymd(dsstdtc)) %>%
-  filter(dsstdat >= as.Date(embargo.limit))   # exclude all cases on or after embargo limit
+                dsstdtc = ymd(dsstdtc))    
 
 # Demographic data is in the first row
 
@@ -275,7 +275,8 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
-patient.data <- demog.data %>% left_join(event.data)
+patient.data <- demog.data %>% left_join(event.data) %>%
+  filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all cases on or after embargo limit
 
 # Add new columns with more self-explanatory names as needed
 
