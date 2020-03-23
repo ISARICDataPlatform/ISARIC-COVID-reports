@@ -1452,7 +1452,7 @@ treatment.upset <- function(data, ...) {
     geom_col(fill = "chartreuse4") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
-    ylab("Count") +
+    ylab("Proportion of patients with \n recorded treatment data") +
     scale_x_upset() 
   
   # Counts
