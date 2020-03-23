@@ -19,7 +19,7 @@ library(survminer)
 
 # flags for inclusion of the two data files
 
-use.uk.data <- FALSE
+use.uk.data <- TRUE
 embargo.limit <- '2020-03-09'
 use.row.data <- TRUE
 use.eot.data <- TRUE
@@ -574,6 +574,11 @@ patient.data <- patient.data %>%
   })) 
 # save RDA @todo change this to keep only relevant columns
 
+
+# Manual filtering of unlikely values 
+patient.data <- patient.data[-c(4, nrow(patient.data)), ]
+
+
 trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        Country,
                                                        country.code,
@@ -607,6 +612,7 @@ trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        admission.to.recovery,
                                                        admission.to.ICU
 )
+
 
 write_csv(trimmed.patient.data, glue("patient_data_{today()}.csv"))
 
@@ -664,7 +670,7 @@ age.pyramid <- function(data, ...){
       ymax = max(data2$count)*1.1/2,
       xmin = length(levels(data2$agegp5))+1.5,         
       xmax = length(levels(data2$agegp5))+1.5) +
-    theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
+    theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt")) + theme(axis.text.x = element_text(angle = 45, hjust=1))
   
 }
 
@@ -679,7 +685,7 @@ sites.by.country <- function(data, ...){
   ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
     theme_bw() +
     xlab("Country") +
-    ylab("Sites") + theme(axis.text.x = element_text(angle = 90, hjust=1))
+    ylab("Sites") + theme(axis.text.x = element_text(angle = 45, hjust=1))
 }
 
 # Distribution of patients and outcomes by country
@@ -692,7 +698,7 @@ outcomes.by.country <- function(data, ...){
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
     xlab("Country") +
-    ylab("Cases") + theme(axis.text.x = element_text(angle = 90, hjust=1))
+    ylab("Cases") + theme(axis.text.x = element_text(angle = 45, hjust=1))
 }
 
 # Outcomes by epi-week
