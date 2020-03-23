@@ -19,7 +19,7 @@ library(survminer)
 
 # flags for inclusion of the two data files
 
-use.uk.data <- FALSE
+use.uk.data <- TRUE
 embargo.limit <- '2020-03-09'
 use.row.data <- TRUE
 use.eot.data <- TRUE
@@ -222,6 +222,7 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
 
 if(use.uk.data){
   uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
+    dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     dplyr::mutate(Country = "UK") %>%
