@@ -97,7 +97,7 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
   dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
   dplyr::mutate(site.name = map_chr(`Site Number_1`, function(x) {
     sub("^\\s+", "", substr(x, 5, nchar(x)))
-    })) %>%
+  })) %>%
   dplyr::select(site.number, site.name, Country) %>%
   filter(!is.na(site.number)) %>%
   dplyr::rename(country.code = Country) %>%
@@ -198,28 +198,30 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
 
 if(use.uk.data){
   uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
-    filter(dsstdat >= as.Date(embargo.limit)) %>%  # exclude all cases on or after embargo limit 
+    filter(is.na(dsstdat) | dsstdat >= as.Date(embargo.limit)) %>%  # exclude all cases on or after embargo limit
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
-    dplyr::mutate(Country = "UK")
+    dplyr::mutate(Country = "UK") %>%
+    dplyr::mutate(data.source = "UK")
 } else {
   uk.data <- NULL
 }
 
 
 if(use.eot.data){
-eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 10000)  %>% 
-dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
-  dplyr::rename(chrincard = chroniccard_mhyn, 
-                modliv = modliver_mhyn, 
-                mildliver = mildliv_mhyn, 
-                chronichaemo_mhyn = chronhaemo_mhyn, 
-                diabetescom_mhyn = diabetiscomp_mhyn,
-                rheumatologic_mhyn = rheumatology_mhyr) %>%
-  dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
-  left_join(site.list, by = "site.number") %>%
-  dplyr::select(-site.number) %>%
-  add_column(agedat = NA)
+  eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 10000)  %>% 
+    dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+    dplyr::rename(chrincard = chroniccard_mhyn, 
+                  modliv = modliver_mhyn, 
+                  mildliver = mildliv_mhyn, 
+                  chronichaemo_mhyn = chronhaemo_mhyn, 
+                  diabetescom_mhyn = diabetiscomp_mhyn,
+                  rheumatologic_mhyn = rheumatology_mhyr) %>%
+    dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
+    left_join(site.list, by = "site.number") %>%
+    dplyr::select(-site.number) %>%
+    add_column(agedat = NA) %>%
+    dplyr::mutate(data.source = "EOT")
 }else{
   eot.data <- NULL
 }
@@ -247,22 +249,23 @@ if(use.row.data){
                   diabetescom_mhyn = diabetiscomp_mhyn,
                   rheumatologic_mhyn = rheumatology_mhyr,
                   icu_hoendat = hoendat) %>%
-  dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
+    dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
     dplyr::select(-site.number) %>%
-    add_column(agedat = NA)
+    add_column(agedat = NA) %>%
+    dplyr::mutate(data.source = "ROW")
 } else {
   row.data <- NULL
 }
 
 raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
-   dplyr::mutate(dsstdat = ymd(dsstdat),
+  dplyr::mutate(dsstdat = ymd(dsstdat),
                 agedat = ymd(agedat), 
-               daily_dsstdat = ymd(daily_dsstdat), 
-               daily_lbdat = ymd(daily_lbdat),
-               hostdat = ymd(hostdat),
-               cestdat = ymd(cestdat),
-               dsstdtc = ymd(dsstdtc))
+                daily_dsstdat = ymd(daily_dsstdat), 
+                daily_lbdat = ymd(daily_lbdat),
+                hostdat = ymd(hostdat),
+                cestdat = ymd(cestdat),
+                dsstdtc = ymd(dsstdtc))
 
 # Demographic data is in the first row
 
@@ -459,7 +462,7 @@ other.dates <- map(1:nrow(patient.data), function(i){
   }
   
   # the IMV field for the daily form is daily_invasive_prtrt
-
+  
   ever.IMV <- patient.data$daily_invasive_prtrt[i] == 1
   
   # rows in events that have an entry for NIMV
@@ -547,38 +550,38 @@ patient.data <- patient.data %>%
 # save RDA @todo change this to keep only relevant columns
 
 trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
-                                                Country,
-                                                country.code,
-                                                site.name,
-                                                sex,
-                                                consolidated.age,
-                                                agegp5,
-                                                agegp10,
-                                                one_of(admission.symptoms$field),
-                                                one_of(comorbidities$field),
-                                                one_of(treatments$field),
-                                                admission.date,
-                                                enrollment.date,
-                                                onset.date,
-                                                ICU.admission.date,
-                                                ICU.discharge.date,
-                                                ICU.duration,
-                                                IMV.duration,
-                                                ever.IMV,
-                                                IMV.start.date,
-                                                IMV.end.date,
-                                                multiple.IMV.periods,
-                                                ever.NIMV,
-                                                NIMV.start.date,
-                                                NIMV.end.date,
-                                                NIMV.duration,
-                                                admission.to.exit,
-                                                onset.to.admission,
-                                                admission.to.censored,
-                                                admission.to.death,
-                                                admission.to.recovery,
-                                                admission.to.ICU
-                                                )
+                                                       Country,
+                                                       country.code,
+                                                       site.name,
+                                                       sex,
+                                                       consolidated.age,
+                                                       agegp5,
+                                                       agegp10,
+                                                       one_of(admission.symptoms$field),
+                                                       one_of(comorbidities$field),
+                                                       one_of(treatments$field),
+                                                       admission.date,
+                                                       enrollment.date,
+                                                       onset.date,
+                                                       ICU.admission.date,
+                                                       ICU.discharge.date,
+                                                       ICU.duration,
+                                                       IMV.duration,
+                                                       ever.IMV,
+                                                       IMV.start.date,
+                                                       IMV.end.date,
+                                                       multiple.IMV.periods,
+                                                       ever.NIMV,
+                                                       NIMV.start.date,
+                                                       NIMV.end.date,
+                                                       NIMV.duration,
+                                                       admission.to.exit,
+                                                       onset.to.admission,
+                                                       admission.to.censored,
+                                                       admission.to.death,
+                                                       admission.to.recovery,
+                                                       admission.to.ICU
+)
 
 write_csv(trimmed.patient.data, glue("patient_data_{today()}.csv"))
 
@@ -589,7 +592,7 @@ write_csv(trimmed.patient.data, glue("patient_data_{today()}.csv"))
 # Age pyramid
 
 age.pyramid <- function(data, ...){
-
+  
   data2 <- data %>%
     group_by(agegp5, sex, outcome) %>%
     dplyr::summarise(count = n()) %>%
@@ -683,7 +686,7 @@ outcomes.by.admission.date <- function(data, ...){
 # Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
 
 comorbidities.upset <- function(data, max.comorbidities, ...){
-
+  
   # just the comorbidity columns
   
   data2 <- data %>%
@@ -752,7 +755,7 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
 
 
 symptoms.upset <- function(data, max.symptoms, ...){
-
+  
   
   # just the symptom columns
   
@@ -810,7 +813,7 @@ symptoms.upset <- function(data, max.symptoms, ...){
     })) %>%
     dplyr::select(-Conditions, -Presence)
   
- ggplot(data3, aes(x = conditions.present)) + 
+  ggplot(data3, aes(x = conditions.present)) + 
     geom_bar(fill = "deepskyblue3", col = "black") + 
     theme_bw() +
     xlab("Symptoms present at admission") +
@@ -928,7 +931,7 @@ treatment.use.plot <- function(data, ...){
 
 
 modified.km.plot <- function(data, ...) {
-
+  
   
   # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
   
@@ -1098,7 +1101,7 @@ violin.sex.func <- function(data, ...){
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
   vd <- tibble(Sex = data2$sex, length.of.stay = abs(data2$length.of.stay) )
-
+  
   # by sex
   
   x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
@@ -1133,7 +1136,7 @@ violin.age.func <- function(data, ...){
   
   
   vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = abs(data2$length.of.stay) )
-
+  
   # remove NAs (@todo for now?)
   
   vdx <- vdx %>% filter(!is.na(Age))
@@ -1325,7 +1328,7 @@ treatment.upset <- function(data, ...) {
                    is.na(details$antifung_cmyn) == TRUE & 
                    is.na(details$corticost_cmyn) == TRUE] <- 1
   details <- subset(details, All_NA == 0)
-
+  
   # Separate steroids according to route
   
   details$Oral_Steroid <- 
@@ -1338,13 +1341,13 @@ treatment.upset <- function(data, ...) {
   
   # 1 is Yes, set anything else to 0 (No)
   details$antiviral_cmyn[details$antiviral_cmyn != 1 | 
-                          is.na(details$antiviral_cmyn) == TRUE] <- 0
+                           is.na(details$antiviral_cmyn) == TRUE] <- 0
   details$antibiotic_cmyn[details$antibiotic_cmyn != 1 | 
-                          is.na(details$antibiotic_cmyn) == TRUE] <- 0
+                            is.na(details$antibiotic_cmyn) == TRUE] <- 0
   details$antifung_cmyn[details$antifung_cmyn != 1 | 
                           is.na(details$antifung_cmyn) == TRUE] <- 0
   details$corticost_cmyn[details$corticost_cmyn != 1 | 
-                          is.na(details$corticost_cmyn) == TRUE] <- 0
+                           is.na(details$corticost_cmyn) == TRUE] <- 0
   details$Antiviral <- details$antiviral_cmyn
   details$Antibiotic <- details$antibiotic_cmyn
   details$Antifungal <- details$antifung_cmyn
@@ -1419,7 +1422,7 @@ status.by.time.after.admission <- function(data, ...){
   
   overall.start <- 0
   overall.end <- max(timings.wrangle$hospital.end, na.rm = T)
-
+  
   # this generates a table of the status of every patient on every day
   
   complete.timeline <- map(1:nrow(timings.wrangle), function(pat.no){
