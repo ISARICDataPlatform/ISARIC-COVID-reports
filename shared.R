@@ -16,6 +16,7 @@ library(binom)
 library(boot)
 library(survival)
 library(survminer)
+library(tidyverse)
 
 # flags for inclusion of the two data files
 
@@ -225,9 +226,10 @@ if(use.uk.data){
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+    dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     dplyr::mutate(Country = "UK") %>%
-    dplyr::mutate(data.source = "UK") #%>%
-    # filter(daily_dsstdat < as.Date(embargo.limit))
+    dplyr::mutate(data.source = "UK") %>%
+    filter(daily_dsstdat < as.Date(embargo.limit))
 } else {
   uk.data <- NULL
 }
@@ -300,8 +302,9 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
-patient.data <- demog.data %>% left_join(event.data) #%>%
-  # filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all cases on or after embargo limit
+patient.data <- demog.data %>% left_join(event.data)%>%
+  filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all UK cases on or after embargo limit
+
 
 # Add new columns with more self-explanatory names as needed
 
@@ -584,8 +587,6 @@ patient.data <- patient.data %>%
 # save RDA @todo change this to keep only relevant columns
 
 
-# Manual filtering of unlikely values 
-patient.data <- patient.data[-c(4, nrow(patient.data)), ]
 
 
 trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
@@ -997,14 +998,15 @@ modified.km.plot <- function(data, ...) {
                    ))
   ggplot(data = df)+
     geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
-    xlim(0, 20)+
+    xlim(0, 5)+
     theme_bw()+
-    scale_colour_manual(values = c("#e41a1c",  "#377eb8", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
+    scale_colour_manual(values = c("indianred",  "green", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
     scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
     xlab("Days after admission") +
     ylab("Cumulative probability")
   
 }
+
 
 
 modified.km.plot.1 <- function(data, ...){
@@ -1058,6 +1060,8 @@ hospital.fatality.ratio <- function(data){
   Died_date <- data$death.date
   # Identify first and last events
   first <- min(Dc_date, Died_date, na.rm = TRUE)
+  # Set start date as 1 March 2020
+  first <- as.Date("2020-03-01")
   last <- max(Dc_date, Died_date, na.rm = TRUE)
   diff <- last - first
   # Plot to start after first event
@@ -1116,7 +1120,44 @@ hospital.fatality.ratio <- function(data){
   plt <- ggplot(data = db) +
     line +
     shade +
-    yaxis + theme_bw()
+    ylab("Hospital fatality ratio") + 
+    theme_bw() + 
+    theme(
+      axis.ticks.x = element_blank(), 
+      axis.text.x = element_blank(), 
+      axis.title.x = element_blank(),
+      plot.margin = unit(c(1,1,3,2), "lines")
+    ) + 
+    coord_cartesian(
+      xlim = c(first, last), 
+      ylim = c(0, 1), 
+      default = TRUE, clip = "off"
+    )
+  
+  # Make data table to go at bottom
+  number_rows <- as.integer(as.numeric(1 + (last - first) / 5)) 
+  rows <- 1:number_rows
+  dates <- as.Date((rows -1) * 5, origin = "2020-03-01")
+  dt <- data.frame(rows = rows, dates = dates)
+  dt <- merge(dt,  db, by.x = "dates", by.y = "Date")
+  dt$Discharged <- dt$Dc_c
+  dt_Died <- dt$Died_c
+  dt <- subset(dt, select = c(dates, Discharged, Died))
+  
+  # I've not been able to get geom_text outside the plotting area
+  
+  for (i in 1:number_rows) {
+    print_date <- format(dt$date[i], format = "%d %b")
+    plt <- plt + 
+      annotate("text", x = dt$date[i], y = -.1, label = print_date) +
+      annotate("text", x = dt$date[i], y = -.15, label = paste(dt$Discharged[i])) +
+      annotate("text", x = dt$date[i], y = -.2, label = paste(dt$Died[i]))
+  }
+  
+  plt <- plt +
+    annotate("text", x = first - 3, y = -.1, label = "Date") +
+    annotate("text", x = first - 3, y = -.15, label = "Discharged") +
+    annotate("text", x = first - 3, y = -.2, label = "Died")
   
   return(list(plt=plt, db=db))
   
@@ -1140,6 +1181,10 @@ violin.sex.func <- function(data, ...){
     })) %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
+  
+  data2 <- data2 %>%
+    filter(!is.na(sex))
+    
   
   vd <- tibble(Sex = data2$sex, length.of.stay = abs(data2$length.of.stay) )
   
@@ -1199,106 +1244,6 @@ violin.age.func <- function(data, ...){
 
 
 
-
-########### Distribution plots ############
-
-#### Function to round 0 days to 0.5 (half a day) #######
-
-round.zeros <- function(x){
-  
-  for (i in 1: length(x)){
-    
-    if (x[i]==0){
-      x[i] <- 0.5
-    }
-  }
-  
-  return(x) 
-}
-
-
-
-########### Admission to outcome #########
-
-
-adm.outcome.func <- function(data){
-  
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
-  
-  data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
-      max(x, y, na.rm = T)
-    }))
-  
-  admit.discharge <- data2$length.of.stay
-  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge <- round.zeros(admit.discharge)
-  
-  pos.cens <- which(data2$censored == 'TRUE')
-  
-  
-  left <- c(admit.discharge)
-  right <- replace(admit.discharge, pos.cens, values=NA )
-  censored_df <- data.frame(left, right)
-  fit <- fitdistcens(censored_df, dist = 'gamma')
-  t <- data.frame(x = admit.discharge)
-  
-  plt <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
-  
-  return(list(plt=plt, fit=fit))
-  
-}
-
-
-
-
-########## Onset to admission #####
-
-
-onset.adm.func <- function(data){
-  
-  admit.discharge <- data$onset.to.admission
-  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- round.zeros(admit.discharge)
-  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
-  
-  # Plot 
-  
-  library(ggplot2)
-  t <- data.frame(x=admit.discharge)
-  plt <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time from symptom onset to admission', title = ' ')
-  
-  return(list(plt=plt, fit=fit))
-  
-  
-}
-
-
-
-
-
-
-
 ########## Survival plot ######
 
 
@@ -1348,7 +1293,11 @@ treatment.upset <- function(data, ...) {
                  antiviral_cmyn, antiviral_cmtrt, 
                  antibiotic_cmyn, 
                  corticost_cmyn, corticost_cmroute,
-                 antifung_cmyn)
+                 antifung_cmyn,
+                 oxygen_cmoccur, noninvasive_proccur, invasive_proccur, 
+                 extracorp_prtrt, 
+                 renal_proccur,
+                 inotrop_cmtrt)
     )
     detail$Pid_special <- i   
     # This is a PID made for this table and does not correlate with other
@@ -1358,16 +1307,19 @@ treatment.upset <- function(data, ...) {
     } else {
       details <- rbind(details, detail, deparse.level = 1)
     }
-    
   }
   
   # If no dsterm result then not the form that will have treatment details
   details$All_NA <- 1
   details$All_NA[is.na(details$dsterm) == FALSE] <- 0
-  details$All_NA[is.na(details$antiviral_cmyn) == TRUE & 
-                   is.na(details$antibiotic_cmyn) == TRUE & 
-                   is.na(details$antifung_cmyn) == TRUE & 
-                   is.na(details$corticost_cmyn) == TRUE] <- 1
+  # Also, if all the treatment columns are NA then exclude
+  col_from <- 2
+  col_to <- ncol(details) - 2
+  details$allna <- 1
+  for (i in col_from:col_to) {
+    details$allna[is.na(details[, i]) == FALSE] <- 0
+  }
+  details$All_NA[details$allna == 1] <- 1
   details <- subset(details, All_NA == 0)
   
   # Separate steroids according to route
@@ -1380,30 +1332,40 @@ treatment.upset <- function(data, ...) {
   details$Intravenous_Steroid[details$corticost_cmroute == 2] <- 1
   details$Inhaled_Steroid[details$corticost_cmroute == 3] <- 1
   
-  # 1 is Yes, set anything else to 0 (No)
-  details$antiviral_cmyn[details$antiviral_cmyn != 1 | 
-                           is.na(details$antiviral_cmyn) == TRUE] <- 0
-  details$antibiotic_cmyn[details$antibiotic_cmyn != 1 | 
-                            is.na(details$antibiotic_cmyn) == TRUE] <- 0
-  details$antifung_cmyn[details$antifung_cmyn != 1 | 
-                          is.na(details$antifung_cmyn) == TRUE] <- 0
-  details$corticost_cmyn[details$corticost_cmyn != 1 | 
-                           is.na(details$corticost_cmyn) == TRUE] <- 0
+  # Label variables for the plot
   details$Antiviral <- details$antiviral_cmyn
   details$Antibiotic <- details$antibiotic_cmyn
   details$Antifungal <- details$antifung_cmyn
   details$Corticosteroid <- details$corticost_cmyn
+  details$Supplemental.oxygen <- details$oxygen_cmoccur
+  details$NIV <- details$noninvasive_proccur
+  details$Invasive.ventilation <- details$invasive_proccur
+  details$ECMO <- details$extracorp_prtrt 
+  details$RRT <- details$renal_proccur
+  details$Inotropes <- details$inotrop_cmtrt
   
-  # Plot 1 - not separating according to type of antiviral
+  # 1 is Yes, set anything else to 0 (No)
+  col_from <- 20 ## This will need changing if number of variables changed
+  col_to <- ncol(details)
+  for (i in col_from:col_to) {
+    details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
+  }
+  
   treatments <- details %>%
     dplyr::select(
       Pid_special, 
       Antiviral, 
       Antibiotic, 
       Antifungal, 
-      Oral_Steroid, Intravenous_Steroid, Inhaled_Steroid
+      Corticosteroid, 
+      Supplemental.oxygen, 
+      NIV, 
+      Invasive.ventilation, 
+      ECMO, 
+      RRT, 
+      Inotropes
     ) %>%
-    pivot_longer(2:7, names_to = "Treatment", values_to = "Present") %>%
+    pivot_longer(2:11, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) %>%
     group_by(Pid_special) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
@@ -1412,11 +1374,16 @@ treatment.upset <- function(data, ...) {
     })) %>%
     dplyr::select(-Treatments, -Presence)
   
-  p <- ggplot(treatments, aes(x = treatments.used)) + 
-    geom_bar(fill = "chartreuse4", col = "black") + 
+  # Upset would stack multiple proportions on top of each other, so to get
+  # proportions, simply need each cell to be allocated a value of n^-1
+  n_row <- nrow(treatments)
+  treatments$prop <- 1 / n_row
+  
+  p <- ggplot(treatments, aes(x = treatments.used, y = prop)) + 
+    geom_col(fill = "chartreuse4") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
-    ylab("Count") +
+    ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
     scale_x_upset() 
   
   # Counts
@@ -1734,6 +1701,8 @@ adm.outcome.func <- function(data){
   fit <- fitdistcens(censored_df, dist = 'gamma')
   t <- data.frame(x = admit.discharge)
   
+  obs <- left   # record observed values for reporting
+  
   plt <- ggplot(data = t) + 
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
     geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
@@ -1746,7 +1715,7 @@ adm.outcome.func <- function(data){
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
     labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
   
-  return(list(plt=plt, fit=fit))
+  return(list(plt=plt, fit=fit, obs = obs))
   
 }
 
@@ -1762,6 +1731,8 @@ onset.adm.func <- function(data){
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
   admit.discharge.2 <- round.zeros(admit.discharge)
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
+
+  obs <-  admit.discharge.2  # record observed values for reporting
   
   # Plot 
   
@@ -1779,7 +1750,7 @@ onset.adm.func <- function(data){
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
     labs(y = 'Density', x = 'Time from symptom onset to admission', title = ' ')
   
-  return(list(plt=plt, fit=fit))
+  return(list(plt=plt, fit=fit, obs = obs))
   
   
 }
