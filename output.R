@@ -27,18 +27,52 @@ d.e <- function(data, ...){
   
   # Distribution estimates
   
+  # Admission to outcome
+  
   mean.adm.to.outcome <-  round(fit.summary.gamma(adm.outcome.func(data)$fit)$m, 1)
   adm.outcome.lower <-   round(fit.summary.gamma(adm.outcome.func(data)$fit)$lower.m, 1)
   adm.outcome.upper <-   round(fit.summary.gamma(adm.outcome.func(data)$fit)$upper.m, 1)
+  
+  
+  
+  # Onset to admission
+  
+  sd.onset.to.adm <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$v), 1)
+  sd.onset.to.adm.lower <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$lower.v), 1)
+  sd.onset.to.adm.upper <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$upper.v), 1)
+  
   
   mean.onset.to.adm <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$m, 1)
   mean.onset.to.adm.lower <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$lower.m, 1)
   mean.onset.to.adm.upper <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$upper.m, 1)
   
-  var.onset.to.adm <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$v, 1)
-  var.onset.to.adm.lower <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$lower.v, 1)
-  var.onset.to.adm.upper <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$upper.v, 1)
+
   
+  # Distribution estimates - OBSERVED
+  
+  # Admission to outcome
+  
+  x <- adm.outcome.func(data)$obs
+  x_mean <- mean(x, na.rm = T)
+  x_sd <- sd(x, na.rm = T)
+  
+  obs.mean.adm.outcome <- round(x_mean, 1)
+  obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
+  obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
+  obs.sd.adm.outcome <- round(x_sd, 2)
+  
+  
+  # Onset to admission
+  
+  y <- onset.adm.func(data)$obs
+  y_mean <- sd(y, na.rm = T)
+  y_sd <- mean(y, na.rm = T)
+  
+  obs.mean.onset.outcome <- round(y_mean, 1)
+  obs.mean.onset.outcome.lower <- round( y_mean - 1.96*(x_sd/sqrt(length(y))), 1)
+  obs.mean.onset.outcome.upper <-  round( y_mean + 1.96*(x_sd/sqrt(length(y))), 1)
+  obs.sd.onset.outcome <- round(y_sd, 2)
+
   
   # CFR
   
@@ -87,9 +121,19 @@ d.e <- function(data, ...){
               mean.onset.to.adm.lower =   mean.onset.to.adm.lower,
               mean.onset.to.adm.upper = mean.onset.to.adm.upper,
               
-              var.onset.to.adm = var.onset.to.adm,
-              var.onset.to.adm.lower  = var.onset.to.adm.lower ,
-              var.onset.to.adm.upper = var.onset.to.adm.upper,
+              sd.onset.to.adm = sd.onset.to.adm,
+              sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
+              sd.onset.to.adm.upper = sd.onset.to.adm.upper,
+              
+              obs.mean.adm.outcome =  obs.mean.adm.outcome,
+              obs.mean.adm.outcome.lower = obs.mean.adm.outcome.lower,
+              obs.mean.adm.outcome.upper = obs.mean.adm.outcome.upper,
+              obs.sd.adm.outcome  = obs.sd.adm.outcome ,
+              
+              obs.mean.onset.outcome =  obs.mean.onset.outcome,
+              obs.mean.onset.outcome.lower = obs.mean.onset.outcome.lower,
+              obs.mean.onset.outcome.upper = obs.mean.onset.outcome.upper,
+              obs.sd.onset.outcome = obs.sd.onset.outcome,
               
               cfr = cfr,
               cfr.lower = cfr.lower,
