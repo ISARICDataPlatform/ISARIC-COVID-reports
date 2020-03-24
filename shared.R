@@ -437,7 +437,7 @@ treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 
 extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
   out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
-   
+  
   if(length(out) > 1){
     stop("Too many entries")
   } else if(length(out) == 0){
@@ -726,7 +726,9 @@ patient.data <- patient.data %>%
   })) %>%
   dplyr::mutate(admission.to.ICU = map2_dbl(ICU.admission.date, admission.date, function(x,y){
     as.numeric(difftime(x, y,  unit="days"))
-  })) 
+  })) %>%
+  mutate(admission.to.IMV = as.numeric(difftime(IMV.start.date, hostdat, unit="days"))) %>%
+  mutate(admission.to.NIMV = as.numeric(difftime(NIMV.start.date, hostdat, unit="days")))
 # save RDA @todo change this to keep only relevant columns
 
 
@@ -957,7 +959,7 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
   # just get rid of individuals from the top n table that have NAs in the other table
   
   label.order = c(unique(comorbidities %>% filter(field %in% most.common ) %>% pull(label)), "Any other")  
-    
+  
   top.n.conditions.tbl <- top.n.conditions.tbl %>%
     filter(subjid %in% other.conditions.tbl$subjid) %>%
     left_join(other.conditions.tbl, by = "subjid") %>%
@@ -965,7 +967,7 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
       c(a,b)
     })) %>%
     dplyr::select(-conditions.present.x, -conditions.present.y)
-
+  
   
   ggplot(top.n.conditions.tbl, aes(x = conditions.present)) + 
     geom_bar(fill = "indianred3", col = "black") + 
@@ -1681,17 +1683,19 @@ status.by.time.after.admission <- function(data, ...){
   timings.wrangle <- data2 %>%
     dplyr::select(subjid,
                   status,
-                  # Admit.ICU,
-                  # Dur.ICU,
+                  admission.to.ICU,
+                  ICU.duration,
                   censored,
                   admission.to.exit) %>%
     dplyr::mutate(hospital.start = 0) %>%
     dplyr::mutate(hospital.end = admission.to.exit) %>%
-    # mutate(ICU.start = Admit.ICU) %>%
-    # mutate(ICU.end = Admit.ICU + Dur.ICU) %>%
+    mutate(ICU.start = admission.to.ICU) %>%
+    mutate(ICU.end = admission.to.ICU + ICU.duration) %>%
     dplyr::select(subjid,  ends_with("start"), ends_with("end"), censored, status) %>%
-    filter(hospital.end >= 0 | is.na(hospital.end))
-  # mutate(ever.ICU = !is.na(ICU.start)) 
+    filter(hospital.end >= 0 | is.na(hospital.end))  %>%
+    mutate(ever.ICU = !is.na(ICU.start)) %>%
+    # If hospital end is known but ICU end is not, impossible to resolve
+    filter(!(!is.na(hospital.end) & is.na(ICU.end) & ever.ICU))
   
   overall.start <- 0
   overall.end <- max(timings.wrangle$hospital.end, na.rm = T)
@@ -1700,35 +1704,39 @@ status.by.time.after.admission <- function(data, ...){
   
   complete.timeline <- map(1:nrow(timings.wrangle), function(pat.no){
     times <- map(overall.start:overall.end, function(day){
-      # if(!timings.wrangle$ever.ICU[pat.no]){
-      if(is.na(timings.wrangle$hospital.end[pat.no])){
-        "Admitted"
-      } else if(day < timings.wrangle$hospital.end[pat.no]){
-        "Admitted"
-      } else if(timings.wrangle$status[pat.no] == "death"){
-        "Died"
-      } else if(timings.wrangle$status[pat.no] == "discharge"){
-        "Discharged"
+      if(!timings.wrangle$ever.ICU[pat.no]){
+        if(is.na(timings.wrangle$hospital.end[pat.no])){
+          "Admitted"
+        } else if(day < timings.wrangle$hospital.end[pat.no]){
+          "Admitted"
+        } else if(timings.wrangle$status[pat.no] == "death"){
+          "Died"
+        } else if(timings.wrangle$status[pat.no] == "discharge"){
+          "Discharged"
+        } else {
+          "Transferred"
+        }
       } else {
-        "Transferred"
+        if(is.na(timings.wrangle$hospital.end[pat.no])){
+          if(day >= timings.wrangle$ICU.start[pat.no] & (is.na(timings.wrangle$ICU.end[pat.no] | day < timings.wrangle$ICU.end[pat.no] ))){
+            "ICU"
+          } else {
+            "Admitted"
+          }
+        } else {
+          if(day >= timings.wrangle$ICU.start[pat.no] &  day < timings.wrangle$ICU.end[pat.no]){
+            "ICU"
+          } else if(day < timings.wrangle$hospital.end[pat.no]){
+            "Admitted"
+          } else if(timings.wrangle$status[pat.no] == "death"){
+            "Died"
+          } else if(timings.wrangle$status[pat.no] == "discharge"){
+            "Discharged"
+          } else {
+            "Transferred"
+          }
+        }
       }
-      # } else {
-      # if(day >= timings.wrangle$ICU.start[pat.no] & day < timings.wrangle$ICU.end[pat.no]){
-      #   "ICU"
-      # } else if(timings.wrangle$Censored[pat.no]){
-      #   if(day >= timings.wrangle$ICU.end[pat.no]){
-      #     "Censored"
-      #   } else {
-      #     "Admitted"
-      #   }
-      # } else if(day < timings.wrangle$hospital.end[pat.no]){
-      #   "Admitted"
-      # } else if(timings.wrangle$Died[pat.no]){
-      #   "Dead"
-      # } else {
-      #   "Discharged"
-      # }
-      # }
     })
     names(times) <- glue::glue("day_{overall.start:overall.end}")
     times$subjid <- timings.wrangle$subjid[pat.no]
@@ -1742,11 +1750,11 @@ status.by.time.after.admission <- function(data, ...){
     pivot_longer(1:n.days, names_to = "day", values_to = "status") %>%
     dplyr::select(subjid, day, status) %>%
     dplyr::mutate(day = map_dbl(day, function(x) as.numeric(str_split_fixed(x, "_", 2)[2]))) %>%
-    dplyr::mutate(status = factor(status, levels = c("Died", "Admitted", "Transferred", "Discharged"))) %>%
+    dplyr::mutate(status = factor(status, levels = rev(c("Died", "ICU", "Admitted", "Transferred", "Discharged")))) %>%
     ungroup() 
   
-  ggplot(complete.timeline) + geom_bar(aes(x = day, fill = status), position = "fill", col = "black") +
-    scale_fill_brewer(palette = "Set1", name  = "Status", drop = F) + 
+  ggplot(complete.timeline) + geom_bar(aes(x = day, fill = status), position = "fill") +
+    scale_fill_brewer(palette = "Set3", name  = "Status", drop = F) + 
     theme_bw() + 
     xlab("Days relative to admission") +
     ylab("Proportion")
