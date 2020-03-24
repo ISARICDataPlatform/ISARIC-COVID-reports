@@ -1002,10 +1002,6 @@ modified.km.plot <- function(data, ...) {
 
 
 
-
-
-modified.km.plot(rand.data)
-
 modified.km.plot.1 <- function(data, ...){
   
   total.patients <- nrow(data)
