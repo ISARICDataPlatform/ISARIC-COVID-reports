@@ -434,6 +434,19 @@ treatment.labels[14] <- "Other"
 
 treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 
+
+extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
+  out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
+   
+  if(length(out) > 1){
+    stop("Too many entries")
+  } else if(length(out) == 0){
+    NA
+  } else {
+    out
+  }
+}
+
 # Add new columns with more self-explanatory names as needed
 
 patient.data <- patient.data %>%
@@ -552,14 +565,16 @@ patient.data <- patient.data %>%
     str_replace(temp, "70-120", "70+")
     
   })) %>%
+  dplyr::mutate(ICU.admission.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hostdat", TRUE)))) %>%
+  dplyr::mutate(ICU.admission.date = ymd(ICU.admission.date)) %>%
+  dplyr::mutate(ICU.discharge.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hoendat", TRUE)))) %>%
+  dplyr::mutate(ICU.discharge.date = ymd(ICU.discharge.date)) %>%
+  dplyr::mutate(ICU.duration = map_dbl(events, function(x) extract.named.column.from.events(x, "hodur", TRUE))) %>%
+  dplyr::mutate(IMV.duration  = map_dbl(events, function(x) extract.named.column.from.events(x, "invasive_prdur", TRUE))) %>%
   # these are just for the sake of having more self-explanatory column names
   dplyr::mutate(admission.date = hostdat) %>%
   dplyr::mutate(enrollment.date = dsstdat) %>%
-  dplyr::mutate(onset.date = cestdat) %>%
-  dplyr::mutate(ICU.admission.date = icu_hostdat) %>%
-  dplyr::mutate(ICU.discharge.date = icu_hoendat) %>%
-  dplyr::mutate(ICU.duration = hodur) %>%
-  dplyr::mutate(IMV.duration  = invasive_prdur)
+  dplyr::mutate(onset.date = cestdat) 
 
 compareNA <- function(v1,v2) {
   same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
