@@ -1076,6 +1076,25 @@ symptom.prevalence <- function(data, ...){
   
   nconds <- ncol(data2) - 1
   
+  data3 <- data2 %>%
+    pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
+    group_by(Condition) %>%
+    dplyr::mutate(Present = map_chr(Present, function(x){
+      if(is.na(x)){
+        "unknown"
+      } else if(x == 1){
+        "present"
+      } else if(x == 2){
+        "absent"
+      } else {
+        "unknown"
+      }
+    })) %>%
+    group_by(Condition) %>%
+    dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
+  
+  
+  
   data2 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
     group_by(Condition) %>%
@@ -1101,9 +1120,9 @@ symptom.prevalence <- function(data, ...){
     pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
     dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
     filter(label != "Other")
+ 
   
-  
-  ggplot(data2) + 
+  plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
     theme_bw() + 
     coord_flip() + 
@@ -1111,7 +1130,10 @@ symptom.prevalence <- function(data, ...){
     scale_fill_manual(values = c("deepskyblue1", "deepskyblue4"), name = "Symptom\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
-}
+   return(list(plt = plt, data3 = data3))
+  
+  
+  }
 
 # Prevalence of comorbidities
 
@@ -1121,6 +1143,24 @@ comorbidity.prevalence <- function(data, ...){
     dplyr::select(subjid, one_of(comorbidities$field)) 
   
   nconds <- ncol(data2) - 1
+  
+  data3 <- data2 %>%
+    pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
+    group_by(Condition) %>%
+    dplyr::mutate(Present = map_chr(Present, function(x){
+      if(is.na(x)){
+        "unknown"
+      } else if(x == 1){
+        "present"
+      } else if(x == 2){
+        "absent"
+      } else {
+        "unknown"
+      }
+    })) %>%
+    group_by(Condition) %>%
+    dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
+  
   
   combined.labeller <- bind_rows(comorbidities %>% add_column(type = "Comorbidities"), 
                                  admission.symptoms %>% add_column(type = "Symptoms at\nadmission"))
@@ -1152,13 +1192,15 @@ comorbidity.prevalence <- function(data, ...){
     filter(label != "Other")
   
   
-  ggplot(data2) + 
+  plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
     scale_fill_manual(values = c("indianred1", "indianred4"), name = "Comorbidity\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
+  
+  return(list(plt = plt, data3 = data3 ))
   
 }
 
