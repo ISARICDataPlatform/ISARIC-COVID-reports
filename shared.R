@@ -16,6 +16,7 @@ library(binom)
 library(boot)
 library(survival)
 library(survminer)
+library(tidyverse)
 
 # flags for inclusion of the two data files
 
@@ -225,12 +226,15 @@ if(use.uk.data){
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+    dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
     filter(daily_dsstdat < as.Date(embargo.limit))
 } else {
   uk.data <- NULL
 }
+
+
 
 
 if(use.eot.data){
@@ -300,8 +304,8 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
-patient.data <- demog.data %>% left_join(event.data) %>%
-  filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all cases on or after embargo limit
+patient.data <- demog.data %>% left_join(event.data)%>%
+  filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all UK cases on or after embargo limit
 
 # Add new columns with more self-explanatory names as needed
 
@@ -576,8 +580,6 @@ patient.data <- patient.data %>%
 # save RDA @todo change this to keep only relevant columns
 
 
-# Manual filtering of unlikely values 
-patient.data <- patient.data[-c(4, nrow(patient.data)), ]
 
 
 trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
@@ -989,15 +991,20 @@ modified.km.plot <- function(data, ...) {
                    ))
   ggplot(data = df)+
     geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
-    xlim(0, 20)+
+    xlim(0, 5)+
     theme_bw()+
-    scale_colour_manual(values = c("#e41a1c",  "#377eb8", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
+    scale_colour_manual(values = c("indianred",  "green", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
     scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
     xlab("Days after admission") +
     ylab("Cumulative probability")
   
 }
 
+
+
+
+
+modified.km.plot(rand.data)
 
 modified.km.plot.1 <- function(data, ...){
   
