@@ -1282,7 +1282,11 @@ treatment.upset <- function(data, ...) {
                  antiviral_cmyn, antiviral_cmtrt, 
                  antibiotic_cmyn, 
                  corticost_cmyn, corticost_cmroute,
-                 antifung_cmyn)
+                 antifung_cmyn,
+                 oxygen_cmoccur, noninvasive_proccur, invasive_proccur, 
+                 extracorp_prtrt, 
+                 renal_proccur,
+                 inotrop_cmtrt)
     )
     detail$Pid_special <- i   
     # This is a PID made for this table and does not correlate with other
@@ -1292,16 +1296,19 @@ treatment.upset <- function(data, ...) {
     } else {
       details <- rbind(details, detail, deparse.level = 1)
     }
-    
   }
   
   # If no dsterm result then not the form that will have treatment details
   details$All_NA <- 1
   details$All_NA[is.na(details$dsterm) == FALSE] <- 0
-  details$All_NA[is.na(details$antiviral_cmyn) == TRUE & 
-                   is.na(details$antibiotic_cmyn) == TRUE & 
-                   is.na(details$antifung_cmyn) == TRUE & 
-                   is.na(details$corticost_cmyn) == TRUE] <- 1
+  # Also, if all the treatment columns are NA then exclude
+  col_from <- 2
+  col_to <- ncol(details) - 2
+  details$allna <- 1
+  for (i in col_from:col_to) {
+    details$allna[is.na(details[, i]) == FALSE] <- 0
+  }
+  details$All_NA[details$allna == 1] <- 1
   details <- subset(details, All_NA == 0)
   
   # Separate steroids according to route
@@ -1314,30 +1321,40 @@ treatment.upset <- function(data, ...) {
   details$Intravenous_Steroid[details$corticost_cmroute == 2] <- 1
   details$Inhaled_Steroid[details$corticost_cmroute == 3] <- 1
   
-  # 1 is Yes, set anything else to 0 (No)
-  details$antiviral_cmyn[details$antiviral_cmyn != 1 | 
-                           is.na(details$antiviral_cmyn) == TRUE] <- 0
-  details$antibiotic_cmyn[details$antibiotic_cmyn != 1 | 
-                            is.na(details$antibiotic_cmyn) == TRUE] <- 0
-  details$antifung_cmyn[details$antifung_cmyn != 1 | 
-                          is.na(details$antifung_cmyn) == TRUE] <- 0
-  details$corticost_cmyn[details$corticost_cmyn != 1 | 
-                           is.na(details$corticost_cmyn) == TRUE] <- 0
+  # Label variables for the plot
   details$Antiviral <- details$antiviral_cmyn
   details$Antibiotic <- details$antibiotic_cmyn
   details$Antifungal <- details$antifung_cmyn
   details$Corticosteroid <- details$corticost_cmyn
+  details$Supplemental.oxygen <- details$oxygen_cmoccur
+  details$NIV <- details$noninvasive_proccur
+  details$Invasive.ventilation <- details$invasive_proccur
+  details$ECMO <- details$extracorp_prtrt 
+  details$RRT <- details$renal_proccur
+  details$Inotropes <- details$inotrop_cmtrt
   
-  # Plot 1 - not separating according to type of antiviral
+  # 1 is Yes, set anything else to 0 (No)
+  col_from <- 20 ## This will need changing if number of variables changed
+  col_to <- ncol(details)
+  for (i in col_from:col_to) {
+    details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
+  }
+  
   treatments <- details %>%
     dplyr::select(
       Pid_special, 
       Antiviral, 
       Antibiotic, 
       Antifungal, 
-      Corticosteroid
+      Corticosteroid, 
+      Supplemental.oxygen, 
+      NIV, 
+      Invasive.ventilation, 
+      ECMO, 
+      RRT, 
+      Inotropes
     ) %>%
-    pivot_longer(2:5, names_to = "Treatment", values_to = "Present") %>%
+    pivot_longer(2:11, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) %>%
     group_by(Pid_special) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
@@ -1355,7 +1372,7 @@ treatment.upset <- function(data, ...) {
     geom_col(fill = "chartreuse4") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
-    ylab("Proportion of patients with \n recorded treatment data") +
+    ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
     scale_x_upset() 
   
   # Counts
