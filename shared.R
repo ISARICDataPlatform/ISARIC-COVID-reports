@@ -1175,6 +1175,10 @@ violin.sex.func <- function(data, ...){
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
+  data2 <- data2 %>%
+    filter(!is.na(sex))
+    
+  
   vd <- tibble(Sex = data2$sex, length.of.stay = abs(data2$length.of.stay) )
   
   # by sex
