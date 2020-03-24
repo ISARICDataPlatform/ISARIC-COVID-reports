@@ -247,7 +247,7 @@ if(use.eot.data){
     left_join(site.list, by = "site.number") %>%
     dplyr::select(-site.number) %>%
     add_column(agedat = NA) %>%
-    dplyr::mutate(data.source = "EOT") %<%
+    dplyr::mutate(data.source = "EOT") %>%
     filter(subjid != "TEST-SF")
 }else{
   eot.data <- NULL
