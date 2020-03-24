@@ -35,7 +35,7 @@ d.dict <- read_csv(glue("{data.path}/{data.dict.file}")) %>%
   dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
 
 comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
-admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4")) %>% pull(field.name)
+admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4") & field.type == "radio") %>% pull(field.name)
 treatment.colnames <- d.dict %>% filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
 
 # COMORBIDITIES
@@ -57,7 +57,7 @@ comorbidities.labels[18] <- "Other"
 # SYMPTOMS
 
 admission.symptoms.labels <- d.dict %>% 
-  filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4")) %>% 
+  filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4") & field.type == "radio" ) %>% 
   pull(field.label) %>%
   str_match(pattern = "4a\\.[0-9]+\\.[\\.]?[0-9]?\\s(.*)") %>%
   as_tibble() %>%
@@ -65,7 +65,7 @@ admission.symptoms.labels <- d.dict %>%
   map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
   map_chr(function(x) sub("\\s+$", "", x)) 
 
-admission.symptoms.labels[26] <- "Bleeding (other)"
+admission.symptoms.labels[2] <- "Cough: no sputum"
 
 # TREATMENTS
 
@@ -226,12 +226,11 @@ if(use.uk.data){
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     dplyr::mutate(Country = "UK") %>%
-    dplyr::mutate(data.source = "UK") %>%
-    filter(daily_dsstdat < as.Date(embargo.limit))
+    dplyr::mutate(data.source = "UK") #%>%
+    # filter(daily_dsstdat < as.Date(embargo.limit))
 } else {
   uk.data <- NULL
 }
-
 
 if(use.eot.data){
   eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 10000)  %>% 
@@ -246,7 +245,8 @@ if(use.eot.data){
     left_join(site.list, by = "site.number") %>%
     dplyr::select(-site.number) %>%
     add_column(agedat = NA) %>%
-    dplyr::mutate(data.source = "EOT")
+    dplyr::mutate(data.source = "EOT") %<%
+    filter(subjid != "TEST-SF")
 }else{
   eot.data <- NULL
 }
@@ -300,8 +300,8 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
-patient.data <- demog.data %>% left_join(event.data) %>%
-  filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all cases on or after embargo limit
+patient.data <- demog.data %>% left_join(event.data) #%>%
+  # filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all cases on or after embargo limit
 
 # Add new columns with more self-explanatory names as needed
 
@@ -549,12 +549,20 @@ patient.data <- patient.data %>%
   })) %>%
   dplyr::mutate(admission.to.exit = as.numeric(difftime(exit.date, hostdat,  unit="days")),
                 onset.to.admission = as.numeric(difftime(hostdat, cestdat, unit="days"))) %>%
-  dplyr::mutate(admission.to.censored = map2_dbl(admission.to.exit, hostdat, function(x,y){
+  dplyr::mutate(admission.to.censored = pmap_dbl(list(admission.to.exit, hostdat, data.source), function(x,y,z){
     if(is.na(x)){
-      as.numeric(difftime(ref.date, y,  unit="days"))}
-    else{
+      if(z == "UK"){
+        # censored until the embargo
+        as.numeric(difftime(as.Date(embargo.limit), y,  unit="days"))
+      } else {
+        # censored until today
+        as.numeric(difftime(ref.date, y,  unit="days"))
+      }
+    }
+    else {
       NA
     }
+    
   })) %>%
   dplyr::mutate(admission.to.death = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
     if(compareNA(4,x )){
