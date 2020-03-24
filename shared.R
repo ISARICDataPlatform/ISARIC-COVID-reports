@@ -18,6 +18,8 @@ library(survival)
 library(survminer)
 library(tidyverse)
 
+## Dataset inclusion flags ##
+
 # flags for inclusion of the two data files
 
 use.uk.data <- TRUE
@@ -28,69 +30,6 @@ use.eot.data <- TRUE
 if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
 }
-
-# read the data dictionary to get lists of columns for symptoms at admission, comorbidities, and treatments
-
-d.dict <- read_csv(glue("{data.path}/{data.dict.file}")) %>%
-  dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
-  dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
-
-comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
-admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4") & field.type == "radio") %>% pull(field.name)
-treatment.colnames <- d.dict %>% filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
-
-# COMORBIDITIES
-
-comorbidities.labels <- d.dict %>% 
-  filter(form.name == "comorbidities" & field.type == "radio") %>% 
-  pull(field.label) %>%
-  str_match(pattern = "4b\\.[0-9]+\\.\\s(.*)") %>%
-  as_tibble() %>%
-  pull(2) %>%
-  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
-  map_chr(function(x) sub("\\s+$", "", x))
-
-# At some point, farting around with regexes is more trouble than its worth
-
-comorbidities.labels[1] <- "Chronic cardiac disease"
-comorbidities.labels[18] <- "Other"
-
-# SYMPTOMS
-
-admission.symptoms.labels <- d.dict %>% 
-  filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4") & field.type == "radio" ) %>% 
-  pull(field.label) %>%
-  str_match(pattern = "4a\\.[0-9]+\\.[\\.]?[0-9]?\\s(.*)") %>%
-  as_tibble() %>%
-  pull(2) %>%
-  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
-  map_chr(function(x) sub("\\s+$", "", x)) 
-
-admission.symptoms.labels[2] <- "Cough: no sputum"
-
-# TREATMENTS
-
-treatment.labels <- d.dict %>% 
-  filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>%
-  pull(field.label) %>%
-  str_match(pattern = "6\\.[0-9]+[\\.]?[0-9]?[\\.]?\\s(.*)") %>%
-  as_tibble() %>%
-  pull(2) %>%
-  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
-  # I don't know why you can't figure this out nicely. Do it later.
-  map_chr(function(x) sub("\\s+$", "", x)) %>%
-  map_chr(function(x) sub("\\?+$", "", x)) %>%
-  map_chr(function(x) sub("\\s+$", "", x)) 
-
-treatment.labels[8] <- "Inhaled nitric oxide"
-treatment.labels[9] <- "Tracheostomy" 
-treatment.labels[14] <- "Other"
-
-# Lookup tables for the nice labels used in graphs
-
-comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
-admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
-treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 
 # List of sites
 
@@ -160,7 +99,7 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
            "SWE" = "Sweden",
            "TUR" = "Turkey",
            "UK" = "UK"
-           )
+    )
   })) %>%
   mutate(flag.url = map_chr(country.code, function(x){
     switch(x,
@@ -221,7 +160,25 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
            "UK" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/gb.svg")
   }))
 
+
 if(use.uk.data){
+  
+  # the UK data has some jaw-dropping differences between column formats. For a small number of radio buttons 0 is FALSE and 2 NA; for the rest 2 FALSE and 3 NA!!!
+  
+  radio.button.convert <- function(x){
+    map_dbl(x, function(y) {
+      if(is.na(y)){
+        NA
+      } else {
+        switch(as.character(y),
+               "1" = 1,
+               "0" = 2,
+               "2" = 3)
+      }
+    })
+  }
+  
+  
   uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
@@ -229,7 +186,8 @@ if(use.uk.data){
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
-    filter(daily_dsstdat < as.Date(embargo.limit))
+    filter(daily_dsstdat < as.Date(embargo.limit)) %>%
+    mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert)
 } else {
   uk.data <- NULL
 }
@@ -305,6 +263,176 @@ event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events 
 patient.data <- demog.data %>% left_join(event.data)%>%
   filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all UK cases on or after embargo limit
 
+### Comorbitities, symptoms, and treatments ###
+
+# read the data dictionary to get lists of columns for symptoms at admission, comorbidities, and treatments
+
+d.dict <- read_csv(glue("{data.path}/{data.dict.file}")) %>%
+  dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
+  dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
+
+comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
+admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4") & field.type == "radio" &  field.name != "bleed_ceterm_v2") %>% pull(field.name)
+treatment.colnames <- d.dict %>% filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
+
+# COMORBIDITIES
+
+comorbidities.labels <- d.dict %>% 
+  filter(form.name == "comorbidities" & field.type == "radio") %>% 
+  pull(field.label) %>%
+  str_match(pattern = "4b\\.[0-9]+\\.\\s(.*)") %>%
+  as_tibble() %>%
+  pull(2) %>%
+  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
+  map_chr(function(x) sub("\\s+$", "", x))
+
+# At some point, farting around with regexes is more trouble than its worth
+
+comorbidities.labels[1] <- "Chronic cardiac disease"
+comorbidities.labels[18] <- "Other"
+
+comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
+
+patient.data <- patient.data %>%
+  mutate(liver.disease = map2_dbl(mildliver, modliv, function(mild, moderate){
+    if(is.na(mild) & is.na(moderate)){
+      NA
+    } else if(is.na(mild)){
+      moderate
+    } else if(is.na(moderate)){
+      mild
+    } else if(mild == 1 | moderate == 1){
+      1
+    } else if(mild == 2 & moderate == 2){
+      2
+    } else {
+      3
+    }
+  }))
+
+comorbidities <- comorbidities %>% bind_rows(list(field = "liver.disease", label = "Liver disease")) %>%
+  filter(field != "mildliver" & field != "modliv")
+
+patient.data <- patient.data %>%
+  mutate(diabetes = map2_dbl(diabetes_mhyn, diabetescom_mhyn, function(simple, complex){
+    if(is.na(simple) & is.na(complex)){
+      NA
+    } else if(is.na(simple)){
+      complicated
+    } else if(is.na(complex)){
+      simple
+    } else if(simple == 1 | complex == 1){
+      1
+    } else if(simple == 2 & complex == 2){
+      2
+    } else {
+      2
+    }
+  }))
+
+comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "Diabetes")) %>%
+  filter(field != "diabetes_mhyn" & field != "diabetescom_mhyn")
+
+
+# SYMPTOMS
+
+# Note that bleed_ceterm_v2 is wrongly described as a radio button; it is free text
+
+admission.symptoms.labels <- d.dict %>% 
+  filter(form.name == "admission_signs_and_symptoms" & 
+           startsWith(field.label, "4") & 
+           field.type == "radio" &  
+           field.name != "bleed_ceterm_v2" ) %>% 
+  pull(field.label) %>%
+  str_match(pattern = "4a\\.[0-9]+\\.[\\.]?[0-9]?\\s(.*)") %>%
+  as_tibble() %>%
+  pull(2) %>%
+  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
+  map_chr(function(x) sub("\\s+$", "", x)) 
+
+admission.symptoms.labels[2] <- "Cough: no sputum"
+
+admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
+
+# these have not been entered coherently, replace them. Someone with a cough with sputum does not have a cough without it
+
+patient.data <- patient.data %>% 
+  mutate(cough.nosputum = pmap_dbl(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
+    if(is.na(x)){
+      NA
+    } else if(all(c(x,y,z) == 2)){
+      2
+    } else if(is.na(y) | is.na(z)){
+      # if these are NA then you don't know what the cough was like
+      NA    
+    } else if(y == 1 | z == 1){
+      2    
+    } else {
+      1
+    }
+  })) %>% 
+  mutate(cough.sputum = map2_dbl(coughsput_ceoccur_v2, coughhb_ceoccur_v2, function(y,z){
+    if(is.na(y)){
+      NA
+    } else if(all(c(y,z) == 2)){
+      2
+    } else if(is.na(z)){
+      # if this is NA then you don't know what the sputum was like
+      NA    
+    } else if(z == 1){
+      2    
+    } else {
+      1
+    }
+  })) %>% 
+  mutate(cough.bloodysputum = coughhb_ceoccur_v2)
+
+admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
+  bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
+  bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)")) %>%
+  filter(field != "cough_ceoccur_v2" & field != "coughsput_ceoccur_v2" & field !="coughhb_ceoccur_v2")
+
+patient.data <- patient.data %>%
+  mutate(shortness.breath = map2_dbl(shortbreath_ceoccur_v2, lowerchest_ceoccur_v2, function(adult, paed){
+    if(is.na(adult) & is.na(paed)){
+      NA
+    } else if(is.na(adult)){
+      paed
+    } else if(is.na(paed)){
+      adult
+    } else if(adult == 1 | paed == 1){
+      1
+    } else if(adult == 2 & paed == 2){
+      2
+    } else {
+      2
+    }
+  }))
+
+admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "shortness.breath", label = "Shortness of breath")) %>%
+  filter(field != "shortbreath_ceoccur_v2" & field != "lowerchest_ceoccur_v2")
+
+
+
+# TREATMENTS
+
+treatment.labels <- d.dict %>% 
+  filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>%
+  pull(field.label) %>%
+  str_match(pattern = "6\\.[0-9]+[\\.]?[0-9]?[\\.]?\\s(.*)") %>%
+  as_tibble() %>%
+  pull(2) %>%
+  map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
+  # I don't know why you can't figure this out nicely. Do it later.
+  map_chr(function(x) sub("\\s+$", "", x)) %>%
+  map_chr(function(x) sub("\\?+$", "", x)) %>%
+  map_chr(function(x) sub("\\s+$", "", x)) 
+
+treatment.labels[8] <- "Inhaled nitric oxide"
+treatment.labels[9] <- "Tracheostomy" 
+treatment.labels[14] <- "Other"
+
+treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 
 # Add new columns with more self-explanatory names as needed
 
@@ -760,7 +888,7 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
     slice(1:max.comorbidities) %>%
     pull(Condition)
   
-  data3 <- data %>%
+  top.n.conditions.tbl <- data %>%
     dplyr::select(subjid, one_of(most.common)) %>%
     pivot_longer(2:(length(most.common)+1), names_to = "Condition", values_to = "Present") %>%
     left_join(comorbidities, by = c("Condition" = "field")) %>%
@@ -784,7 +912,47 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
     })) %>%
     dplyr::select(-Conditions, -Presence)
   
-  ggplot(data3, aes(x = conditions.present)) + 
+  other.conditions.tbl <- data %>%
+    dplyr::select(subjid, one_of(comorbidities$field) & !one_of(most.common)) 
+  
+  other.conditions.tbl <- other.conditions.tbl%>%
+    pivot_longer(2:(ncol(other.conditions.tbl)), names_to = "Condition", values_to = "Present") %>%
+    group_by(subjid) %>%
+    dplyr::summarise(Present = any(Present == 1)) %>%
+    add_column(label = "Any other") %>%
+    filter(!is.na(Present)) %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) %>%
+    group_by(subjid) %>%
+    dplyr::summarise(Conditions = list(label), Presence = list(Present)) %>%
+    dplyr::mutate(conditions.present = map2(Conditions, Presence, function(c,p){
+      c[which(p)]
+    })) %>%
+    dplyr::select(-Conditions, -Presence)
+  
+  # just get rid of individuals from the top n table that have NAs in the other table
+  
+  label.order = c(unique(comorbidities %>% filter(field %in% most.common ) %>% pull(label)), "Any other")  
+    
+  top.n.conditions.tbl <- top.n.conditions.tbl %>%
+    filter(subjid %in% other.conditions.tbl$subjid) %>%
+    left_join(other.conditions.tbl, by = "subjid") %>%
+    mutate(conditions.present = map2(conditions.present.x, conditions.present.y, function(a,b){
+      c(a,b)
+    })) %>%
+    dplyr::select(-conditions.present.x, -conditions.present.y)
+
+  
+  ggplot(top.n.conditions.tbl, aes(x = conditions.present)) + 
     geom_bar(fill = "indianred3", col = "black") + 
     theme_bw() +
     xlab("Comorbidities present at admission") +
@@ -825,12 +993,11 @@ symptoms.upset <- function(data, max.symptoms, ...){
     group_by(Condition) %>%
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
     ungroup() %>%
-    filter(Condition != "other_mhyn") %>%
     arrange(desc(Present)) %>%
     slice(1:max.symptoms) %>%
     pull(Condition)
   
-  data3 <- data %>%
+  top.n.symptoms.tbl <- data %>%
     dplyr::select(subjid, one_of(most.common)) %>%
     pivot_longer(2:(length(most.common)+1), names_to = "Condition", values_to = "Present") %>%
     left_join(admission.symptoms, by = c("Condition" = "field")) %>%
@@ -854,7 +1021,45 @@ symptoms.upset <- function(data, max.symptoms, ...){
     })) %>%
     dplyr::select(-Conditions, -Presence)
   
-  ggplot(data3, aes(x = conditions.present)) + 
+  other.conditions.tbl <- data %>%
+    dplyr::select(subjid, one_of(admission.symptoms$field) & !one_of(most.common)) 
+  
+  other.conditions.tbl <- other.conditions.tbl%>%
+    pivot_longer(2:(ncol(other.conditions.tbl)), names_to = "Condition", values_to = "Present") %>%
+    group_by(subjid) %>%
+    dplyr::summarise(Present = any(Present == 1)) %>%
+    add_column(label = "Any other") %>%
+    filter(!is.na(Present)) %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) %>%
+    group_by(subjid) %>%
+    dplyr::summarise(Conditions = list(label), Presence = list(Present)) %>%
+    dplyr::mutate(conditions.present = map2(Conditions, Presence, function(c,p){
+      c[which(p)]
+    })) %>%
+    dplyr::select(-Conditions, -Presence)
+  
+  # just get rid of individuals from the top n table that have NAs in the other table
+  
+  top.n.symptoms.tbl <- top.n.symptoms.tbl %>%
+    filter(subjid %in% other.conditions.tbl$subjid) %>%
+    left_join(other.conditions.tbl, by = "subjid") %>%
+    mutate(conditions.present = map2(conditions.present.x, conditions.present.y, function(a,b){
+      c(a,b)
+    })) %>%
+    dplyr::select(-conditions.present.x, -conditions.present.y)
+  
+  
+  ggplot(top.n.symptoms.tbl, aes(x = conditions.present)) + 
     geom_bar(fill = "deepskyblue3", col = "black") + 
     theme_bw() +
     xlab("Symptoms present at admission") +
@@ -862,12 +1067,58 @@ symptoms.upset <- function(data, max.symptoms, ...){
     scale_x_upset() 
 }
 
-# Prevalence of symptoms and comortbidities
+# Prevalence of symptoms
 
-comorbidity.symptom.prevalence <- function(data, ...){
+symptom.prevalence <- function(data, ...){
   
   data2 <- data %>%
-    dplyr::select(subjid, one_of(admission.symptoms$field), one_of(comorbidities$field)) 
+    dplyr::select(subjid, one_of(admission.symptoms$field)) 
+  
+  nconds <- ncol(data2) - 1
+  
+  data2 <- data2 %>%
+    pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
+    group_by(Condition) %>%
+    filter(!is.na(Present)) %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) %>%
+    dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
+    left_join(admission.symptoms, by = c("Condition" = "field")) %>%
+    dplyr::select(-Condition) %>%
+    dplyr::mutate(prop.yes = Present/Total) %>%
+    dplyr::mutate(prop.no = 1-prop.yes) %>%
+    arrange(prop.yes) %>%
+    dplyr::mutate(Condition = as_factor(label)) %>%
+    pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
+    dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
+    filter(label != "Other")
+  
+  
+  ggplot(data2) + 
+    geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    theme_bw() + 
+    coord_flip() + 
+    ylim(0, 1) +
+    scale_fill_manual(values = c("deepskyblue1", "deepskyblue4"), name = "Symptom\npresent", labels = c("No", "Yes")) +
+    theme(axis.text.y = element_text(size = 7))
+  
+}
+
+# Prevalence of comorbidities
+
+comorbidity.prevalence <- function(data, ...){
+  
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(comorbidities$field)) 
   
   nconds <- ncol(data2) - 1
   
@@ -890,28 +1141,27 @@ comorbidity.symptom.prevalence <- function(data, ...){
       }
     })) %>%
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
-    left_join(combined.labeller, by = c("Condition" = "field")) %>%
+    left_join(comorbidities, by = c("Condition" = "field")) %>%
     dplyr::select(-Condition) %>%
     dplyr::mutate(prop.yes = Present/Total) %>%
     dplyr::mutate(prop.no = 1-prop.yes) %>%
-    arrange(type, prop.yes) %>%
+    arrange(prop.yes) %>%
     dplyr::mutate(Condition = as_factor(label)) %>%
     pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
     dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
-    dplyr::mutate(typepresent = glue("{type}_{affected}")) %>%
     filter(label != "Other")
   
   
   ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
-    facet_wrap(~type, scales = "free") +
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
-    scale_fill_brewer(palette = "Paired", name = "Condition\npresent", labels = c("No", "Yes")) +
+    scale_fill_manual(values = c("indianred1", "indianred4"), name = "Comorbidity\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
 }
+
 
 # Raw proportions of patients undergoing each treatment
 
@@ -1184,7 +1434,7 @@ violin.sex.func <- function(data, ...){
   
   data2 <- data2 %>%
     filter(!is.na(sex))
-    
+  
   
   vd <- tibble(Sex = data2$sex, length.of.stay = abs(data2$length.of.stay) )
   
@@ -1731,7 +1981,7 @@ onset.adm.func <- function(data){
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
   admit.discharge.2 <- round.zeros(admit.discharge)
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
-
+  
   obs <-  admit.discharge.2  # record observed values for reporting
   
   # Plot 

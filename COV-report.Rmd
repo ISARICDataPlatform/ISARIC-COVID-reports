@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 library(tidyverse)
 library(glue)
+library(gridExtra)
 
 # file locations
 
@@ -87,30 +88,24 @@ age.pyramid(patient.data)
 
 **Figure 2**: The distribution of combinations of the four most common symptoms seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
 
-```{r symptomcombos, echo=FALSE}
+```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3}
 
 symptoms.upset(patient.data, 4)
+symptom.prevalence(patient.data)
 
 ```
 
 
 **Figure 3**: The distribution of combinations of the four most common comorbidities seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity.
 
-```{r comorbcombos, echo=FALSE}
+```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3}
 
 comorbidities.upset(patient.data, 4)
+comorbidity.prevalence(patient.data)
 
 ```
 
-**Figure 4**: Prevalence of all recorded comorbidities and symptoms at admission, across all patients for whom this data was recorded
-
-```{r prevsympcov, echo = FALSE, out.width= "80%"}
-
-comorbidity.symptom.prevalence(patient.data)
-
-```
-
-**Figure 5**: The distribution of patient status by number days after admission. "Transferred" patients were moved to another institution, where their final outcome cannot be determined. Patients with censored outcomes at the time of this report remain in the "Admitted" category.
+**Figure 4**: The distribution of patient status by number days after admission. "Transferred" patients were moved to another institution, where their final outcome cannot be determined. Patients with censored outcomes at the time of this report remain in the "Admitted" category.
 
 ```{r outcome.curve, out.width= "80%"}
 
@@ -118,7 +113,7 @@ comorbidity.symptom.prevalence(patient.data)
 status.by.time.after.admission(patient.data)
 ```
 
-**Figure 6**: Distribution of length of hospital stay by 19/03/2020, according to patient sex. The hospital stay function is either time to death or recovery or time to censorship.
+**Figure 5**: Distribution of length of hospital stay by 19/03/2020, according to patient sex. The hospital stay function is either time to death or recovery or time to censorship.
 
 ```{r stay.by.sex, out.width= "80%"}
 violin.sex.func(patient.data)
@@ -127,7 +122,7 @@ violin.sex.func(patient.data)
 
 ```
 
-**Figure 7**: Distribution of length of hospital stay by 19/03/2020, according to patient age group. The hospital stay function considers the time to death, recovery or censorship.
+**Figure 6**: Distribution of length of hospital stay by 19/03/2020, according to patient age group. The hospital stay function considers the time to death, recovery or censorship.
 
 ```{r  stay.by.age, out.width= "80%"}
 
@@ -135,7 +130,7 @@ violin.age.func(patient.data)
 ```
 
 
-**Figure 8**: Estimated hospital fatality ratio based on patients with complete outcome data, showing changes to estimate over time. Shaded area represents 95% confidence interval. Methods from Wu *et al.*(2020).
+**Figure 7**: Estimated hospital fatality ratio based on patients with complete outcome data, showing changes to estimate over time. Shaded area represents 95% confidence interval. Methods from Wu *et al.*(2020).
 
 ```{r out.width= "80%"}
 
@@ -143,7 +138,7 @@ hospital.fatality.ratio(patient.data)$plt
 
 ```
 
-**Figure 9**: Patient outcomes by epidemiological week (of 2020) of admission
+**Figure 8**: Patient outcomes by epidemiological week (of 2020) of admission
 
 ```{r recruitment3, echo=FALSE}
 
@@ -153,14 +148,14 @@ outcomes.by.admission.date(patient.data)
 
 # Treatment
 
-**Figure 10**: Treatments used on all patients where this information was recorded
+**Figure 9**: Treatments used on all patients where this information was recorded
 
 ```{r treatment1, echo=FALSE}
 treatment.use.plot(patient.data)
 ```
 
 
-**Figure 11**: The distribution of combinations of antimicrobial treatments and steroids administed during hospital stay, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
+**Figure 10**: The distribution of combinations of antimicrobial treatments and steroids administed during hospital stay, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)$p
@@ -172,7 +167,7 @@ treatment.upset(patient.data)$p
 Blue curves show the Gamma distribution fit to two time-dependent data variables. 
 
 
-**Figure 12**: Distribution of time from symptom onset to admission.
+**Figure 11**: Distribution of time from symptom onset to admission.
 
 ```{r onset.admission, out.width = '80%'}
 
@@ -181,7 +176,7 @@ onset.adm.func(patient.data)$plt
 ```
 
 
-**Figure 13**: Distribution of time from admission to an outcome - either death or recovery.
+**Figure 12**: Distribution of time from admission to an outcome - either death or recovery.
 
 
 ```{r  adm.outcome, out.width = '80%'}
@@ -192,7 +187,7 @@ adm.outcome.func(patient.data)$plt
 
 
 
-**Figure 14**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The case  fatality ratio (black) is based on the cumulative incidence function of deaths and recoveries so far. For a completed epidemic,
+**Figure 13**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The case  fatality ratio (black) is based on the cumulative incidence function of deaths and recoveries so far. For a completed epidemic,
 the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
@@ -205,7 +200,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 15**: Number of sites per country
+**Figure 14**: Number of sites per country
 
 ```{r recruitment1, echo=FALSE}
 
@@ -213,7 +208,7 @@ sites.by.country(patient.data)
 
 ```
 
-**Figure 16**: Distribution of patients by country and outcome
+**Figure 15**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
