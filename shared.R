@@ -555,7 +555,6 @@ patient.data <- patient.data %>%
     temp <- substr(a, 2, nchar(a) -1 )
     temp <- str_replace(temp, ",", "-")
     str_replace(temp, "90-120", "90+")
-    
   })) %>%
   dplyr::mutate(agegp10 = cut(consolidated.age, c(seq(0,70,by = 10),120), right = FALSE)) %>%
   dplyr::mutate(agegp10 = fct_relabel(agegp10, function(a){
@@ -563,7 +562,6 @@ patient.data <- patient.data %>%
     temp <- substr(a, 2, nchar(a) -1 )
     temp <- str_replace(temp, ",", "-")
     str_replace(temp, "70-120", "70+")
-    
   })) %>%
   dplyr::mutate(ICU.admission.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hostdat", TRUE)))) %>%
   dplyr::mutate(ICU.admission.date = ymd(ICU.admission.date)) %>%
@@ -804,7 +802,7 @@ age.pyramid <- function(data, ...){
     geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
     xlab("Age group") +
     ylab("Count") +
     scale_x_discrete(drop = "F") +
@@ -851,7 +849,7 @@ outcomes.by.country <- function(data, ...){
   
   ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
     xlab("Country") +
     ylab("Cases") + theme(axis.text.x = element_text(angle = 45, hjust=1))
 }
@@ -863,7 +861,7 @@ outcomes.by.admission.date <- function(data, ...){
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
   ggplot(data2) + geom_bar(aes(x = epiweek(hostdat), fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
     scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week, 2020") +
     ylab("Cases") 
