@@ -23,7 +23,7 @@ library(tidyverse)
 # flags for inclusion of the two data files
 
 use.uk.data <- TRUE
-embargo.limit <- '2020-03-09'
+embargo.limit <- today()
 use.row.data <- TRUE
 use.eot.data <- TRUE
 
@@ -186,7 +186,7 @@ if(use.uk.data){
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
-    filter(daily_dsstdat < as.Date(embargo.limit)) %>%
+    filter(daily_dsstdat < embargo.limit) %>%
     mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert)
 } else {
   uk.data <- NULL
@@ -261,7 +261,7 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
 patient.data <- demog.data %>% left_join(event.data)%>%
-  filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all UK cases on or after embargo limit
+  filter(dsstdat < embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
 
 ### Comorbitities, symptoms, and treatments ###
 
@@ -697,7 +697,7 @@ patient.data <- patient.data %>%
     if(is.na(x)){
       if(z == "UK"){
         # censored until the embargo
-        as.numeric(difftime(as.Date(embargo.limit), y,  unit="days"))
+        as.numeric(difftime(embargo.limit, y,  unit="days"))
       } else {
         # censored until today
         as.numeric(difftime(ref.date, y,  unit="days"))
