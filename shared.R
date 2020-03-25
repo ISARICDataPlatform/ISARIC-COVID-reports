@@ -1378,9 +1378,9 @@ modified.km.plot <- function(data, ...) {
   
   # Exclude rows which no entries for length of stay
   
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+    mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
       max(x, y, na.rm = T)
     }))
   
@@ -1582,12 +1582,12 @@ violin.sex.func <- function(data, ...){
   
   # Analysis to be run on only entries with admission.to.exit entries
   
-  data2 <- data %>% filter(!is.na(admission.to.exit))      #| !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(start.to.exit))      #| !is.na(admission.to.censored))
   
   # This is to include dates for individuals still in hospital
   
   data2 <- data2 %>% 
-  mutate(length.of.stay = abs(round.zeros(admission.to.exit)))  %>%#, admission.to.censored, function(x,y){
+  mutate(length.of.stay = abs(round.zeros(start.to.exit)))  %>%#, admission.to.censored, function(x,y){
   #     max(x, y, na.rm = T)
   #   })) %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
@@ -1624,19 +1624,12 @@ violin.sex.func <- function(data, ...){
 
 violin.age.func <- function(data, ...){
   
-  # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
+  # Analysis to be run on only entries with admission.to.exit entries
   
-  data2 <- data %>% filter(!is.na(admission.to.exit))      #| !is.na(admission.to.censored))
-  
-
-  # This is to include dates for individuals still in hospital
-
-  data2 <- data2 %>%
-    mutate(length.of.stay = pmax(admission.to.exit, na.rm = T))
-
+  data2 <- data %>% filter(!is.na(start.to.exit))      #| !is.na(admission.to.censored))
   
   data2 <- data2 %>% 
-    mutate(length.of.stay = abs(round.zeros(admission.to.exit)))
+    mutate(length.of.stay = abs(round.zeros(start.to.exit)))
   
   vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = abs(data2$length.of.stay) )
   
@@ -1645,7 +1638,7 @@ violin.age.func <- function(data, ...){
   vdx <- vdx %>% filter(!is.na(Age))
   
   vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
-    geom_violin(trim=FALSE)+ #geom_boxplot(width=0.1, fill="white")  +
+    geom_violin(trim=FALSE)+ geom_boxplot(width=0.05, fill="white")  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -1963,9 +1956,9 @@ casefat2 <-  function(data, conf=0.95){
   
   # Exclude rows which no entries for length of stay
   
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+    mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
       max(x, y, na.rm = T)
     }))
   
