@@ -11,10 +11,24 @@ d.e <- function(data, ...){
   N.cases <- nrow(data)      # total
   N.var <- ncol(data)  # number of variables
   N.sites <- length(unique(data$site.name)) # number of sites 
-  N.countries = length(unique(data$Country)) # number of countries
+  N.countries <- length(unique(data$Country)) # number of countries
   median.age <- median(data$age_estimateyears, na.rm = T) # median age (observed)
+  mean.age <-  mean(data$age_estimateyears, na.rm = T)  # mean age
+  sd.age <- sd(data$age_estimateyears, na.rm = T)
+  
   min.age <- ceiling(min(data$age_estimateyears, na.rm=T)) # minimum age
   max.age <- ceiling(max(data$age_estimateyears, na.rm=T)) # maximum age
+  
+  # ages by sex
+  m <- data[data$sex=='1', ]
+  f <-  data[data$sex=='2', ]
+  
+  m.age.mean <- mean(m$age_estimateyears, na.rm=T)
+  m.age.sd <- sd(m$age_estimateyears, na.rm=T)
+  f.age.mean <- mean(f$age_estimateyears, na.rm=T)
+  f.age.sd <-  sd(f$age_estimateyears, na.rm=T)
+  
+  
   N.males <- summary(as.factor(data$sex))[[1]] # males-count
   N.females <- summary(as.factor(data$sex))[[2]] # females-count
   N.sex.unknown <- N.cases - N.males - N.females # unknown-count
@@ -24,6 +38,19 @@ d.e <- function(data, ...){
   N.outcomes <- N.deaths+N.recoveries         # outcomes-count (deaths+recoveries)
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
   N.healthworkers <- summary(as.factor(patient.data$healthwork_erterm))[[1]]
+  
+  eth.1 <- N.cases - summary(as.factor(data$ethnic___1))[[1]]
+  eth.2 <- N.cases - summary(as.factor(data$ethnic___2))[[1]]
+  eth.3 <- N.cases - summary(as.factor(data$ethnic___3))[[1]]
+  eth.4 <- N.cases - summary(as.factor(data$ethnic___4))[[1]]
+  eth.5 <- N.cases - summary(as.factor(data$ethnic___5))[[1]]
+  eth.6 <- N.cases - summary(as.factor(data$ethnic___6))[[1]]
+  eth.7 <- N.cases - summary(as.factor(data$ethnic___7))[[1]]
+  eth.8 <- N.cases - summary(as.factor(data$ethnic___8))[[1]]
+  eth.9 <- N.cases - summary(as.factor(data$ethnic___9))[[1]]
+  eth.10 <-N.cases -  summary(as.factor(data$ethnic___10))[[1]]
+  eth.NA <- N.cases - sum(eth.1, eth.2, eth.3, eth.4, eth.5, eth.6, eth.7, eth.8, eth.9, eth.10)
+  
   
   # Distribution estimates
   
@@ -37,10 +64,10 @@ d.e <- function(data, ...){
   
   # Onset to admission
   
-  sd.onset.to.adm <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$v), 1)
-  sd.onset.to.adm.lower <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$lower.v), 1)
-  sd.onset.to.adm.upper <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$upper.v), 1)
-  
+  # sd.onset.to.adm <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$v), 1)
+  # sd.onset.to.adm.lower <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$lower.v), 1)
+  # sd.onset.to.adm.upper <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$upper.v), 1)
+  # 
   
   mean.onset.to.adm <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$m, 1)
   mean.onset.to.adm.lower <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$lower.m, 1)
@@ -68,10 +95,16 @@ d.e <- function(data, ...){
   y_mean <- sd(y, na.rm = T)
   y_sd <- mean(y, na.rm = T)
   
-  obs.mean.onset.outcome <- round(y_mean, 1)
-  obs.mean.onset.outcome.lower <- round( y_mean - 1.96*(x_sd/sqrt(length(y))), 1)
-  obs.mean.onset.outcome.upper <-  round( y_mean + 1.96*(x_sd/sqrt(length(y))), 1)
-  obs.sd.onset.outcome <- round(y_sd, 2)
+  obs.mean.onset.adm <- round(y_mean, 1)
+  obs.mean.onset.adm.lower <- round( y_mean - 1.96*(x_sd/sqrt(length(y))), 1)
+  obs.mean.onset.adm.upper <-  round( y_mean + 1.96*(x_sd/sqrt(length(y))), 1)
+  obs.sd.onset.adm <- round(y_sd, 2)
+  
+  
+  # Admission to ICU
+  
+  z <- patient.data$admission.to.ICU
+  z <- round.zeros(abs(z[!is.na(z)]))
 
   
   # CFR
@@ -113,6 +146,23 @@ d.e <- function(data, ...){
               N.outcomes = N.outcomes,
               N.healthworkers = N.healthworkers,
               
+              m.age.mean =  m.age.mean,
+              m.age.sd  =   m.age.sd,
+              f.age.mean = f.age.mean,
+              f.age.sd = f.age.sd,
+              
+              eth.1 = eth.1,
+              eth.2 = eth.2,
+              eth.3 = eth.3,
+              eth.4 = eth.4,
+              eth.5 = eth.5,
+              eth.6 = eth.6,
+              eth.7 = eth.7,
+              eth.8 = eth.8,
+              eth.9 = eth.9,
+              eth.10 = eth.10,
+              eth.NA = eth.NA,
+              
               mean.adm.to.outcome =  mean.adm.to.outcome,
               adm.outcome.lower =  adm.outcome.lower,
               adm.outcome.upper = adm.outcome.upper,
@@ -121,19 +171,19 @@ d.e <- function(data, ...){
               mean.onset.to.adm.lower =   mean.onset.to.adm.lower,
               mean.onset.to.adm.upper = mean.onset.to.adm.upper,
               
-              sd.onset.to.adm = sd.onset.to.adm,
-              sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
-              sd.onset.to.adm.upper = sd.onset.to.adm.upper,
+              # sd.onset.to.adm = sd.onset.to.adm,
+              # sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
+              # sd.onset.to.adm.upper = sd.onset.to.adm.upper,
               
               obs.mean.adm.outcome =  obs.mean.adm.outcome,
               obs.mean.adm.outcome.lower = obs.mean.adm.outcome.lower,
               obs.mean.adm.outcome.upper = obs.mean.adm.outcome.upper,
-              obs.sd.adm.outcome  = obs.sd.adm.outcome ,
+              obs.sd.adm.outcome  = obs.sd.adm.outcome,
               
-              obs.mean.onset.outcome =  obs.mean.onset.outcome,
-              obs.mean.onset.outcome.lower = obs.mean.onset.outcome.lower,
-              obs.mean.onset.outcome.upper = obs.mean.onset.outcome.upper,
-              obs.sd.onset.outcome = obs.sd.onset.outcome,
+              obs.mean.onset.adm =  obs.mean.onset.adm,
+              obs.mean.onset.adm.lower = obs.mean.onset.adm.lower,
+              obs.mean.onset.adm.upper = obs.mean.onset.adm.upper,
+              obs.sd.onset.adm = obs.sd.onset.adm,
               
               cfr = cfr,
               cfr.lower = cfr.lower,
