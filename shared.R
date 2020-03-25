@@ -1518,7 +1518,7 @@ violin.sex.func <- function(data, ...){
   
   # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(admission.to.exit) )      #| !is.na(admission.to.censored))
   
   # This is to include dates for individuals still in hospital
   
@@ -1562,7 +1562,7 @@ violin.age.func <- function(data, ...){
   
   # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(admission.to.exit))   #| !is.na(admission.to.censored))
   
   data2 <- data2 %>%
     mutate(length.of.stay = pmax(admission.to.exit, admission.to.censored, na.rm = T))
