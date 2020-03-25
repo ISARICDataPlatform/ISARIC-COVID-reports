@@ -17,6 +17,7 @@ library(boot)
 library(survival)
 library(survminer)
 library(tidyverse)
+library(broom)
 
 ## Dataset inclusion flags ##
 
@@ -604,104 +605,74 @@ compareNA <- function(v1,v2) {
 
 # More complicated date wrangling (IMV, NIMV)
 
-other.dates <- map(1:nrow(patient.data), function(i){
-  id = patient.data$subjid[i]
-  events.tibble <- patient.data$events[i][[1]]
+process.event.dates <- function(events.tbl, summary.status.name, daily.status.name){
+  subtbl <- events.tbl %>% dplyr::select(dsstdat, daily_dsstdat, !!summary.status.name, !!daily.status.name )
   
-  # the NIMV field for the daily form is daily_noninvasive_prtrt
+  colnames(subtbl)[3:4] <- c("summary.col","daily.col")
   
-  ever.NIMV <- patient.data$noninvasive_proccur[i] == 1
+  check.rows <- subtbl %>% filter(!is.na(summary.col) | !is.na(daily.col)) 
+  if(nrow(check.rows) == 0){
+    ever <- NA
+  } else {
+    ever <- any((check.rows$summary.col == 1) | (check.rows$daily.col == 1), na.rm = T)
+  }
   
-  # rows in events that have an entry for NIMV
-  # sometimes there is a daily_noninvasive_prtrt/daily_invasive_prtrt but no daily_dsstdat. This seems to only happen on the first line, but check @todo
-  
-  NIMV.rows <- events.tibble %>% filter(!is.na(daily_noninvasive_prtrt)) %>% dplyr::select(dsstdat, daily_dsstdat, daily_noninvasive_prtrt) %>%
+
+  rows <- subtbl %>% filter(!is.na(daily.col)) %>%
     mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
     mutate(consolidated.dssdat = ymd(consolidated.dssdat))
   
-  # multiple.NIMV.periods indicates that the patient had more than one continuous episode of NIMV. Currently there are none of these. 
-  # They are not currently coherently handled, just flagged
-  
-  if(nrow(NIMV.rows) == 0){
-    # no reference to NIMV
-    NIMV.start.date <- NA
-    NIMV.end.date <- NA
-    multiple.NIMV.periods <- NA
-  } else if(!any(NIMV.rows$daily_noninvasive_prtrt == 1)){
-    # no "yes" to NIMV
-    NIMV.start.date <- NA
-    NIMV.end.date <- NA
-    multiple.NIMV.periods <- NA
+  if(nrow(rows) == 0){
+    # no reference 
+    start.date <- NA
+    end.date <- NA
+    multiple.periods <- NA
+  } else if(!any(rows$daily.col == 1)){
+    # no "yes" 
+    start.date <- NA
+    end.date <- NA
+    multiple.periods <- NA
   } else {
-    NIMV.start.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 1) %>% slice(1) %>% pull(consolidated.dssdat)
-    NIMV.last.date <- NIMV.rows %>% filter(daily_noninvasive_prtrt == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
-    if(NIMV.last.date == NIMV.rows %>% slice(n()) %>% pull(consolidated.dssdat)){
-      # Patient was on NIMV at last report
-      NIMV.end.date <- NA
+    start.date <- rows %>% filter(daily.col == 1) %>% slice(1) %>% pull(consolidated.dssdat)
+    last.date <- rows %>% filter(daily.col == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
+    if(last.date == rows %>% slice(n()) %>% pull(consolidated.dssdat)){
+      # Patient was on at last report
+      end.date <- NA
     } else {
-      # They were off NIMV at the next report
-      next.report.row <- max(which(NIMV.rows$consolidated.dssdat == NIMV.last.date)) + 1
-      NIMV.end.date <- NIMV.rows$consolidated.dssdat[next.report.row]
+      # They were off at the next report
+      next.report.row <- max(which(rows$consolidated.dssdat == last.date)) + 1
+      end.date <- rows$consolidated.dssdat[next.report.row]
     }
-    if(nrow(NIMV.rows)<=2){
-      multiple.NIMV.periods <- F
+    if(nrow(rows)<=2){
+      multiple.periods <- F
     } else {
       # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on NIMV, 
       # then the patient went on NIMV multiple times
-      temp <- map_dbl(2:nrow(NIMV.rows), function(x)  NIMV.rows$daily_noninvasive_prtrt[x] - NIMV.rows$daily_noninvasive_prtrt[x-1] )
-      multiple.NIMV.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  NIMV.rows$daily_noninvasive_prtrt[1] == 1)
+      temp <- map_dbl(2:nrow(rows), function(x)  rows$daily.col[x] - rows$daily.col[x-1] )
+      multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
     }
   }
-  
-  # the IMV field for the daily form is daily_invasive_prtrt
-  
-  ever.IMV <- patient.data$daily_invasive_prtrt[i] == 1
-  
-  # rows in events that have an entry for NIMV
-  
-  IMV.rows <- events.tibble %>% filter(!is.na(daily_invasive_prtrt)) %>% dplyr::select(dsstdat, daily_dsstdat, daily_invasive_prtrt) %>%
-    mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
-    mutate(consolidated.dssdat = ymd(consolidated.dssdat))
-  
-  # multiple.IMV.periods indicates that the patient had more than one continuous episode of IMV. Currently there are none of these. 
-  # They are not currently coherently handled, just flagged
-  
-  if(nrow(IMV.rows) == 0){
-    # no reference to IMV
-    IMV.start.date <- NA
-    IMV.end.date <- NA
-    multiple.IMV.periods <- NA
-  } else if(!any(IMV.rows$daily_invasive_prtrt == 1)){
-    # no "yes" to NIMV
-    IMV.start.date <- NA
-    IMV.end.date <- NA
-    multiple.IMV.periods <- NA
-  } else {
-    IMV.start.date <- IMV.rows %>% filter(daily_invasive_prtrt == 1) %>% slice(1) %>% pull(consolidated.dssdat)
-    IMV.last.date <- IMV.rows %>% filter(daily_invasive_prtrt == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
-    if(IMV.last.date == IMV.rows %>% slice(n()) %>% pull(consolidated.dssdat)){
-      # Patient was on IMV at last report
-      IMV.end.date <- NA
-    } else {
-      # They were off IMV at the next report
-      next.report.row <- max(which(IMV.rows$consolidated.dssdat == IMV.last.date)) + 1
-      IMV.end.date <- IMV.rows$consolidated.dssdat[next.report.row]
-    }
-    if(nrow(IMV.rows)<=2){
-      multiple.IMV.periods <- F
-    } else {
-      # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on IMV, 
-      # then the patient went on IMV multiple times
-      temp <- map_dbl(2:nrow(IMV.rows), function(x)  IMV.rows$daily_invasive_prtrt[x] - IMV.rows$daily_invasive_prtrt[x-1] )
-      multiple.IMV.periods <- length(which(temp == -1)) > 1 | (length(which(temp == -1)) > 0 &  IMV.rows$daily_invasive_prtrt[1] == 1)
-    }
-  }
-  
-  list(subjid = id, ever.IMV = ever.IMV, IMV.start.date = IMV.start.date, IMV.end.date = IMV.end.date, multiple.IMV.periods = multiple.IMV.periods,
-       ever.NIMV = ever.NIMV, NIMV.start.date = NIMV.start.date, NIMV.end.date = NIMV.end.date, multiple.NIMV.periods = multiple.NIMV.periods)
-}) %>% bind_rows()
+  list(ever = ever, start.date = start.date, end.date = end.date, multiple.periods = multiple.periods)
+}
 
-patient.data <- patient.data %>% left_join(other.dates)
+patient.data <- patient.data %>% 
+  mutate(NIMV.cols  = map(events, function(el){
+  process.event.dates(el, "noninvasive_proccur", "daily_noninvasive_prtrt")
+})) %>%
+  mutate(NIMV.cols = map(NIMV.cols, function(x){
+    names(x) <- glue("NIMV.{names(x)}")
+    x
+  })) %>% 
+  { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>% 
+  mutate(IMV.cols  = map(events, function(el){
+    process.event.dates(el, "invasive_proccur", "daily_invasive_prtrt")
+  })) %>%
+  mutate(IMV.cols = map(IMV.cols, function(x){
+    names(x) <- glue("IMV.{names(x)}")
+    x
+  })) %>% 
+  { bind_cols(., bind_rows(!!!.$IMV.cols)) }
+
 
 # @todo this script needs to be more aware of the date of the dataset
 
@@ -772,10 +743,10 @@ patient.data <- patient.data %>%
       NA
     }
   })) %>%
-  mutate(admission.to.IMV = as.numeric(difftime(ICU.admission.date, admission.date, unit="days")),
+  mutate(admission.to.ICU = as.numeric(difftime(ICU.admission.date, admission.date, unit="days")),
          admission.to.IMV = as.numeric(difftime(IMV.start.date, admission.date, unit="days")),
          admission.to.NIMV = as.numeric(difftime(NIMV.start.date, admission.date, unit="days")),
-         start.to.IMV = as.numeric(difftime(ICU.admission.date, start.date, unit="days")),
+         start.to.ICU = as.numeric(difftime(ICU.admission.date, start.date, unit="days")),
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
          start = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
@@ -799,11 +770,11 @@ trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        ICU.discharge.date,
                                                        ICU.duration,
                                                        IMV.duration,
-                                                       ever.IMV,
+                                                       IMV.ever,
                                                        IMV.start.date,
                                                        IMV.end.date,
                                                        multiple.IMV.periods,
-                                                       ever.NIMV,
+                                                       NIMV.ever,
                                                        NIMV.start.date,
                                                        NIMV.end.date,
                                                        NIMV.duration,
@@ -1378,9 +1349,9 @@ modified.km.plot <- function(data, ...) {
   
   # Exclude rows which no entries for length of stay
   
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
   data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
+    mutate(length.of.stay = map2_dbl(start.to.exit, start.to.censored, function(x,y){
       max(x, y, na.rm = T)
     }))
   
@@ -1828,14 +1799,14 @@ status.by.time.after.admission <- function(data, ...){
   timings.wrangle <- data2 %>%
     dplyr::select(subjid,
                   status,
-                  admission.to.ICU,
+                  start.to.ICU,
                   ICU.duration,
                   censored,
-                  admission.to.exit) %>%
+                  start.to.exit) %>%
     dplyr::mutate(hospital.start = 0) %>%
-    dplyr::mutate(hospital.end = admission.to.exit) %>%
-    mutate(ICU.start = admission.to.ICU) %>%
-    mutate(ICU.end = admission.to.ICU + ICU.duration) %>%
+    dplyr::mutate(hospital.end = start.to.exit) %>%
+    mutate(ICU.start = start.to.ICU) %>%
+    mutate(ICU.end = start.to.ICU + ICU.duration) %>%
     dplyr::select(subjid,  ends_with("start"), ends_with("end"), censored, status) %>%
     filter(hospital.end >= 0 | is.na(hospital.end))  %>%
     mutate(ever.ICU = !is.na(ICU.start)) %>%
