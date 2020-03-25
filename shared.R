@@ -836,7 +836,8 @@ sites.by.country <- function(data, ...){
   data2 <- data %>%
     group_by(Country, redcap_data_access_group) %>%
     dplyr::summarise(n.sites = 1) %>%
-    dplyr::summarise(n.sites = sum(n.sites))
+    dplyr::summarise(n.sites = sum(n.sites)) %>%
+    filter(!is.na(Country))
   
   ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
     theme_bw() +
@@ -848,7 +849,8 @@ sites.by.country <- function(data, ...){
 
 outcomes.by.country <- function(data, ...){
   data2 <- data %>%
-    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
+    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))  %>%
+    filter(!is.na(Country))
   
   ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
