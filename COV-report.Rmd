@@ -124,12 +124,11 @@ comorbidities.upset(patient.data, 4)
 
 ```
 
-**Figure 4**: The distribution of patient status by number days after admission. "Transferred" patients were moved to another institution, where their final outcome cannot be determined. Patients with censored outcomes at the time of this report remain in the "Admitted" category. 
+**Figure 5**: Distribution of length of hospital stay, according to sex. The coloured areas indicate the kernel probability density of the observed data. The plot is based only on completed outcomes.
 
-```{r outcome.curve, out.width= "80%"}
+```{r  stay.by.age, out.width= "80%"}
 
-  
-status.by.time.after.admission(patient.data)
+violin.sex.func(patient.data)
 ```
 
 **Figure 5**: Distribution of length of hospital stay, according to patient age group. The coloured areas indicate the kernel probability density of the observed data. The plot is based only on completed outcomes.
