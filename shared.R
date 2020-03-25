@@ -772,12 +772,12 @@ patient.data <- patient.data %>%
       NA
     }
   })) %>%
-  mutate(admission.to.IMV = as.numeric(difftime(ICU.admission.date, admission.date, unit="days")),
+  mutate(admission.to.ICU = as.numeric(difftime(ICU.admission.date, admission.date, unit="days")),
          admission.to.IMV = as.numeric(difftime(IMV.start.date, admission.date, unit="days")),
          admission.to.NIMV = as.numeric(difftime(NIMV.start.date, admission.date, unit="days")),
-         start.to.IMV = as.numeric(difftime(ICU.admission.date, start.date, unit="days")),
+         start.to.ICU = as.numeric(difftime(ICU.admission.date, start.date, unit="days")),
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
-         start = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
+         start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
 
 
@@ -811,8 +811,7 @@ trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        onset.to.admission,
                                                        admission.to.censored,
                                                        admission.to.death,
-                                                       admission.to.recovery,
-                                                       admission.to.ICU
+                                                       admission.to.recovery
 )
 
 
