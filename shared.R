@@ -996,10 +996,10 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
   
   
   ggplot(top.n.conditions.tbl, aes(x = conditions.present)) + 
-    geom_bar(fill = "indianred3", col = "black") + 
+    geom_bar(aes(y=..count../sum(..count..)), fill = "indianred3", col = "black") + 
     theme_bw() +
     xlab("Comorbidities present at admission") +
-    ylab("Count") +
+    ylab("Proportion of patients") +
     scale_x_upset() 
 }
 
@@ -1103,10 +1103,10 @@ symptoms.upset <- function(data, max.symptoms, ...){
   
   
   ggplot(top.n.symptoms.tbl, aes(x = conditions.present)) + 
-    geom_bar(fill = "deepskyblue3", col = "black") + 
+    geom_bar(aes(y=..count../sum(..count..)), fill = "deepskyblue3", col = "black") + 
     theme_bw() +
     xlab("Symptoms present at admission") +
-    ylab("Count") +
+    ylab("Proportion of patients") +
     scale_x_upset() 
 }
 
@@ -1325,7 +1325,7 @@ treatment.use.plot <- function(data, ...){
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
-    scale_fill_brewer(palette = "Paired", name = "Treatment", labels = c("No", "Yes")) +
+    scale_fill_manual(values = c("chartreuse2", "chartreuse4"), name = "Treatment", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
   return(list(plt = plt, data3 = data3))
@@ -1363,7 +1363,6 @@ modified.km.plot <- function(data, ...) {
                    ))
   ggplot(data = df)+
     geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
-    xlim(0, 5)+
     theme_bw()+
     scale_colour_manual(values = c("indianred",  "green", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
     scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
@@ -1382,7 +1381,7 @@ modified.km.plot.1 <- function(data, ...){
     filter(outcome != "censored" & !is.na(outcome.date)) %>%
     dplyr::select(subjid, hostdat, outcome.date, outcome, admission.to.exit) 
   
-  timeline <- map(0:max(data2$admission.to.exit), function(x){
+  timeline <- map(0:max(data2$admission.to.exit, na.rm = T), function(x){
     outcome.date <- data2 %>% filter(admission.to.exit <= x)
     prop.dead <- nrow(outcome.date %>% filter(outcome == "death"))/total.patients
     prop.discharged <- nrow(outcome.date %>% filter(outcome == "discharge"))/total.patients
@@ -1757,7 +1756,7 @@ treatment.upset <- function(data, ...) {
   treatments$prop <- 1 / n_row
   
   p <- ggplot(treatments, aes(x = treatments.used, y = prop)) + 
-    geom_col(fill = "chartreuse4") + 
+    geom_col(fill = "chartreuse3") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
     ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
