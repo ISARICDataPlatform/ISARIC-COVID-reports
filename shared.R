@@ -186,7 +186,7 @@ if(use.uk.data){
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
-    filter(daily_dsstdat < embargo.limit) %>%
+    # filter(daily_dsstdat <= embargo.limit) %>%
     mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert)
 } else {
   uk.data <- NULL
@@ -260,8 +260,8 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
-patient.data <- demog.data %>% left_join(event.data)%>%
-  filter(dsstdat < embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
+patient.data <- demog.data %>% left_join(event.data) #%>%
+  # filter(dsstdat < embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
 
 ### Comorbitities, symptoms, and treatments ###
 
@@ -818,7 +818,7 @@ age.pyramid <- function(data, ...){
     scale_y_continuous(
       # currently in hard-coded increments of 5. @todo make this better
       breaks = plot.breaks,
-      # labels = plot.labels,
+      labels = plot.labels,
       limits = c(-1.1*max.count, 1.1*max.count)) +
     annotation_custom(
       grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
@@ -1573,7 +1573,7 @@ violin.age.func <- function(data, ...){
   data2 <- data %>% filter(!is.na(admission.to.exit))   #| !is.na(admission.to.censored))
   
   data2 <- data2 %>%
-    mutate(length.of.stay = pmax(admission.to.exit, admission.to.censored, na.rm = T))
+    mutate(length.of.stay = pmax(admission.to.exit, na.rm = T))
   
   
   vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = abs(data2$length.of.stay) )
