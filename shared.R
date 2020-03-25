@@ -1518,22 +1518,34 @@ hospital.fatality.ratio <- function(data){
   
 }
 
+#### Function to round 0 days to 0.5 (half a day) #######
 
+round.zeros <- function(x){
+  
+  for (i in 1: length(x)){
+    
+    if (x[i]==0){
+      x[i] <- 0.5
+    }
+  }
+  
+  return(x) 
+}
 
 ## Violin plot by sex ####
 
 violin.sex.func <- function(data, ...){
   
-  # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
+  # Analysis to be run on only entries with admission.to.exit entries
   
-  data2 <- data %>% filter(!is.na(admission.to.exit) )      #| !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(admission.to.exit))      #| !is.na(admission.to.censored))
   
   # This is to include dates for individuals still in hospital
   
   data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
-      max(x, y, na.rm = T)
-    })) %>%
+  mutate(length.of.stay = abs(round.zeros(admission.to.exit)))  %>%#, admission.to.censored, function(x,y){
+  #     max(x, y, na.rm = T)
+  #   })) %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
@@ -1541,7 +1553,7 @@ violin.sex.func <- function(data, ...){
     filter(!is.na(sex))
   
   
-  vd <- tibble(Sex = data2$sex, length.of.stay = abs(data2$length.of.stay) )
+  vd <- tibble(Sex = data2$sex, length.of.stay = data2$length.of.stay )
   
   # by sex
   
@@ -1553,8 +1565,8 @@ violin.sex.func <- function(data, ...){
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) + 
+      axis.title.y = element_text( size=12) 
+    ) +  #+ ylim(0, max(length(vd$length.of.stay)))
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
   
@@ -1570,11 +1582,12 @@ violin.age.func <- function(data, ...){
   
   # Analysis to be run on only entries with either admission.to.exit or admission.to.censored 
   
-  data2 <- data %>% filter(!is.na(admission.to.exit))   #| !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(admission.to.exit))      #| !is.na(admission.to.censored))
   
-  data2 <- data2 %>%
-    mutate(length.of.stay = pmax(admission.to.exit, admission.to.censored, na.rm = T))
+  # This is to include dates for individuals still in hospital
   
+  data2 <- data2 %>% 
+    mutate(length.of.stay = abs(round.zeros(admission.to.exit)))
   
   vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = abs(data2$length.of.stay) )
   
@@ -1588,7 +1601,7 @@ violin.age.func <- function(data, ...){
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
       axis.title.y = element_text( size=12)
-    ) + 
+    ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
     scale_fill_discrete(drop = F) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
@@ -2015,19 +2028,8 @@ casefat2 <-  function(data, conf=0.95){
 
 ########### Distribution plots ############
 
-#### Function to round 0 days to 0.5 (half a day) #######
 
-round.zeros <- function(x){
-  
-  for (i in 1: length(x)){
-    
-    if (x[i]==0){
-      x[i] <- 0.5
-    }
-  }
-  
-  return(x) 
-}
+
 
 
 
