@@ -92,7 +92,7 @@ age.pyramid(patient.data)
 ```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
 
 symptoms.upset(patient.data, 4)
-symptom.prevalence(patient.data)
+symptom.prevalence(patient.data)$plt
 
 ```
 
@@ -102,7 +102,7 @@ symptom.prevalence(patient.data)
 ```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
 
 comorbidities.upset(patient.data, 4)
-comorbidity.prevalence(patient.data)
+comorbidity.prevalence(patient.data)$plt
 
 ```
 
@@ -152,7 +152,7 @@ outcomes.by.admission.date(patient.data)
 **Figure 8**: Treatments used on all patients where this information was recorded.
 
 ```{r treatment1, echo=FALSE}
-treatment.use.plot(patient.data)
+treatment.use.plot(patient.data)$plt
 ```
 
 
@@ -262,6 +262,128 @@ Patient data is collected and uploaded from start of admission, however a comple
 
 In the UK, up to 10th March 2020, people with positive swabs were admitted to hospital as part of the containment strategy. Many of these people had recently been abroad, particularly Italy. Since 11th March 2020, admission is mostly based upon need for treatment of COVID-19 disease. This may explain the younger age of the UK group and the fewer comorbidities reported when compared with reports from China and Italy.
 
+
+
+# Summary Tables
+
+
+**Table 1:** Patient Characteristics
+
+| Description                  | Value                                      |
+|------------------------------|--------------------------------------------|
+| Size of cohort               | `r de$N.cases`                            |
+|                              |                                            |
+| **By sex**                      |                                            |
+| Male                         | `r de$N.males`                            |
+| Female                       | `r de$N.females`                          |
+| Unknown                      | `r de$N.sex.unknown`                     |
+|                              |                                            |
+| **By Status**                   |                                            |
+| Dead                         | `r de$N.deaths` (`r round(de$N.deaths/de$N.cases,2)`) |
+| Recovered (discharged alive) | `r de$N.recoveries`                          |
+| Still in hospital            | `r de$N.censored`                            |
+|                              |                                            |
+| **By age group**                 |                                            |
+| `r levels(patient.data$agegp10)[1]` | `r summary(patient.data$agegp10)[[1]]`          |
+| `r levels(patient.data$agegp10)[2]` | `r summary(patient.data$agegp10)[[2]]`             |
+| `r levels(patient.data$agegp10)[3]` | `r summary(patient.data$agegp10)[[3]]`             |
+| `r levels(patient.data$agegp10)[4]` | `r summary(patient.data$agegp10)[[4]]`             |
+| `r levels(patient.data$agegp10)[5]` | `r summary(patient.data$agegp10)[[5]]`             |
+| `r levels(patient.data$agegp10)[6]` | `r summary(patient.data$agegp10)[[6]]`             |
+| `r levels(patient.data$agegp10)[7]` | `r summary(patient.data$agegp10)[[7]]`             |
+| `r levels(patient.data$agegp10)[8]` | `r summary(patient.data$agegp10)[[8]]`             |
+|                              |                                                      |
+| Unknown                      | `r summary(patient.data$agegp10)[[9]]`             |
+|                              |                                            |
+| **By ethnicity**                 |                                            |
+| Arab                         | `r de$eth.1`                                  |
+| Black                        | `r de$eth.2`                                  |
+| East Asian                   | `r de$eth.3`                                  |
+| South Asian                  | `r de$eth.4`                                  |
+| West Asian                   | `r de$eth.5`                                  |
+| Latin American               | `r de$eth.6`                                  |
+| White                        | `r de$eth.7`                                  |
+| Aboriginal/First Nations     | `r de$eth.8`                                  |
+| Other                        | `r de$eth.9`                                  |
+| Unknown                      | `r de$eth.NA`                                 |
+
+
+**Table 2:** Prevalence of Symptoms, Comorbidities and Treatments
+
+| **Symptoms**                      | Present                        | Absent                        | Unknown                        |
+|-------------------------------|--------------------------------|-------------------------------|--------------------------------|
+| Abdominal pain                | `r de$s.dat$present[1]`        | `r de$s.dat$absent[1]`        | `r de$s.dat$unknown[1]`        |
+| Bleeding                      | `r de$s.dat$present[2]`        | `r de$s.dat$absent[2]`        | `r de$s.dat$unknown[2]`        |
+| Chest pain                    | `r de$s.dat$present[3]`        | `r de$s.dat$absent[3]`        | `r de$s.dat$unknown[3]`        |
+| Confusion                     | `r de$s.dat$present[4]`        | `r de$s.dat$absent[4]`        | `r de$s.dat$unknown[4]`        |
+| Conjuctivitis                 | `r de$s.dat$present[5]`        | `r de$s.dat$absent[5]`        | `r de$s.dat$unknown[5]`        |
+| Cough                         | `r sum(de$s.dat$present[6:8])` | `r sum(de$s.dat$absent[6:8])` | `r sum(de$s.dat$unknown[6:8])` |
+| Diarrhoea                     | `r de$s.dat$present[9]`        | `r de$s.dat$absent[9]`        | `r de$s.dat$unknown[9]`        |
+| Ear pain                      | `r de$s.dat$present[10]`       | `r de$s.dat$absent[10]`       | `r de$s.dat$unknown[10]`       |
+| Fatigue                       | `r de$s.dat$present[11]`       | `r de$s.dat$absent[11]`       | `r de$s.dat$unknown[11]`       |
+| Fever                         | `r de$s.dat$present[12]`       | `r de$s.dat$absent[12]`       | `r de$s.dat$unknown[12]`       |
+| Headache                      | `r de$s.dat$present[13]`       | `r de$s.dat$absent[13]`       | `r de$s.dat$unknown[13]`       |
+| Joint pain                    | `r de$s.dat$present[14]`       | `r de$s.dat$absent[14]`       | `r de$s.dat$unknown[14]`       |
+| Lymph                         | `r de$s.dat$present[15]`       | `r de$s.dat$absent[15]`       | `r de$s.dat$unknown[15]`       |
+| Myalgia                       | `r de$s.dat$present[16]`       | `r de$s.dat$absent[16]`       | `r de$s.dat$unknown[16]`       |
+| Rash                          | `r de$s.dat$present[17]`       | `r de$s.dat$absent[17]`       | `r de$s.dat$unknown[17]`       |
+| Runny nose                    | `r de$s.dat$present[18]`       | `r de$s.dat$absent[18]`       | `r de$s.dat$unknown[18]`       |
+| Seizures                      | `r de$s.dat$present[19]`       | `r de$s.dat$absent[19]`       | `r de$s.dat$unknown[19]`       |
+| Shortness of breath           | `r de$s.dat$present[20]`       | `r de$s.dat$absent[20]`       | `r de$s.dat$unknown[20]`       |
+|                               |                                |                               |                                |
+| **Comorbidities**                 |                                |                               |                                |
+| AIDS/HIV                      | `r de$c.dat$present[1]`        | `r de$c.dat$absent[1]`        | `r de$c.dat$unknown[1]`        |
+| Asthma                        | `r de$c.dat$present[2]`        | `r de$c.dat$absent[2]`        | `r de$c.dat$unknown[2]`        |
+| Chronic cardiac disease       | `r de$c.dat$present[3]`        | `r de$c.dat$absent[3]`        | `r de$c.dat$unknown[3]`        |
+| Chronic haematologic disease  | `r de$c.dat$present[4]`        | `r de$c.dat$absent[4]`        | `r de$c.dat$unknown[4]`        |
+| Chronic neurological disorder | `r de$c.dat$present[5]`        | `r de$c.dat$absent[5]`        | `r de$c.dat$unknown[5]`        |
+| Chronic pulmonary disease     | `r de$c.dat$present[6]`        | `r de$c.dat$absent[6]`        | `r de$c.dat$unknown[6]`        |
+| Dementia                      | `r de$c.dat$present[7]`        | `r de$c.dat$absent[7]`        | `r de$c.dat$unknown[7]`        |
+| Diabetes                      | `r de$c.dat$present[8]`        | `r de$c.dat$absent[8]`        | `r de$c.dat$unknown[8]`        |
+| Liver disease                 | `r de$c.dat$present[9]`        | `r de$c.dat$absent[9]`        | `r de$c.dat$unknown[9]`        |
+| Malignant neoplasm            | `r de$c.dat$present[10]`       | `r de$c.dat$absent[10]`       | `r de$c.dat$unknown[10]`       |
+| Malnutrition                  | `r de$c.dat$absent[11]`        | `r de$c.dat$absent[11]`       | `r de$c.dat$unknown[11]`       |
+| Obesity                       | `r de$c.dat$absent[12]`        | `r de$c.dat$absent[12]`       | `r de$c.dat$unknown[12]`       |
+| Chronic kidney disease        | `r de$c.dat$present[14]`       | `r de$c.dat$absent[14]`       | `r de$c.dat$unknown[14]`       |
+| Rheumatologic disorder        | `r de$c.dat$present[15]`       | `r de$c.dat$absent[15]`       | `r de$c.dat$unknown[15]`       |
+| Smoking                       | `r de$c.dat$present[16]`       | `r de$c.dat$absent[16]`       | `r de$c.dat$unknown[16]`       |
+| Other risk factors            | `r de$c.dat$present[13]`       | `r de$c.dat$absent[13]`       | `r de$c.dat$unknown[13]`       |
+|                               |                                |                               |                                |
+| **Treatment**                     |                                |                               |                                |
+| Antibiotic agent              | `r de$t.dat$present[1]`        | `r de$t.dat$absent[1]`        | `r de$t.dat$unknown[1]`        |
+| Antifungal agent              | `r de$t.dat$present[2]`        | `r de$t.dat$absent[2]`        | `r de$t.dat$unknown[2]`        |
+| Antiviral agent               | `r de$t.dat$present[3]`        | `r de$t.dat$absent[3]`        | `r de$t.dat$unknown[3]`        |
+| Corticosteroid agent          | `r de$t.dat$present[4]`        | `r de$t.dat$absent[4]`        | `r de$t.dat$unknown[4]`        |
+| Extracorporeal support        | `r de$t.dat$present[5]`        | `r de$t.dat$absent[5]`        | `r de$t.dat$unknown[5]`        |
+| Inhaled nitric oxide          | `r de$t.dat$present[6]`        | `r de$t.dat$absent[6]`        | `r de$t.dat$unknown[6]`        |
+| Inotropes / vasopressors      | `r de$t.dat$present[7]`        | `r de$t.dat$absent[7]`        | `r de$t.dat$unknown[7]`        |
+| Invasive ventilation          | `r de$t.dat$present[8]`        | `r de$t.dat$absent[8]`        | `r de$t.dat$unknown[8]`        |
+| Non-invasive ventilation      | `r de$t.dat$present[9]`        | `r de$t.dat$absent[9]`        | `r de$t.dat$unknown[9]`        |
+| Oxygen therapy                | `r de$t.dat$present[11]`       | `r de$t.dat$absent[11]`       | `r de$t.dat$unknown[11]`       |
+| Prone ventilation             | `r de$t.dat$present[12]`       | `r de$t.dat$absent[12]`       | `r de$t.dat$unknown[12]`       |
+| Renal replacement therapy     | `r de$t.dat$present[13]`       | `r de$t.dat$absent[13]`       | `r de$t.dat$unknown[13]`       |
+| Tracheostomy inserted         | `r de$t.dat$present[14]`       | `r de$t.dat$absent[14]`       | `r de$t.dat$unknown[14]`       |
+| Other                         | `r de$t.dat$present[10]`       | `r de$t.dat$absent[10]`       | `r de$t.dat$unknown[10]`       |
+
+
+
+
+**Table 3:** Duration of stay
+
+
+| **Time(in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean (95% CI)** | **Notes** |
+|------------------------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------|-------------------------------------------------------------------------------------------|---------------------------------------------|
+| Length of hospital stay              | `r de$obs.mean.adm.outcome` (`r de$obs.mean.adm.outcome.lower`, `r de$obs.mean.adm.outcome.upper`) | `r de$obs.sd.adm.outcome`            | `r de$mean.adm.to.outcome` (`r de$adm.outcome.lower`, `r de$adm.outcome.upper`)           |                                             |
+|Symptom onset to admission | `r  de$obs.mean.onset.adm` (`r de$obs.mean.onset.adm.lower`, `r de$obs.mean.onset.adm.upper`)      | `r de$obs.sd.onset.adm`              | `r de$mean.onset.to.adm` (`r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) |                                             |
+|                                                |                                                                                                    |                                      |                                                                                           |                                             |
+|Admission to ICU entry     | `r round(mean(de$a.icu, na.rm=T), 1)`                                                              | `r round(sd(de$a.icu, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.icu)` observations  |
+| Duration of ICU                     | `r round(mean(de$d.icu, na.rm=T), 1)`                                                              | `r round(sd(de$d.icu, na.rm=T), 1)`     |                                                                                           | Based on `r length(de$d.icu)` observations  |
+|                                                |                                                                                                    |                                      |                                                                                           |                                             |
+| Admission to IMV           | `r round(mean(de$a.imv, na.rm=T), 1)`                                                              | `r round(sd(de$a.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.imv)` observations  |
+| Duration of IMV                                | `r round(mean(de$d.imv, na.rm=T), 1)`                                                              | `r round(sd(de$d.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$d.imv)` observations  |
+|                                                |                                                                                                    |                                      |                                                                                           |                                             |
+| Admission to NIMV          | `r round(mean(de$a.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$a.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$a.nimv)` observations |
+| Duration of NIMV                               | `r round(mean(de$d.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$d.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$d.nimv)` observations |
 
 
 # ISARIC Team Members
