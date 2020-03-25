@@ -48,7 +48,7 @@ source(glue("{code.path}/output.R"))
 
 <f style="font-family: times, serif; font-size:11pt; font-style:italic"> - A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases</f>
 
-# COVID-19 Report: 23rd March, 2020 {-}
+# COVID-19 Report: 25th March, 2020 {-}
 
 
 
@@ -64,21 +64,32 @@ The median age (calculated based on reported ages) is `r de$median.age` years. T
 
 Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients.
 
-For this cohort,  the observed average for the number of days from admission to any outcome (death or discharge) is `r de$obs.mean.adm.outcome`, with a standard deviation of `r  de$obs.sd.adm.outcome`. 
+For this cohort, the average observed duration for the number of days from admission to any outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation of `r  de$obs.sd.adm.outcome`. 
 
-The observed average for the number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.to.adm`(95% CI: `r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) with a standard deviation of `r de$obs.sd.onset.adm`. The expected estimate for the mean for the same variable is `r de$mean.onset.to.adm` days (95% CI: `r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`).
-
-The average duration (in days) from admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)`, with a standard deviation of	`r round(sd(de$a.icu, na.rm=T), 1)`days. This is based on `r length(de$a.icu)` observations. The duration of ICU stay has an average of `r round(mean(de$d.icu, na.rm=T), 1)`and a standard deviation of	`r round(sd(de$d.icu, na.rm=T), 1)`.
-
-The mean duration (in days) from admission to receiving NIMV is `r round(mean(de$a.nimv, na.rm=T), 1)` days, with a standard deviation of `r round(sd(de$a.nimv, na.rm=T), 1)` days.	This is	based on `r length(de$a.nimv)` observations.	The mean duration of NIMV is `r round(mean(de$d.nimv, na.rm=T), 1)` days, with a standard deviation (SD) of 	`r round(sd(de$d.nimv, na.rm=T), 1)` days. 
+The average  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (95% CI: `r de$mean.onset.adm.lower`, `r de$mean.onset.adm.upper`) with a standard deviation of `r de$obs.sd.onset.adm` days. Expected estimates for the mean durations of admission to outcome and symptom onset to admission are provided in the summary tables at the end of this report. 
 
 
-For the time from admission to IMV, the average duration (in days) is `r round(mean(de$a.imv, na.rm=T), 1)` (SD:`r round(sd(de$a.imv, na.rm=T), 1)`). The duration of IMV has an average of `r round(mean(de$d.imv, na.rm=T), 1)`	(SD:`r round(sd(de$d.imv, na.rm=T), 1)`). 	
+The average duration from admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` days, with a standard deviation (SD) of	`r round(sd(de$a.icu, na.rm=T), 1)` days. This is based on data on all `r length(de$a.icu)` cases admitted into ICU.  
+
+The duration of ICU stay has an average of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  These estimates are based on `r length(de$d.icu)` cases which have complete records for ICU duration or ICU start/end dates.
+
+
+The mean duration from admission to NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days).	This is	based on data from all cases `r length(de$a.nimv)` cases in this cohort who received NIV.	
+
+The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days, with a standard deviation (SD) of 	`r round(sd(de$d.nimv, na.rm=T), 1)` days. These estimates were derived from data on `r length(de$d.nimv)` with complete NIV duration records.
+
+
+The mean duration for the time from admission to IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days). These estimates are based on data on all `r length(de$a.imv)` cases who received IMV. Of these, `r length(de$d.imv)` cases have complete data on IMV duration. The mean and SD for the duration of IMV - estimated based on cases with completed IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.	
 	
 
-Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr` (95% CI: `r de$hfr.lower`, `r de$hfr.upper`). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr` (95% CI: `r de$cfr.lower`, `r de$cfr.upper`).  
+Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr` (95% CI: `r de$hfr.lower`, `r de$hfr.upper`). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr` (95% CI: `r de$cfr.lower`, `r de$cfr.upper`). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
 
 Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals.
+
+
+
+
+
 
 
 
@@ -286,7 +297,7 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 | Unknown                      | `r de$N.sex.unknown`                     |
 |                              |                                            |
 | **By Status**                   |                                            |
-| Dead                         | `r de$N.deaths` (`r round(de$N.deaths/de$N.cases,2)`) |
+| Dead                         | `r de$N.deaths` |
 | Recovered (discharged alive) | `r de$N.recoveries`                          |
 | Still in hospital            | `r de$N.censored`                            |
 |                              |                                            |
@@ -302,18 +313,6 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 |                              |                                                      |
 | Unknown                      | `r summary(patient.data$agegp10)[[9]]`             |
 |                              |                                            |
-| **By ethnicity**                 |                                            |
-| Arab                         | `r de$eth.1`                                  |
-| Black                        | `r de$eth.2`                                  |
-| East Asian                   | `r de$eth.3`                                  |
-| South Asian                  | `r de$eth.4`                                  |
-| West Asian                   | `r de$eth.5`                                  |
-| Latin American               | `r de$eth.6`                                  |
-| White                        | `r de$eth.7`                                  |
-| Aboriginal/First Nations     | `r de$eth.8`                                  |
-| Other                        | `r de$eth.9`                                  |
-| Unknown                      | `r de$eth.NA`                                 |
-
 
 <br /><br /><br />
 
@@ -375,13 +374,14 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 | Tracheostomy inserted         | `r de$t.dat$present[14]`       | `r de$t.dat$absent[14]`       | `r de$t.dat$unknown[14]`       |
 | Other                         | `r de$t.dat$present[10]`       | `r de$t.dat$absent[10]`       | `r de$t.dat$unknown[10]`       |
 
+
 <br /><br /><br />
 
 
 **Table 3:** Duration of stay
 
 
-| **Time(in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean**^[Expected estimates were derived by fitting a Gamma distribution to the observed data.] (95% CI)** | **Notes** |
+| **Time(in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean**^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates for fitted distribution account for unobserved outcomes. ] (95% CI) | **Notes** |
 |------------------------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------|-------------------------------------------------------------------------------------------|---------------------------------------------|
 | Length of hospital stay              | `r de$obs.mean.adm.outcome` (`r de$obs.mean.adm.outcome.lower`, `r de$obs.mean.adm.outcome.upper`) | `r de$obs.sd.adm.outcome`            | `r de$mean.adm.to.outcome` (`r de$adm.outcome.lower`, `r de$adm.outcome.upper`)           |                                             |
 |Symptom onset to admission | `r  de$obs.mean.onset.adm` (`r de$obs.mean.onset.adm.lower`, `r de$obs.mean.onset.adm.upper`)      | `r de$obs.sd.onset.adm`              | `r de$mean.onset.to.adm` (`r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) |                                             |
@@ -395,7 +395,7 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 | Admission to NIMV          | `r round(mean(de$a.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$a.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$a.nimv)` observations |
 | Duration of NIMV                               | `r round(mean(de$d.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$d.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$d.nimv)` observations |
 
-The expected mean for the same variable is `r de$mean.adm.to.outcome` days (95% CI: `r de$adm.outcome.lower`, `r de$adm.outcome.upper`).
+
 
 # ISARIC Team Members
 
@@ -425,7 +425,6 @@ The expected mean for the same variable is `r de$mean.adm.to.outcome` days (95% 
 
 2.	R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria.
 
-3.	Wu Peng, Hao Xinxin, Lau Eric H Y, Wong Jessica Y, Leung Kathy S M, Wu Joseph T, Cowling Benjamin J, Leung Gabriel M. Real-time tentative assessment of the epidemiological characteristics of novel coronavirus infections in Wuhan, China, as at 22 January 2020 (2020). *Euro Surveill.*, 25(3):pii=2000044. [doi:10.2807/1560-7917.ES.2020.25.3.2000044](https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044).
 
 
 
