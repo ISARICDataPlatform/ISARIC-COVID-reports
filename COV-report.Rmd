@@ -121,7 +121,7 @@ comorbidity.prevalence(patient.data)$plt
 status.by.time.after.admission(patient.data)
 ```
 
-**Figure 5**: Distribution of length of hospital stay, according to patient sex. This is only based on completed outcomes.
+**Figure 5**: Distribution of length of hospital stay, according to patient sex. The coloured areas indicate the kernel probability density of the observed data. The plot is based only on completed outcomes. 
 
 ```{r stay.by.sex, out.width= "80%"}
 
@@ -129,7 +129,7 @@ violin.sex.func(patient.data)
 
 ```
 
-**Figure 6**: Distribution of length of hospital stay, according to patient age group. This is only based on completed outcomes.
+**Figure 6**: Distribution of length of hospital stay, according to patient age group. The coloured areas indicate the kernel probability density of the observed data. The plot is based only on completed outcomes.
 
 ```{r  stay.by.age, out.width= "80%"}
 
