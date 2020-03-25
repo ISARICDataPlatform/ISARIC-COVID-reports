@@ -1666,15 +1666,9 @@ treatment.upset <- function(data, ...) {
       Antiviral, 
       Antibiotic, 
       Antifungal, 
-      Corticosteroid, 
-      Supplemental.oxygen, 
-      NIV, 
-      Invasive.ventilation, 
-      ECMO, 
-      RRT, 
-      Inotropes
+      Corticosteroid
     ) %>%
-    pivot_longer(2:11, names_to = "Treatment", values_to = "Present") %>%
+    pivot_longer(2:5, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) %>%
     group_by(Pid_special) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
