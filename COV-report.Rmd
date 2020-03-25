@@ -76,9 +76,6 @@ The mean duration (in days) from admission to receiving NIMV is `r round(mean(de
 For the time from admission to IMV, the average duration (in days) is `r round(mean(de$a.imv, na.rm=T), 1)` (SD:`r round(sd(de$a.imv, na.rm=T), 1)`). The duration of IMV has an average of `r round(mean(de$d.imv, na.rm=T), 1)`	(SD:`r round(sd(de$d.imv, na.rm=T), 1)`). 	
 	
 
-
-
-
 Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr` (95% CI: `r de$hfr.lower`, `r de$hfr.upper`). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr` (95% CI: `r de$cfr.lower`, `r de$cfr.upper`).  
 
 Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals.
@@ -124,7 +121,7 @@ comorbidity.prevalence(patient.data)$plt
 status.by.time.after.admission(patient.data)
 ```
 
-**Figure 5**: Distribution of length of hospital stay, according to patient sex.
+**Figure 5**: Distribution of length of hospital stay, according to patient sex. This is only based on completed outcomes.
 
 ```{r stay.by.sex, out.width= "80%"}
 
@@ -132,7 +129,7 @@ violin.sex.func(patient.data)
 
 ```
 
-**Figure 6**: Distribution of length of hospital stay, according to patient age group. 
+**Figure 6**: Distribution of length of hospital stay, according to patient age group. This is only based on completed outcomes.
 
 ```{r  stay.by.age, out.width= "80%"}
 
