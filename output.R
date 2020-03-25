@@ -96,8 +96,8 @@ d.e <- function(data, ...){
   y_sd <- mean(y, na.rm = T)
   
   obs.mean.onset.adm <- round(y_mean, 1)
-  obs.mean.onset.adm.lower <- round( y_mean - 1.96*(x_sd/sqrt(length(y))), 1)
-  obs.mean.onset.adm.upper <-  round( y_mean + 1.96*(x_sd/sqrt(length(y))), 1)
+  obs.mean.onset.adm.lower <- round( y_mean - 1.96*(y_sd/sqrt(length(y))), 1)
+  obs.mean.onset.adm.upper <-  round( y_mean + 1.96*(y_sd/sqrt(length(y))), 1)
   obs.sd.onset.adm <- round(y_sd, 2)
   
   
