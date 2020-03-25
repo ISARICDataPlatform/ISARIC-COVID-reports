@@ -254,7 +254,17 @@ raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
 
 # Demographic data is in the first row
 
-demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
+demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
+  # replace the fractional ages
+  mutate(age_estimateyears = map_dbl(age_estimateyears, function(x){
+    if(is.na(x)){
+      NA
+    } else if(0 < x & 1 > x){
+      x*100
+    } else {
+      x
+    }
+  }))
 
 # Clinical data is in subsequent rows but also _sometimes_ in the first row. So the events column still contains a copy of the first row.
 
