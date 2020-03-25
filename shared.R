@@ -318,7 +318,7 @@ patient.data <- patient.data %>%
     if(is.na(simple) & is.na(complex)){
       NA
     } else if(is.na(simple)){
-      complicated
+      complex
     } else if(is.na(complex)){
       simple
     } else if(simple == 1 | complex == 1){
@@ -359,13 +359,13 @@ admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admiss
 patient.data <- patient.data %>% 
   mutate(cough.nosputum = pmap_dbl(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
     if(is.na(x)){
-      NA
+      NA     
+    } else if(is.na(y) | is.na(z)){
+        # if these are NA then you don't know what the cough was like
+       NA    
     } else if(all(c(x,y,z) == 2)){
       2
-    } else if(is.na(y) | is.na(z)){
-      # if these are NA then you don't know what the cough was like
-      NA    
-    } else if(y == 1 | z == 1){
+    }  else if(y == 1 | z == 1){
       2    
     } else {
       1
@@ -374,11 +374,11 @@ patient.data <- patient.data %>%
   mutate(cough.sputum = map2_dbl(coughsput_ceoccur_v2, coughhb_ceoccur_v2, function(y,z){
     if(is.na(y)){
       NA
-    } else if(all(c(y,z) == 2)){
-      2
     } else if(is.na(z)){
       # if this is NA then you don't know what the sputum was like
       NA    
+    } else if(all(c(y,z) == 2)){
+      2
     } else if(z == 1){
       2    
     } else {

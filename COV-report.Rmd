@@ -89,7 +89,7 @@ age.pyramid(patient.data)
 
 **Figure 2**: Top: The distribution of combinations of the four most common symptoms seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms. Bottom: Frequency of each symptom in the patient population.
 
-```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3}
+```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
 
 symptoms.upset(patient.data, 4)
 symptom.prevalence(patient.data)
@@ -99,7 +99,7 @@ symptom.prevalence(patient.data)
 
 **Figure 3**:  Top: The distribution of combinations of the four most common comorbidities seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity. Bottom: Frequency of each comorbidity in the patient population.
 
-```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3}
+```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
 
 comorbidities.upset(patient.data, 4)
 comorbidity.prevalence(patient.data)
