@@ -23,7 +23,7 @@ library(tidyverse)
 # flags for inclusion of the two data files
 
 use.uk.data <- TRUE
-embargo.limit <- '2020-03-09'
+embargo.limit <- today()
 use.row.data <- TRUE
 use.eot.data <- TRUE
 
@@ -186,7 +186,7 @@ if(use.uk.data){
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
-    filter(daily_dsstdat < as.Date(embargo.limit)) %>%
+    filter(daily_dsstdat < embargo.limit) %>%
     mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert)
 } else {
   uk.data <- NULL
@@ -261,7 +261,7 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup()
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
 patient.data <- demog.data %>% left_join(event.data)%>%
-  filter(dsstdat < as.Date(embargo.limit) | data.source != "UK") # exclude all UK cases on or after embargo limit
+  filter(dsstdat < embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
 
 ### Comorbitities, symptoms, and treatments ###
 
@@ -318,7 +318,7 @@ patient.data <- patient.data %>%
     if(is.na(simple) & is.na(complex)){
       NA
     } else if(is.na(simple)){
-      complicated
+      complex
     } else if(is.na(complex)){
       simple
     } else if(simple == 1 | complex == 1){
@@ -359,13 +359,13 @@ admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admiss
 patient.data <- patient.data %>% 
   mutate(cough.nosputum = pmap_dbl(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
     if(is.na(x)){
-      NA
+      NA     
+    } else if(is.na(y) | is.na(z)){
+        # if these are NA then you don't know what the cough was like
+       NA    
     } else if(all(c(x,y,z) == 2)){
       2
-    } else if(is.na(y) | is.na(z)){
-      # if these are NA then you don't know what the cough was like
-      NA    
-    } else if(y == 1 | z == 1){
+    }  else if(y == 1 | z == 1){
       2    
     } else {
       1
@@ -374,11 +374,11 @@ patient.data <- patient.data %>%
   mutate(cough.sputum = map2_dbl(coughsput_ceoccur_v2, coughhb_ceoccur_v2, function(y,z){
     if(is.na(y)){
       NA
-    } else if(all(c(y,z) == 2)){
-      2
     } else if(is.na(z)){
       # if this is NA then you don't know what the sputum was like
       NA    
+    } else if(all(c(y,z) == 2)){
+      2
     } else if(z == 1){
       2    
     } else {
@@ -555,7 +555,6 @@ patient.data <- patient.data %>%
     temp <- substr(a, 2, nchar(a) -1 )
     temp <- str_replace(temp, ",", "-")
     str_replace(temp, "90-120", "90+")
-    
   })) %>%
   dplyr::mutate(agegp10 = cut(consolidated.age, c(seq(0,70,by = 10),120), right = FALSE)) %>%
   dplyr::mutate(agegp10 = fct_relabel(agegp10, function(a){
@@ -563,7 +562,6 @@ patient.data <- patient.data %>%
     temp <- substr(a, 2, nchar(a) -1 )
     temp <- str_replace(temp, ",", "-")
     str_replace(temp, "70-120", "70+")
-    
   })) %>%
   dplyr::mutate(ICU.admission.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hostdat", TRUE)))) %>%
   dplyr::mutate(ICU.admission.date = ymd(ICU.admission.date)) %>%
@@ -699,7 +697,7 @@ patient.data <- patient.data %>%
     if(is.na(x)){
       if(z == "UK"){
         # censored until the embargo
-        as.numeric(difftime(as.Date(embargo.limit), y,  unit="days"))
+        as.numeric(difftime(embargo.limit, y,  unit="days"))
       } else {
         # censored until today
         as.numeric(difftime(ref.date, y,  unit="days"))
@@ -804,14 +802,14 @@ age.pyramid <- function(data, ...){
     geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
     xlab("Age group") +
     ylab("Count") +
     scale_x_discrete(drop = "F") +
     scale_y_continuous(
       # currently in hard-coded increments of 5. @todo make this better
-      breaks = seq(-(ceiling(max(abs(data2$count))/5)*5), ceiling(max(abs(data2$count))/5)*5, by = 5),
-      labels = as.character(c(rev(seq(5, ceiling(max(abs(data2$count))/5)*5, by = 5)), 0, seq(5, ceiling(max(abs(data2$count))/5)*5, by= 5))),
+      breaks = seq(-(ceiling(max.count/5)*5), ceiling(max.count/5)*5, by = 10),
+      labels = as.character(c(rev(seq(10, ceiling(max.count/5)*5, by = 10)), 0, seq(10, ceiling(max.count/5)*5, by= 10))),
       limits = c(-1.1*max.count, 1.1*max.count)) +
     annotation_custom(
       grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
@@ -851,7 +849,7 @@ outcomes.by.country <- function(data, ...){
   
   ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
     xlab("Country") +
     ylab("Cases") + theme(axis.text.x = element_text(angle = 45, hjust=1))
 }
@@ -863,7 +861,7 @@ outcomes.by.admission.date <- function(data, ...){
     dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
   ggplot(data2) + geom_bar(aes(x = epiweek(hostdat), fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Censored", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
     scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week, 2020") +
     ylab("Cases") 
@@ -1696,15 +1694,9 @@ treatment.upset <- function(data, ...) {
       Antiviral, 
       Antibiotic, 
       Antifungal, 
-      Corticosteroid, 
-      Supplemental.oxygen, 
-      NIV, 
-      Invasive.ventilation, 
-      ECMO, 
-      RRT, 
-      Inotropes
+      Corticosteroid
     ) %>%
-    pivot_longer(2:11, names_to = "Treatment", values_to = "Present") %>%
+    pivot_longer(2:5, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) %>%
     group_by(Pid_special) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
