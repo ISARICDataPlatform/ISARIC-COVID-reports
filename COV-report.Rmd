@@ -19,6 +19,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(glue)
 library(gridExtra)
+library(dplyr)
 
 # file locations
 
@@ -52,6 +53,7 @@ source(glue("{code.path}/output.R"))
 
 
 
+
 # Summary
 
 The results in this report have been produced using data from the International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. These data were contributed by **`r de$N.sites`** sites across **`r de$N.countries`** countries.
@@ -66,28 +68,28 @@ Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$
 
 For this cohort, the average observed duration for the number of days from admission to any outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation of `r  de$obs.sd.adm.outcome`. 
 
-The average  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (95% CI: `r de$mean.onset.adm.lower`, `r de$mean.onset.adm.upper`) with a standard deviation of `r de$obs.sd.onset.adm` days. Expected estimates for the mean durations of admission to outcome and symptom onset to admission are provided in the summary tables at the end of this report. 
+The average  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`). Expected estimates^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates for fitted distribution account for unobserved outcomes.] for the mean durations of admission to outcome and symptom onset to admission are provided in the summary tables at the end of this report. 
 
 
-The average duration from admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` days, with a standard deviation (SD) of	`r round(sd(de$a.icu, na.rm=T), 1)` days. This is based on data on all `r length(de$a.icu)` cases admitted into ICU.  
+The average duration from admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` days, with a standard deviation (SD) of	`r round(sd(de$a.icu, na.rm=T), 1)` days. This is based on data on all `r length(de$a.icu)` cases (in this cohort) admitted into ICU.  
 
 The duration of ICU stay has an average of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  These estimates are based on `r length(de$d.icu)` cases which have complete records for ICU duration or ICU start/end dates.
 
 
 The mean duration from admission to NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days).	This is	based on data from all cases `r length(de$a.nimv)` cases in this cohort who received NIV.	
 
-The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days, with a standard deviation (SD) of 	`r round(sd(de$d.nimv, na.rm=T), 1)` days. These estimates were derived from data on `r length(de$d.nimv)` with complete NIV duration records.
+The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days, with a standard deviation (SD) of 	`r round(sd(de$d.nimv, na.rm=T), 1)` days. These estimates were derived from data on `r length(de$d.nimv)` cases with complete NIV duration records.
 
 
-The mean duration for the time from admission to IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days). These estimates are based on data on all `r length(de$a.imv)` cases who received IMV. Of these, `r length(de$d.imv)` cases have complete data on IMV duration. The mean and SD for the duration of IMV - estimated based on cases with completed IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.	
+The mean duration for the time from admission to IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days). These estimates are based on data on all `r length(de$a.imv)` cases who received IMV. Of these, `r length(de$d.imv)` cases have complete data on IMV duration. 
+
+
+The mean and SD for the duration of IMV - estimated based on cases with completed IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.	
 	
 
 Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr` (95% CI: `r de$hfr.lower`, `r de$hfr.upper`). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr` (95% CI: `r de$cfr.lower`, `r de$cfr.upper`). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
 
 Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals.
-
-
-
 
 
 
@@ -174,7 +176,7 @@ treatment.upset(patient.data)$p
 
 # Statistical Analysis
 
-Blue curves show the Gamma distribution fit to two time-dependent data variables. 
+Blue curves show the Gamma distribution fit to two time-dependent data variables. The dashed line indicated the position of the expected mean.
 
 
 **Figure 9**: Distribution of time from symptom onset to admission.
@@ -357,8 +359,8 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 | Extracorporeal support        | `r de$t.dat$present[5]`        | `r de$t.dat$absent[5]`        | `r de$t.dat$unknown[5]`        |
 | Inhaled nitric oxide          | `r de$t.dat$present[6]`        | `r de$t.dat$absent[6]`        | `r de$t.dat$unknown[6]`        |
 | Inotropes / vasopressors      | `r de$t.dat$present[7]`        | `r de$t.dat$absent[7]`        | `r de$t.dat$unknown[7]`        |
-| Invasive ventilation          | `r de$t.dat$present[8]`        | `r de$t.dat$absent[8]`        | `r de$t.dat$unknown[8]`        |
-| Non-invasive ventilation      | `r de$t.dat$present[9]`        | `r de$t.dat$absent[9]`        | `r de$t.dat$unknown[9]`        |
+| Invasive ventilation          | `r length(de$a.imv)`        | `r de$t.dat$absent[8]`        | `r de$N.cases - length(de$a.imv) - de$t.dat$absent[8]`        |
+| Non-invasive ventilation      | `r length(de$a.nimv)`        | `r de$t.dat$absent[9]`        | `r de$N.cases- length(de$a.nimv) - de$t.dat$absent[9]`        |
 | Oxygen therapy                | `r de$t.dat$present[11]`       | `r de$t.dat$absent[11]`       | `r de$t.dat$unknown[11]`       |
 | Prone ventilation             | `r de$t.dat$present[12]`       | `r de$t.dat$absent[12]`       | `r de$t.dat$unknown[12]`       |
 | Renal replacement therapy     | `r de$t.dat$present[13]`       | `r de$t.dat$absent[13]`       | `r de$t.dat$unknown[13]`       |
@@ -372,7 +374,7 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 **Table 3:** Duration of stay
 
 
-| **Time(in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean**^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates for fitted distribution account for unobserved outcomes. ] (95% CI) | **Notes** |
+| **Time(in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean**(95% CI) | **Notes** |
 |------------------------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------|-------------------------------------------------------------------------------------------|---------------------------------------------|
 | Length of hospital stay              | `r de$obs.mean.adm.outcome` (`r de$obs.mean.adm.outcome.lower`, `r de$obs.mean.adm.outcome.upper`) | `r de$obs.sd.adm.outcome`            | `r de$mean.adm.to.outcome` (`r de$adm.outcome.lower`, `r de$adm.outcome.upper`)           |                                             |
 |Symptom onset to admission | `r  de$obs.mean.onset.adm` (`r de$obs.mean.onset.adm.lower`, `r de$obs.mean.onset.adm.upper`)      | `r de$obs.sd.onset.adm`              | `r de$mean.onset.to.adm` (`r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) |                                             |
@@ -383,8 +385,8 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 | Admission to IMV           | `r round(mean(de$a.imv, na.rm=T), 1)`                                                              | `r round(sd(de$a.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.imv)` observations  |
 | Duration of IMV                                | `r round(mean(de$d.imv, na.rm=T), 1)`                                                              | `r round(sd(de$d.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$d.imv)` observations  |
 |                                                |                                                                                                    |                                      |                                                                                           |                                             |
-| Admission to NIMV          | `r round(mean(de$a.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$a.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$a.nimv)` observations |
-| Duration of NIMV                               | `r round(mean(de$d.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$d.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$d.nimv)` observations |
+| Admission to NIV          | `r round(mean(de$a.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$a.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$a.nimv)` observations |
+| Duration of NIV                               | `r round(mean(de$d.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$d.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$d.nimv)` observations |
 
 
 
