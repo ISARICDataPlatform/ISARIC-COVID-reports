@@ -97,7 +97,7 @@ Of `r de$n.treat` patients with completed details of treatments received `r de$p
 # Patient Characteristics
 
 
-**Figure 1**: Age and sex distribution of patients. Bar fills are outcome (death/discharge/censored) at the time of report.
+**Figure 1**: Age and sex distribution of patients. Bar fills are outcome (death/discharge/ongoing care) at the time of report. The "ongoing care" category are made up of individuals with ongoing hospital treatment at the time of this report.
 
 ```{r agepyramid, echo = FALSE}
 
@@ -105,22 +105,22 @@ age.pyramid(patient.data)
 
 ```
 
-**Figure 2**: Top: The distribution of combinations of the four most common symptoms seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms. Bottom: Frequency of each symptom in the patient population.
+**Figure 2**: Top: Frequency of symtptoms seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common symptoms, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity. The "Any other" category contains all remaining symptoms in the top plot.
+
 
 ```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-
-symptoms.upset(patient.data, 4)
 symptom.prevalence(patient.data)$plt
+symptoms.upset(patient.data, 4)
+
 
 ```
 
 
-**Figure 3**:  Top: The distribution of combinations of the four most common comorbidities seen at admission, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity. Bottom: Frequency of each comorbidity in the patient population.
+**Figure 3**:  Top: Frequency of comorbidities seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common comorbidities, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity. The "Any other" category contains all remaining comorbidities in the top plot, and any other comordbidities recorded as free text by clinical staff.
 
 ```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-
-comorbidities.upset(patient.data, 4)
 comorbidity.prevalence(patient.data)$plt
+comorbidities.upset(patient.data, 4)
 
 ```
 

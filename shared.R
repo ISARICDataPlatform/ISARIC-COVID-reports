@@ -588,7 +588,13 @@ patient.data <- patient.data %>%
   # these are just for the sake of having more self-explanatory column names
   dplyr::mutate(admission.date = hostdat) %>%
   dplyr::mutate(enrollment.date = dsstdat) %>%
-  dplyr::mutate(onset.date = cestdat) 
+  dplyr::mutate(onset.date = cestdat) %>%
+  # start.date is either the admission date or the date of symptom onset, whichever is _later_ - hospital cases are counted from disease onset
+  dplyr::mutate(start.date = map2_chr(admission.date, onset.date, function(x,y){
+    as.character(max(x,y, na.rm = T))
+  })) %>%
+  dplyr::mutate(start.date = ymd(start.date))
+  
 
 compareNA <- function(v1,v2) {
   same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
@@ -707,9 +713,10 @@ patient.data <- patient.data %>%
   dplyr::mutate(NIMV.duration = map2_dbl(NIMV.end.date, NIMV.start.date, function(x,y){
     as.numeric(difftime(x, y,  unit="days"))
   })) %>%
-  dplyr::mutate(admission.to.exit = as.numeric(difftime(exit.date, hostdat,  unit="days")),
-                onset.to.admission = as.numeric(difftime(hostdat, cestdat, unit="days"))) %>%
-  dplyr::mutate(admission.to.censored = pmap_dbl(list(admission.to.exit, hostdat, data.source), function(x,y,z){
+  dplyr::mutate(admission.to.exit = as.numeric(difftime(exit.date, admission.date,  unit="days")),
+                onset.to.admission = as.numeric(difftime(admission.date, onset.date, unit="days")),
+                start.to.exit = as.numeric(difftime(exit.date, start.date,  unit="days"))) %>%
+  dplyr::mutate(admission.to.censored = pmap_dbl(list(admission.to.exit, admission.date, data.source), function(x,y,z){
     if(is.na(x)){
       if(z == "UK"){
         # censored until the embargo
@@ -722,9 +729,29 @@ patient.data <- patient.data %>%
     else {
       NA
     }
-    
+  })) %>%
+  dplyr::mutate(start.to.censored = pmap_dbl(list(admission.to.exit, start.date, data.source), function(x,y,z){
+    if(is.na(x)){
+      if(z == "UK"){
+        # censored until the embargo
+        as.numeric(difftime(embargo.limit, y,  unit="days"))
+      } else {
+        # censored until today
+        as.numeric(difftime(ref.date, y,  unit="days"))
+      }
+    }
+    else {
+      NA
+    }
   })) %>%
   dplyr::mutate(admission.to.death = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
+    if(compareNA(4,x )){
+      as.numeric(difftime(y, z,  unit="days"))
+    } else {
+      NA
+    }
+  })) %>%
+  dplyr::mutate(start.to.death = pmap_dbl(list(dsstdtcyn, dsstdtc, start.date), function(x, y, z){
     if(compareNA(4,x )){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
@@ -738,13 +765,19 @@ patient.data <- patient.data %>%
       NA
     }
   })) %>%
-  dplyr::mutate(admission.to.ICU = map2_dbl(ICU.admission.date, admission.date, function(x,y){
-    as.numeric(difftime(x, y,  unit="days"))
+  dplyr::mutate(start.to.recovery = pmap_dbl(list(dsstdtcyn, dsstdtc, start.date), function(x, y, z){
+    if(compareNA(1, x)){
+      as.numeric(difftime(y, z,  unit="days"))
+    } else {
+      NA
+    }
   })) %>%
-  mutate(admission.to.IMV = as.numeric(difftime(IMV.start.date, hostdat, unit="days"))) %>%
-  mutate(admission.to.NIMV = as.numeric(difftime(NIMV.start.date, hostdat, unit="days")))
-# save RDA @todo change this to keep only relevant columns
-
+  mutate(admission.to.IMV = as.numeric(difftime(ICU.admission.date, admission.date, unit="days")),
+         admission.to.IMV = as.numeric(difftime(IMV.start.date, admission.date, unit="days")),
+         admission.to.NIMV = as.numeric(difftime(NIMV.start.date, admission.date, unit="days")),
+         start.to.IMV = as.numeric(difftime(ICU.admission.date, start.date, unit="days")),
+         start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
+         start = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
 
 
@@ -798,7 +831,7 @@ age.pyramid <- function(data, ...){
     dplyr::summarise(count = n()) %>%
     ungroup() %>%
     filter(!is.na(sex) & !is.na(agegp5)) %>%
-    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge"))) %>%
+    dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death"))) %>%
     dplyr::mutate(count = map2_dbl(count, sex, function(c, s){
       if(s == 1){
         -c
@@ -821,7 +854,7 @@ age.pyramid <- function(data, ...){
     geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     xlab("Age group") +
     ylab("Count") +
     scale_x_discrete(drop = "F") +
@@ -855,22 +888,24 @@ sites.by.country <- function(data, ...){
     dplyr::summarise(n.sites = sum(n.sites)) %>%
     filter(!is.na(Country))
   
+  
   ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
     theme_bw() +
     xlab("Country") +
-    ylab("Sites") + theme(axis.text.x = element_text(angle = 45, hjust=1))
+    ylab("Sites") + theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+    geom_text(aes(x=Country, y=n.sites + 3, label=n.sites), size=4)
 }
 
 # Distribution of patients and outcomes by country
 
 outcomes.by.country <- function(data, ...){
   data2 <- data %>%
-    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))  %>%
+    dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country))
   
   ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     xlab("Country") +
     ylab("Cases") + theme(axis.text.x = element_text(angle = 45, hjust=1))
 }
@@ -879,7 +914,7 @@ outcomes.by.country <- function(data, ...){
 
 outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
-    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge"))) %>%
+    dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored", "death"))) %>%
     mutate(two.digit.epiweek = map_chr(hostdat, function(x){
       ew <- epiweek(x)
       ifelse(nchar(as.character(ew))==1, glue("0{as.character(ew)}"), as.character(ew))
@@ -888,9 +923,9 @@ outcomes.by.admission.date <- function(data, ...){
     filter(!is.na(hostdat))
   ggplot(data2) + geom_bar(aes(x = year.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
-    xlab("Epidemiological week") +
+    xlab("Epidemiological week of admission") +
     ylab("Cases") + 
     theme(axis.text.x = element_text(angle = 45, hjust=1))
 }
@@ -996,10 +1031,10 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
   
   
   ggplot(top.n.conditions.tbl, aes(x = conditions.present)) + 
-    geom_bar(fill = "indianred3", col = "black") + 
+    geom_bar(aes(y=..count../sum(..count..)), fill = "indianred3", col = "black") + 
     theme_bw() +
     xlab("Comorbidities present at admission") +
-    ylab("Count") +
+    ylab("Proportion of patients") +
     scale_x_upset() 
 }
 
@@ -1103,10 +1138,10 @@ symptoms.upset <- function(data, max.symptoms, ...){
   
   
   ggplot(top.n.symptoms.tbl, aes(x = conditions.present)) + 
-    geom_bar(fill = "deepskyblue3", col = "black") + 
+    geom_bar(aes(y=..count../sum(..count..)), fill = "deepskyblue3", col = "black") + 
     theme_bw() +
     xlab("Symptoms present at admission") +
-    ylab("Count") +
+    ylab("Proportion of patients") +
     scale_x_upset() 
 }
 
@@ -1325,7 +1360,7 @@ treatment.use.plot <- function(data, ...){
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
-    scale_fill_brewer(palette = "Paired", name = "Treatment", labels = c("No", "Yes")) +
+    scale_fill_manual(values = c("chartreuse2", "chartreuse4"), name = "Treatment", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
   return(list(plt = plt, data3 = data3))
@@ -1363,7 +1398,6 @@ modified.km.plot <- function(data, ...) {
                    ))
   ggplot(data = df)+
     geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
-    xlim(0, 5)+
     theme_bw()+
     scale_colour_manual(values = c("indianred",  "green", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
     scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
@@ -1382,7 +1416,7 @@ modified.km.plot.1 <- function(data, ...){
     filter(outcome != "censored" & !is.na(outcome.date)) %>%
     dplyr::select(subjid, hostdat, outcome.date, outcome, admission.to.exit) 
   
-  timeline <- map(0:max(data2$admission.to.exit), function(x){
+  timeline <- map(0:max(data2$admission.to.exit, na.rm = T), function(x){
     outcome.date <- data2 %>% filter(admission.to.exit <= x)
     prop.dead <- nrow(outcome.date %>% filter(outcome == "death"))/total.patients
     prop.discharged <- nrow(outcome.date %>% filter(outcome == "discharge"))/total.patients
@@ -1568,7 +1602,7 @@ violin.sex.func <- function(data, ...){
   # by sex
   
   x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
-    geom_violin(trim=FALSE, scale = "width")+ 
+    geom_violin(trim=FALSE)+ 
     geom_boxplot(width=0.1, fill="white")  +
     scale_fill_discrete(drop = F) +
     labs(title=" ", x="Sex", y = "Length of hospital stay") + 
@@ -1610,7 +1644,8 @@ violin.age.func <- function(data, ...){
   
   vdx <- vdx %>% filter(!is.na(Age))
   
-  vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + geom_violin(trim=FALSE, scale = "width")+ #geom_boxplot(width=0.1, fill="white")  +
+  vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
+    geom_violin(trim=FALSE)+ #geom_boxplot(width=0.1, fill="white")  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -1757,7 +1792,7 @@ treatment.upset <- function(data, ...) {
   treatments$prop <- 1 / n_row
   
   p <- ggplot(treatments, aes(x = treatments.used, y = prop)) + 
-    geom_col(fill = "chartreuse4") + 
+    geom_col(fill = "chartreuse3") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
     ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
