@@ -68,7 +68,7 @@ For this cohort,  the observed average for the number of days from admission to 
 
 The observed average for the number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.to.adm`(95% CI: `r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) with a standard deviation of `r de$obs.sd.onset.adm`. The expected estimate for the mean for the same variable is `r de$mean.onset.to.adm` days (95% CI: `r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`).
 
-The average duration (in days) from admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)`, with a standard deviation of	`r round(sd(de$a.icu, na.rm=T), 1)`days. This is based on `r length(de$a.icu)` observations. The duration of ICU stay has an average of `r round(mean(de$d.icu, na.rm=T), 1)`and a standard deviation of	`r round(sd(d.icu, na.rm=T), 1)`.
+The average duration (in days) from admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)`, with a standard deviation of	`r round(sd(de$a.icu, na.rm=T), 1)`days. This is based on `r length(de$a.icu)` observations. The duration of ICU stay has an average of `r round(mean(de$d.icu, na.rm=T), 1)`and a standard deviation of	`r round(sd(de$d.icu, na.rm=T), 1)`.
 
 The mean duration (in days) from admission to receiving NIMV is `r round(mean(de$a.nimv, na.rm=T), 1)` days, with a standard deviation of `r round(sd(de$a.nimv, na.rm=T), 1)` days.	This is	based on `r length(de$a.nimv)` observations.	The mean duration of NIMV is `r round(mean(de$d.nimv, na.rm=T), 1)` days, with a standard deviation (SD) of 	`r round(sd(de$d.nimv, na.rm=T), 1)` days. 
 
