@@ -358,9 +358,9 @@ admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admiss
 
 patient.data <- patient.data %>% 
   mutate(cough.nosputum = pmap_dbl(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
-    if(is.na(x)){
+    if(is.na(x) | x == 3){
       NA     
-    } else if(is.na(y) | is.na(z)){
+    } else if(is.na(y) | is.na(z) | y == 3 | z == 3){
         # if these are NA then you don't know what the cough was like
        NA    
     } else if(all(c(x,y,z) == 2)){
@@ -372,9 +372,9 @@ patient.data <- patient.data %>%
     }
   })) %>% 
   mutate(cough.sputum = map2_dbl(coughsput_ceoccur_v2, coughhb_ceoccur_v2, function(y,z){
-    if(is.na(y)){
+    if(is.na(y) | y == 3){
       NA
-    } else if(is.na(z)){
+    } else if(is.na(z) | z == 3){
       # if this is NA then you don't know what the sputum was like
       NA    
     } else if(all(c(y,z) == 2)){
@@ -385,7 +385,13 @@ patient.data <- patient.data %>%
       1
     }
   })) %>% 
-  mutate(cough.bloodysputum = coughhb_ceoccur_v2)
+  mutate(cough.bloodysputum = map_dbl(coughhb_ceoccur_v2, function(z){
+    if(is.na(z) | z == 3){
+      NA
+    } else {
+      z
+    }
+  }))
 
 admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
