@@ -20,7 +20,7 @@ library(tidyverse)
 
 ## Dataset inclusion flags ##
 
-# flags for inclusion of the two data files
+# flags for inclusion of the three data files
 
 use.uk.data <- TRUE
 embargo.limit <- today()
@@ -798,6 +798,9 @@ age.pyramid <- function(data, ...){
   
   max.count = data2 %>% group_by(agegp5, sex) %>% dplyr::summarise(sac = sum(abs(count))) %>% pull(sac) %>% max()
   
+  plot.breaks <- seq(-(ceiling(max.count/10)*10), ceiling(max.count/10)*10, by = 10)
+  plot.labels <- as.character(c(rev(seq(10, ceiling(max.count/10)*10, by = 10)), 0, seq(10, ceiling(max.count/10)*10, by= 10)))
+
   ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp5, y=count, fill = outcome), stat = "identity", col = "black") +
     geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
@@ -808,8 +811,8 @@ age.pyramid <- function(data, ...){
     scale_x_discrete(drop = "F") +
     scale_y_continuous(
       # currently in hard-coded increments of 5. @todo make this better
-      breaks = seq(-(ceiling(max.count/5)*5), ceiling(max.count/5)*5, by = 10),
-      labels = as.character(c(rev(seq(10, ceiling(max.count/5)*5, by = 10)), 0, seq(10, ceiling(max.count/5)*5, by= 10))),
+      breaks = plot.breaks,
+      # labels = plot.labels,
       limits = c(-1.1*max.count, 1.1*max.count)) +
     annotation_custom(
       grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
@@ -858,13 +861,20 @@ outcomes.by.country <- function(data, ...){
 
 outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
-    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge")))
-  ggplot(data2) + geom_bar(aes(x = epiweek(hostdat), fill = outcome), col = "black", width = 0.95) +
+    dplyr::mutate(outcome = factor(outcome, levels = c("death", "censored", "discharge"))) %>%
+    mutate(two.digit.epiweek = map_chr(hostdat, function(x){
+      ew <- epiweek(x)
+      ifelse(nchar(as.character(ew))==1, glue("0{as.character(ew)}"), as.character(ew))
+    })) %>%
+    mutate(year.epiweek = glue("{year(hostdat)}-{two.digit.epiweek}")) %>%
+    filter(!is.na(hostdat))
+  ggplot(data2) + geom_bar(aes(x = year.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Death", "Ongoing care", "Discharge")) +
-    scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
-    xlab("Epidemiological week, 2020") +
-    ylab("Cases") 
+    # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
+    xlab("Epidemiological week") +
+    ylab("Cases") + 
+    theme(axis.text.x = element_text(angle = 45, hjust=1))
 }
 
 # Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
