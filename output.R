@@ -101,11 +101,41 @@ d.e <- function(data, ...){
   obs.sd.onset.adm <- round(y_sd, 2)
   
   
-  # Admission to ICU
+  # Admission to ICU (not fitted due to low count)
   
-  z <- patient.data$admission.to.ICU
-  z <- round.zeros(abs(z[!is.na(z)]))
-
+  a.icu <- data$admission.to.ICU
+  a.icu <- round.zeros(abs(a.icu[!is.na(a.icu)]))
+  
+  
+  # ICU duration 
+  
+  d.icu <- data$ICU.duration
+  d.icu <- round.zeros(abs(d.icu[!is.na(d.icu)]))
+  
+  
+  
+  # Admission to IMV
+  
+  a.imv <- patient.data$admission.to.IMV
+  a.imv <- round.zeros(abs(a.imv[!is.na(a.imv)]))
+  
+  
+  # IMV duration
+  
+  d.imv <- data$IMV.duration
+  d.imv <- round.zeros(abs(d.imv[!is.na(d.imv)]))
+  
+  
+  # Admission to NIMV
+  
+  a.nimv <- patient.data$admission.to.NIMV
+  a.nimv <- round.zeros(abs(a.nimv[!is.na(a.nimv)]))
+  
+  
+  # NIMV duration
+  d.nimv <- patient.data$NIMV.duration
+  d.nimv <- round.zeros(abs(d.nimv[!is.na(d.nimv)]))
+  
   
   # CFR
   
@@ -129,6 +159,19 @@ d.e <- function(data, ...){
   p.abx <- paste(sprintf("%.1f", p.abx))
   p.av <- 100 * df$Av / df$All
   p.av <- paste(sprintf("%.1f", p.av))
+  
+  # Symptoms 
+  
+  s.dat <- symptom.prevalence(data)$data3
+  
+  # Comorbidities
+  
+  c.dat <- comorbidity.prevalence(data)$data3
+  
+  # Treatments
+  
+  t.dat <- treatment.use.plot(data)$data3
+  
   
   return(list(N.cases = N.cases,
               N.var = N.var,
@@ -174,7 +217,7 @@ d.e <- function(data, ...){
               # sd.onset.to.adm = sd.onset.to.adm,
               # sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
               # sd.onset.to.adm.upper = sd.onset.to.adm.upper,
-              
+          
               obs.mean.adm.outcome =  obs.mean.adm.outcome,
               obs.mean.adm.outcome.lower = obs.mean.adm.outcome.lower,
               obs.mean.adm.outcome.upper = obs.mean.adm.outcome.upper,
@@ -184,6 +227,16 @@ d.e <- function(data, ...){
               obs.mean.onset.adm.lower = obs.mean.onset.adm.lower,
               obs.mean.onset.adm.upper = obs.mean.onset.adm.upper,
               obs.sd.onset.adm = obs.sd.onset.adm,
+              
+              a.icu = a.icu,
+              d.icu = d.icu,
+              
+              a.imv = a.imv,
+              d.imv = d.imv,
+              
+              a.nimv = a.nimv,
+              d.nimv = d.nimv,
+              
               
               cfr = cfr,
               cfr.lower = cfr.lower,
@@ -197,8 +250,13 @@ d.e <- function(data, ...){
               n.treat = n.treat,
               p.none = p.none,
               p.abx = p.abx,
-              p.av = p.av
+              p.av = p.av,
+              
+              s.dat = s.dat,
+              c.dat = c.dat,
+              t.dat = t.dat
   ))
+  
   
 }
 
