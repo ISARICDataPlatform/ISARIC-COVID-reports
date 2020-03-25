@@ -748,7 +748,7 @@ patient.data <- patient.data %>%
          admission.to.NIMV = as.numeric(difftime(NIMV.start.date, admission.date, unit="days")),
          start.to.ICU = as.numeric(difftime(ICU.admission.date, start.date, unit="days")),
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
-         start = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
+         start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
 
 
@@ -783,8 +783,7 @@ trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        onset.to.admission,
                                                        admission.to.censored,
                                                        admission.to.death,
-                                                       admission.to.recovery,
-                                                       admission.to.ICU
+                                                       admission.to.recovery
 )
 
 
@@ -1674,7 +1673,6 @@ surv_plot_func <- function(data, ...){
 
 # Upset plot for treatments @todo add maximum parameter?
 
-
 treatment.upset <- function(data, ...) {
   library(tidyr); library(tidyverse)
   row_n <- nrow(data)
@@ -1745,15 +1743,21 @@ treatment.upset <- function(data, ...) {
     details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
   }
   
+  # Any O2 therapy
+  details = details %>%
+    rowwise() %>%
+    mutate(Oxygen.Therapy = max(Supplemental.oxygen, NIV, Invasive.ventilation, ECMO))
+  
   treatments <- details %>%
     dplyr::select(
       Pid_special, 
       Antiviral, 
       Antibiotic, 
       Antifungal, 
-      Corticosteroid
+      Corticosteroid,
+      Oxygen.Therapy
     ) %>%
-    pivot_longer(2:5, names_to = "Treatment", values_to = "Present") %>%
+    pivot_longer(2:6, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) %>%
     group_by(Pid_special) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
@@ -1762,13 +1766,8 @@ treatment.upset <- function(data, ...) {
     })) %>%
     dplyr::select(-Treatments, -Presence)
   
-  # Upset would stack multiple proportions on top of each other, so to get
-  # proportions, simply need each cell to be allocated a value of n^-1
-  n_row <- nrow(treatments)
-  treatments$prop <- 1 / n_row
-  
   p <- ggplot(treatments, aes(x = treatments.used, y = prop)) + 
-    geom_col(fill = "chartreuse3") + 
+    geom_bar(aes(y=..count../sum(..count..)), fill = "chartreuse3", col = "black") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
     ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
