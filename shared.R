@@ -808,8 +808,8 @@ age.pyramid <- function(data, ...){
     scale_x_discrete(drop = "F") +
     scale_y_continuous(
       # currently in hard-coded increments of 5. @todo make this better
-      breaks = seq(-(ceiling(max(abs(data2$count))/5)*5), ceiling(max(abs(data2$count))/5)*5, by = 5),
-      labels = as.character(c(rev(seq(5, ceiling(max(abs(data2$count))/5)*5, by = 5)), 0, seq(5, ceiling(max(abs(data2$count))/5)*5, by= 5))),
+      breaks = seq(-(ceiling(max.count/5)*5), ceiling(max.count/5)*5, by = 10),
+      labels = as.character(c(rev(seq(10, ceiling(max.count/5)*5, by = 10)), 0, seq(10, ceiling(max.count/5)*5, by= 10))),
       limits = c(-1.1*max.count, 1.1*max.count)) +
     annotation_custom(
       grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
