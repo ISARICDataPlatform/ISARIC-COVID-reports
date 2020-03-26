@@ -59,7 +59,7 @@ d.e <- function(data, ...){
   mean.adm.to.outcome <-  round(fit.summary.gamma(adm.outcome.func(data)$fit)$m, 1)
   adm.outcome.lower <-   round(fit.summary.gamma(adm.outcome.func(data)$fit)$lower.m, 1)
   adm.outcome.upper <-   round(fit.summary.gamma(adm.outcome.func(data)$fit)$upper.m, 1)
-  
+  median.adm.to.outcome <- round(fit.summary.gamma(adm.outcome.func(data)$fit)$bmed$t0, 1)
   
   
   # Onset to admission
@@ -72,7 +72,7 @@ d.e <- function(data, ...){
   mean.onset.to.adm <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$m, 1)
   mean.onset.to.adm.lower <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$lower.m, 1)
   mean.onset.to.adm.upper <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$upper.m, 1)
-  
+  median.onset.to.adm <- round(fit.summary.gamma(onset.adm.func(data)$fit)$bmed$t0, 1)
 
   
   # Distribution estimates - OBSERVED
@@ -181,6 +181,12 @@ d.e <- function(data, ...){
   # Treatments
   
   t.dat <- treatment.use.plot(data)$data3
+  
+  # Cough
+  
+  cough_pre <- summary(as.factor(patient.data$cough))[[2]]
+  cough_abs <- summary(as.factor(patient.data$cough))[[1]]
+  cough_unk <- summary(as.factor(patient.data$cough))[[3]]
   
   
   return(list(N.cases = N.cases,
