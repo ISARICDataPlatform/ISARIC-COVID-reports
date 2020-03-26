@@ -49,47 +49,48 @@ source(glue("{code.path}/output.R"))
 
 <f style="font-family: times, serif; font-size:11pt; font-style:italic"> - A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases</f>
 
-# COVID-19 Report: 25th March, 2020 {-}
+# COVID-19 Report: 25 March 2020 {-}
 
 
 
 
 # Summary
 
-The results in this report have been produced using data from the International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 database up to 19 March 2020. These data were contributed by **`r de$N.sites`** sites across **`r de$N.countries`** countries.
+The results in this report have been produced using data from the ISARIC COVID-19 database up to the date of this report. **`r de$N.sites`** across **`r de$N.countries`** countries contributed data to this report.
 
-To date, data have been entered for **`r de$N.cases`** patients. 
+Data have been entered for **`r de$N.cases`** patients. 
 
-The cohort is made up of `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
+The cohort comprises `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
 
-The median age (calculated based on reported ages) is `r de$median.age` years. The minimum and maximum observed ages in this cohort are `r de$min.age`  and `r de$max.age` years respectively. 
+The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
 
 Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients.
 
-For this cohort, the average observed duration for the number of days from admission to any outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation of `r  de$obs.sd.adm.outcome`. 
+The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. 
 
-The average  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`). Expected estimates^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates for fitted distribution account for unobserved outcomes.] for the mean durations of admission to outcome and symptom onset to admission are provided in the summary tables at the end of this report. 
-
-
-The average duration from admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` days, with a standard deviation (SD) of	`r round(sd(de$a.icu, na.rm=T), 1)` days. This is based on data on all `r length(de$a.icu)` cases (in this cohort) admitted into ICU.  
-
-The duration of ICU stay has an average of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  These estimates are based on `r length(de$d.icu)` cases which have complete records for ICU duration or ICU start/end dates.
+The observed mean  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`). Expected estimates^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates for fitted distribution account for unobserved outcomes.] for the mean durations of admission to outcome and symptom onset to hospital admission are provided in the summary tables at the end of this report. 
 
 
-The mean duration from admission to NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days).	This is	based on data from all cases `r length(de$a.nimv)` cases in this cohort who received NIV.	
+`r length(de$a.icu)` cases were admitted into ICU. The observed mean duration from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` days (SD: `r round(sd(de$a.icu, na.rm=T), 1)` days). 
 
-The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days, with a standard deviation (SD) of 	`r round(sd(de$d.nimv, na.rm=T), 1)` days. These estimates were derived from data on `r length(de$d.nimv)` cases with complete NIV duration records.
-
-
-The mean duration for the time from admission to IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days). These estimates are based on data on all `r length(de$a.imv)` cases who received IMV. Of these, `r length(de$d.imv)` cases have complete data on IMV duration. 
+The duration of ICU stay has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  The estimates for duration of ICU stay  are based on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`).
 
 
-The mean and SD for the duration of IMV - estimated based on cases with completed IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.	
+`r length(de$a.nimv)` patients received non-invasive mechanical ventilation (NIV). The mean duration from admission to receiving NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days).
+
+
+The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days).  The estimates for duration of NIV treatment  are based on only those cases with have complete NIV duration records (N = `r length(de$d.nimv)`).
+
+
+`r length(de$d.imv)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days).
+
+
+The mean and SD for the duration of IMV - estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.	
 	
 
-Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr` (95% CI: `r de$hfr.lower`, `r de$hfr.upper`). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr` (95% CI: `r de$cfr.lower`, `r de$cfr.upper`). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
+Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr/100`% (95% CI: `r de$hfr.lower/100`%, `r de$hfr.upper/100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr/100`% (95% CI: `r de$cfr.lower/100`%, `r de$cfr.upper/100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
 
-Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals.
+Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. The aforementioned treatment categories should not be treated as mutually exclusive since some patients received multiple treatments.
 
 
 
@@ -126,14 +127,14 @@ comorbidities.upset(patient.data, 4)
 
 ```
 
-**Figure 5**: Distribution of length of hospital stay, according to sex. The coloured areas indicate the kernel probability density of the observed data. The plot is based only on completed outcomes.
+**Figure 4**: Distribution of length of hospital stay, according to sex. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r  stay.by.sex, out.width= "80%"}
 
 violin.sex.func(patient.data)
 ```
 
-**Figure 5**: Distribution of length of hospital stay, according to patient age group. The coloured areas indicate the kernel probability density of the observed data. The plot is based only on completed outcomes.
+**Figure 5**: Distribution of length of hospital stay, according to patient age group. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r  stay.by.age, out.width= "80%"}
 
@@ -160,14 +161,14 @@ outcomes.by.admission.date(patient.data)
 
 # Treatment
 
-**Figure 7**: Treatments used on all patients where this information was recorded.
+**Figure 7**: Treatments used. This only includes  on all patients where this information was recorded.
 
 ```{r treatment1, echo=FALSE}
 treatment.use.plot(patient.data)$plt
 ```
 
 
-**Figure 8**: The distribution of combinations of antimicrobial treatments and steroids administed during hospital stay, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each symptoms.
+**Figure 8**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each symptoms.
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)$p
@@ -176,10 +177,8 @@ treatment.upset(patient.data)$p
 
 # Statistical Analysis
 
-Blue curves show the Gamma distribution fit to two time-dependent data variables. The dashed line indicated the position of the expected mean.
 
-
-**Figure 9**: Distribution of time from symptom onset to admission.
+**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 ```{r onset.admission, out.width = '80%'}
 
@@ -188,7 +187,7 @@ onset.adm.func(patient.data)$plt
 ```
 
 
-**Figure 10**: Distribution of time from admission to an outcome - either death or recovery.
+**Figure 10**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 
 ```{r  adm.outcome, out.width = '80%'}
@@ -199,7 +198,7 @@ adm.outcome.func(patient.data)$plt
 
 
 
-**Figure 11**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The case  fatality ratio (black) is based on the cumulative incidence function of deaths and recoveries so far. See Methods section for details. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 11**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. See Methods section for details. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -233,14 +232,13 @@ outcomes.by.country(patient.data)
 # Background
 
 
-In response to the emergence of novel coronavirus (COVID-19), ISARIC launched a portfolio of resources to accelerate outbreak research and response. All resources are designed to address the most critical public health questions, have undergone extensive review by international clinical experts, and are free for all to use. Resources are available on the [ISARIC website](https://isaric.tghn.org/).
+In response to the emergence of novel coronavirus (COVID-19), ISARIC launched a portfolio of resources to accelerate outbreak research and response. All data collection tools are designed to address the most critical public health questions, have undergone extensive review by international clinical experts, and are free for all to use. Resources are available on the [ISARIC website](https://isaric.tghn.org/).
 
-The [ISARIC-WHO COVID-19 Case Record Form (CRF)](https://media.tghn.org/medialibrary/2020/03/ISARIC_COVID-19_CRF_V1.3_24Feb2020.pdf) enables the collection of standardised clinical data to inform patient management and the public health response. These forms should be used to collect data on suspected or confirmed cases of COVID-19.
+The [ISARIC-WHO COVID-19 Case Record Form (CRF)](https://media.tghn.org/medialibrary/2020/03/ISARIC_COVID-19_CRF_V1.3_24Feb2020.pdf) enables the collection of standardised clinical data to inform patient management and the public health response. These forms should be used to collect data on suspected or confirmed cases of COVID-19. The CRF is available in multiple languages and is now in use across dozens of countries and research consortia, who are contributing data to these reports.
 
-Following the launch of this this open resource, ISARIC received a massive response from the health and research communities. This form is now in use across dozens of countries and research consortia, aligning the collection of health data. The form is available in multiple languages. Data can be entered electronically to the data platform as below. ISARIC supports researchers to retain control of the data and samples they collect. All decisions regarding data use are made by the institutions that enter the data. We keep our contributors informed of any plans and welcome their input to ensure that we are generating the best science and promoting the interests of your patients, your institutions and your public health authorities. Feedback and suggestions are welcome anytime at [ncov@isaric.org](ncov@isaric.org)
+To support the rapid implementation of standardised data collection and reporting, ISARIC hosts a data platform that includes an electronic data capture system, a secure repository and an analytic framework. Data are entered to a web-based REDCap data management system, securely stored, and used to inform regular reports as above. Data contributors are invited to input on the methods and contents of the reports, and are provided with the R code to execute analysis on their own data in the platform. For more information, visit the ISARIC website.
 
-To support the rapid implementation of standardised data collection and reporting, ISARIC hosts a data platform that includes an electronic data capture system, a secure repository and an analytic framework. Data are entered to a web-based [REDCap](https://www.project-redcap.org/) data management system, securely stored, and used to inform regular reports as above. Data contributors are invited to input on the methods and contents of the reports, and are provided with the R code to execute analysis on their own data in the platform. For more information, visit the [ISARIC](https://isaric.tghn.org/covid-19-clinical-research-resources/) website.
-
+Following the launch of this these open resources, ISARIC received a massive response from the health and research communities. ISARIC supports researchers to retain control of the data and samples they collect. All decisions regarding data use are made by the institutions that enter the data. We keep our contributors informed of any plans and welcome their input to ensure that we are generating the best science and promoting the interests of your patients, your institutions and your public health authorities. Feedback and suggestions are welcome at [ncov@isaric.org](ncov@isaric.org).
 
 
 
@@ -248,13 +246,13 @@ To support the rapid implementation of standardised data collection and reportin
 
 Patient details were submitted electronically by participating sites to the ISARIC database.  Relevant background and presenting symptoms were recorded on the day of study recruitment.  Daily follow-up was then completed until recovery or death.  A final form was completed with details of treatments received and outcomes. All categories that represent fewer than five individuals have been suppressed to avoid the potential for identification of participants. 
 
-Graphs have been used to represent the age distribution of patience by sex and status (censored, death, recovered), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
+Graphs have been used to represent the age distribution of patience by sex and status (dead, recovered & still in hospital), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
 
 Using a non-parametric Kaplan-Meier-based method (Ghani *et al.*, 2005), the case- fatality ratio (CFR) was estimated, as well as probabilities for death and recovery. This method estimates the CFR with the formula $a/(a+b)$, where $a$ and $b$ are the values of the cumulative incidence function for deaths and recoveries respectively, estimated at the last observed time point. In a competing risk context (i.e. where there are multiple endpoints),  the cumulative incidence function for an endpoint is equal to the product of the hazard function for that endpoint and the survival function assuming a composite endpoint. It is worth noting that this method assumes that future deaths and recoveries will occur with the same relative probabilities as have been observed so far. Binomial confidence intervals for the CFR were obtained by a normal approximation (See Ghani *et al.*, (2005)).
 
 <!-- Another CFR estimation method, which uses observed outcomes only, was employed in this analysis. For this method, the CFR is calculated as the ratio of deaths to the sum of deaths and recoveries until the reference point (Wu *et al.*, 2020). Over time, the uncertainty around the estimate decreases due to an increase in completed outcomes. Exact binomial confidence intervals are plotted along with the risk estimate at each time point.  -->
 
-To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions were fitted to the observed data, accounting for censorship. Parameters were estimated by a maximum likelihood procedure and confidence intervals for the means and variances were obtained by bootstrap. 
+To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions were fitted to the observed data, accounting for unobserved outcomes. Parameters were estimated by a maximum likelihood procedure and confidence intervals for the means and variances were obtained by bootstrap. 
 
 <!-- For cases still in hospital, i.e. cases which do not yet have an outcome by the date of this report, the  likelihood function for the estimation of the time from admission to any outcome was constructed to allow for right censoring. -->
 
@@ -266,7 +264,7 @@ All analysis were performed using the R statistical software (R Core Team, 2019)
 
 ## Caveat to all data
 
-Patient data is collected and uploaded from start of admission, however a complete patient data set is not available until the episode of care is complete. This causes a predictable lag in available data influenced by the duration of admission which is greatest for the sickest patients, and accentuated during the up-phase of the outbreak.
+Patient data are collected and uploaded from start of admission, however a complete patient data set is not available until the episode of care is complete. This causes a predictable lag in available data influenced by the duration of admission which is greatest for the sickest patients, and accentuated during the up-phase of the outbreak.
 
 
 ## Caveat to UK data
@@ -394,7 +392,7 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 
 * Gail Carson
 * Emmanuelle A. Dankwa
-* AnneMarie Docherty 
+* Annemarie Docherty 
 * Christl A. Donnelly
 * Christophe Fraser
 * Matthew Hall
