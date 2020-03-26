@@ -60,6 +60,9 @@ The results in this report have been produced using data from the ISARIC COVID-1
 
 Data have been entered for **`r de$N.cases`** patients. 
 
+We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  Please note the caveats.  These are particularly relevant for our first global report as information is still incomplete for the many individuals who are still hospitalized, and note that most of the cases are from the UK. 
+
+
 The cohort comprises `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
 
 The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
@@ -92,10 +95,7 @@ The mean and SD for the duration of IMV - estimated based on all `r length(de$d.
 
 Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr/100`% (95% CI: `r de$hfr.lower/100`%, `r de$hfr.upper/100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
 
-Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. The aforementioned treatment categories should not be treated as mutually exclusive since some patients received multiple treatments.
-
-
-
+Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. The aforementioned treatment categories should not be treated as mutually exclusive since some patients received multiple treatments.  `r de$p.o2`% received some degree of oxygen supplementation.  Of those receiving oxygen supplementation, `r de$p.NIV`% received non-invasive ventilation and `r de$p.In.Ven`% received invasive mechanical ventilation.
 
 
 
@@ -152,7 +152,7 @@ violin.age.func(patient.data)
 
 <!-- ``` -->
 
-**Figure 6**: Patient outcomes by epidemiological week (of 2020) of admission
+**Figure 6**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset)
 
 ```{r recruitment3, echo=FALSE}
 

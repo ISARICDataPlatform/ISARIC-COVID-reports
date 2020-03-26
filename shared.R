@@ -886,17 +886,17 @@ outcomes.by.country <- function(data, ...){
 outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored", "death"))) %>%
-    mutate(two.digit.epiweek = map_chr(hostdat, function(x){
+    mutate(two.digit.epiweek = map_chr(start.date, function(x){
       ew <- epiweek(x)
       ifelse(nchar(as.character(ew))==1, glue("0{as.character(ew)}"), as.character(ew))
     })) %>%
-    mutate(year.epiweek = glue("{year(hostdat)}-{two.digit.epiweek}")) %>%
+    mutate(year.epiweek = glue("{year(start.date)}-{two.digit.epiweek}")) %>%
     filter(!is.na(hostdat))
   ggplot(data2) + geom_bar(aes(x = year.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
-    xlab("Epidemiological week of admission") +
+    xlab("Epidemiological week of admission/symptom onset") +
     ylab("Cases") + 
     theme(axis.text.x = element_text(angle = 45, hjust=1))
 }
@@ -1411,9 +1411,10 @@ modified.km.plot.1 <- function(data, ...){
   
   
   final.dead <- timeline %>%  pull(prop.dead) %>% max()
+  final.discharged <- timeline %>% pull(prop.discharged) %>% min()
   final.not.discharged <- timeline %>% pull(prop.not.discharged) %>% min()
   
-  interpolation.line <- final.dead + (1-(final.not.discharged+final.dead))*(final.dead/(final.dead + (1-final.not.discharged)))
+  interpolation.line <- final.dead + (1-(final.discharged+final.dead))*(final.dead/(final.dead + final.discharged)))
   
   timeline <- timeline %>%
     add_column(interpolation = interpolation.line) %>%
@@ -1712,7 +1713,8 @@ treatment.upset <- function(data, ...) {
   # Any O2 therapy
   details = details %>%
     rowwise() %>%
-    mutate(Oxygen.Therapy = max(Supplemental.oxygen, NIV, Invasive.ventilation, ECMO))
+    mutate(Oxygen.Therapy = max(Supplemental.oxygen, NIV, Invasive.ventilation, 
+                                ECMO))
   
   treatments <- details %>%
     dplyr::select(
@@ -1749,8 +1751,19 @@ treatment.upset <- function(data, ...) {
     mutate(Any = max(Antiviral, Antibiotic, Antifungal, Corticosteroid))
   details$None <- 1 - details$Any
   N.none <- sum(details$None, na.rm = FALSE)
+  N.O2 <- sum(details$Oxygen.Therapy, na.rm = FALSE)
+  N.NIV <- sum(details$NIV, na.rm = FALSE)
+  N.inv.vent <- sum(details$Invasive.ventilation, na.rm = FALSE)
   
-  df = data.frame(All = N.treat, Abx = N.abx, Av = N.av, None = N.none)
+  df = data.frame(
+    All = N.treat, 
+    Abx = N.abx, 
+    Av = N.av, 
+    None = N.none, 
+    O2 = N.O2,
+    NIV = N.NIV,
+    Inv.ven <- N.inv.vent
+  )
   
   return(list(p = p, df = df))
 }
