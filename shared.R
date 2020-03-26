@@ -1692,7 +1692,7 @@ violin.age.func <- function(data, ...){
 
 treatment.upset <- function(data, ...) {
   library(tidyr); library(tidyverse)
-  detail <- subset(
+  details <- subset(
     data, 
     select = c(dsterm, 
                antiviral_cmyn, antiviral_cmtrt, 
