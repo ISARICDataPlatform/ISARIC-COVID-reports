@@ -1782,7 +1782,7 @@ treatment.upset <- function(data, ...) {
     mutate(Any = max(Antiviral, Antibiotic, Antifungal, Corticosteroid))
   details$None <- 1 - details$Any
   N.none <- sum(details$None, na.rm = FALSE)
-  N.O2 <- sum(details$Oxygen.Therapy, na.rm = FALSE)
+  N.O2 <- sum(details$O2.ever, na.rm = FALSE)
   N.NIV <- sum(details$NIV, na.rm = FALSE)
   N.inv.vent <- sum(details$Invasive.ventilation, na.rm = FALSE)
   
