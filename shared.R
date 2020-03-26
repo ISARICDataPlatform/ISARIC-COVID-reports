@@ -707,7 +707,6 @@ patient.data <- patient.data %>%
   { bind_cols(., bind_rows(!!!.$ECMO.cols)) } %>%
   dplyr::select(-ECMO.cols) %>%
   mutate(ICU.cols  = map2(subjid,events, function(id, el){
->>>>>>> f3833c3e002037e6b625bf0dd44212c9fa45a8d5
     process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
   })) %>%
   mutate(ICU.ever = unlist(ICU.cols)) %>%
@@ -2212,17 +2211,12 @@ surv.plot.func <- function(data, ...){
                      ggtheme = theme_bw(), # Change ggplot2 theme
                      palette = c('#D2691E', '#BA55D3'),
                      legend.labs = 
-<<<<<<< HEAD
                        c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , legend = c(0.8, 0.8))
   
   pval <- round(surv_pvalue(fit)$pval, 2)
   
   return(list(plt = plt, pval=pval))
   
-=======
-                       c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , xlab = 'Time (in days) from admission', legend = c(0.8, 0.8))
-  return(plot)
->>>>>>> 3708155662936aa08ecaca26c0deed42768f40d3
 }
 
 
