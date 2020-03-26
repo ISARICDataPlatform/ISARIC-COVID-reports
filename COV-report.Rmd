@@ -52,8 +52,6 @@ source(glue("{code.path}/output.R"))
 # COVID-19 Report: 25 March 2020 {-}
 
 
-
-
 # Summary
 
 The results in this report have been produced using data from the ISARIC COVID-19 database up to the date of this report. **`r de$N.sites`** across **`r de$N.countries`** countries contributed data to this report.
@@ -67,7 +65,7 @@ The cohort comprises `r de$N.males` males and `r de$N.females` females - sex is 
 
 The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
 
-Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr/100`% (95% CI: `r de$hfr.lower/100`%, `r de$hfr.upper/100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
+Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr*100`% (95% CI: `r de$hfr.lower*100`%, `r de$hfr.upper*100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
 
 The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. 
 
@@ -89,7 +87,7 @@ The duration of stay in the intensive care unit (ICU) has a mean of `r round(mea
 The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days).  The estimates for duration of NIV treatment  are based on only those cases with have complete NIV duration records (N = `r length(de$d.nimv)`).
 
 
-`r length(de$d.imv)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days).
+`r length(de$a.imv)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days).
 
 
 The mean and SD for the duration of IMV - estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.	
@@ -182,7 +180,7 @@ treatment.upset(patient.data)$p
 
 ```{r survival, out.width= "80%"}
 
-include_graphics('survival-plot.png')
+knitr::include_graphics('survival-plot.png')
 
 ```
  
