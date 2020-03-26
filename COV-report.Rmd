@@ -182,11 +182,11 @@ treatment.upset(patient.data)$p
 
 # Statistical Analysis
 
- **Figure 9**: Survival analysis for length of hospital stay by sex. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated as tick marks. At 0.05 significance level, there is no significant difference in length of hospital stay by sex (p-value $>$ 0.05). 
+ **Figure 9**: Survival analysis for length of hospital stay by sex. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated as tick marks.
 
 ```{r survival, out.width= "80%"}
 
-knitr::include_graphics('survival-plot.png')
+survival.plot.func(data)$plt
 
 ```
  
