@@ -369,41 +369,38 @@ admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admiss
 # these have not been entered coherently, replace them. Someone with a cough with sputum does not have a cough without it
 
 patient.data <- patient.data %>% 
-  mutate(cough.nosputum = pmap_dbl(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
-    if(is.na(x) | x == 3){
-      NA     
-    } else if(is.na(y) | is.na(z) | y == 3 | z == 3){
-        # if these are NA then you don't know what the cough was like
-       NA    
+  mutate(cough.cols = pmap(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
+    
+    if(any(c(x,y,z) == 3) | any(is.na(c(x,y,z)))){
+      cough.nosputum <- NA
+      cough.sputum <- NA
+      cough.bloodysputum <- NA
     } else if(all(c(x,y,z) == 2)){
-      2
-    }  else if(y == 1 | z == 1){
-      2    
+      cough.nosputum <- 2
+      cough.sputum <- 2
+      cough.bloodysputum <- 2
+    } else if(y == 1){
+      cough.nosputum <- 2
+      if(z == 1){
+        cough.sputum <- 2
+        cough.bloodysputum <- 1
+      } else {
+        cough.sputum <- 1
+        cough.bloodysputum <- 2
+      } 
+    } else if(z == 1) {
+      cough.nosputum <- 2
+      cough.sputum <- 2
+      cough.bloodysputum <- 1
     } else {
-      1
+      cough.nosputum <- x
+      cough.sputum <- 2
+      cough.bloodysputum <- 2
     }
+    list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
   })) %>% 
-  mutate(cough.sputum = map2_dbl(coughsput_ceoccur_v2, coughhb_ceoccur_v2, function(y,z){
-    if(is.na(y) | y == 3){
-      NA
-    } else if(is.na(z) | z == 3){
-      # if this is NA then you don't know what the sputum was like
-      NA    
-    } else if(all(c(y,z) == 2)){
-      2
-    } else if(z == 1){
-      2    
-    } else {
-      1
-    }
-  })) %>% 
-  mutate(cough.bloodysputum = map_dbl(coughhb_ceoccur_v2, function(z){
-    if(is.na(z) | z == 3){
-      NA
-    } else {
-      z
-    }
-  }))
+  { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
+  select(-cough.cols)
 
 admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
