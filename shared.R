@@ -2196,9 +2196,9 @@ onset.adm.func <- function(data){
 ######### Survival plot ######
 
 
-surv.plot.func <- function(data, ...){
+surv.plot.func <- function(data1, ...){
 
-  data2 <- data %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+  data2 <- data1 %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   
   data2 <- data2 %>% 
     dplyr::mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
@@ -2206,6 +2206,7 @@ surv.plot.func <- function(data, ...){
     }))
   data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
   
+
   data2$event <- as.factor(as.integer(as.logical(data2$censored))) # Now, TRUE= 1, FALSE = 0 
   
   data2$event <- revalue(data2$event, c('0'=1, '1'=0)) # changing to TRUE = 0 (i.e. censored, not experienced event), FALSE = 1 (not censored, experienced event)
@@ -2214,8 +2215,9 @@ surv.plot.func <- function(data, ...){
   df <- tibble(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), event = data2$event)
   
   fit <- survfit(Surv(df$length.of.stay, df$event) ~ df$sex, data = df)
+
   #print(fit)
-  plt <- ggsurvplot(fit,
+  plot <- ggsurvplot(fit, data = df, 
                      pval = T, pval.coord = c(0, 0.03), conf.int = T,
                      risk.table = F, # Add risk table
                      # risk.table.col = "strata", # Change risk table color by groups
@@ -2225,11 +2227,7 @@ surv.plot.func <- function(data, ...){
                      palette = c('#D2691E', '#BA55D3'),
                      legend.labs = 
                        c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , legend = c(0.8, 0.8))
-  
-  pval <- round(surv_pvalue(fit)$pval, 2)
-  
-  return(list(plt = plt, pval=pval))
-  
+  return(plot)
 }
 
 
