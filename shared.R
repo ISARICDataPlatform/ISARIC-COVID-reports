@@ -18,8 +18,9 @@ library(survival)
 library(survminer)
 library(tidyverse)
 library(broom)
+library(boot)
 
-## Dataset inclusion flags ##
+#### Dataset inclusion flags ####
 
 # flags for inclusion of the three data files
 
@@ -32,7 +33,7 @@ if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
 }
 
-# List of sites
+#### List of sites ####
 
 site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>% 
   dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
@@ -213,7 +214,7 @@ if(use.eot.data){
 }
 
 
-# Manual date correction
+#### Manual date correction ####
 
 if(use.row.data){
   row.data <- read_csv(glue("{data.path}/{row.data.file}"), guess_max = 10000) %>% 
@@ -274,7 +275,7 @@ event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events 
 patient.data <- demog.data %>% left_join(event.data) #%>%
   # filter(dsstdat < embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
 
-### Comorbitities, symptoms, and treatments ###
+#### Comorbitities, symptoms, and treatments ####
 
 # read the data dictionary to get lists of columns for symptoms at admission, comorbidities, and treatments
 
@@ -286,7 +287,7 @@ comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field
 admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4") & field.type == "radio" &  field.name != "bleed_ceterm_v2") %>% pull(field.name)
 treatment.colnames <- d.dict %>% filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
 
-# COMORBIDITIES
+#### COMORBIDITIES ####
 
 comorbidities.labels <- d.dict %>% 
   filter(form.name == "comorbidities" & field.type == "radio") %>% 
@@ -345,7 +346,7 @@ comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "D
   filter(field != "diabetes_mhyn" & field != "diabetescom_mhyn")
 
 
-# SYMPTOMS
+#### SYMPTOMS ####
 
 # Note that bleed_ceterm_v2 is wrongly described as a radio button; it is free text
 
@@ -368,41 +369,38 @@ admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admiss
 # these have not been entered coherently, replace them. Someone with a cough with sputum does not have a cough without it
 
 patient.data <- patient.data %>% 
-  mutate(cough.nosputum = pmap_dbl(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
-    if(is.na(x) | x == 3){
-      NA     
-    } else if(is.na(y) | is.na(z) | y == 3 | z == 3){
-        # if these are NA then you don't know what the cough was like
-       NA    
+  mutate(cough.cols = pmap(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
+    
+    if(any(c(x,y,z) == 3) | any(is.na(c(x,y,z)))){
+      cough.nosputum <- NA
+      cough.sputum <- NA
+      cough.bloodysputum <- NA
     } else if(all(c(x,y,z) == 2)){
-      2
-    }  else if(y == 1 | z == 1){
-      2    
+      cough.nosputum <- 2
+      cough.sputum <- 2
+      cough.bloodysputum <- 2
+    } else if(y == 1){
+      cough.nosputum <- 2
+      if(z == 1){
+        cough.sputum <- 2
+        cough.bloodysputum <- 1
+      } else {
+        cough.sputum <- 1
+        cough.bloodysputum <- 2
+      } 
+    } else if(z == 1) {
+      cough.nosputum <- 2
+      cough.sputum <- 2
+      cough.bloodysputum <- 1
     } else {
-      1
+      cough.nosputum <- x
+      cough.sputum <- 2
+      cough.bloodysputum <- 2
     }
+    list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
   })) %>% 
-  mutate(cough.sputum = map2_dbl(coughsput_ceoccur_v2, coughhb_ceoccur_v2, function(y,z){
-    if(is.na(y) | y == 3){
-      NA
-    } else if(is.na(z) | z == 3){
-      # if this is NA then you don't know what the sputum was like
-      NA    
-    } else if(all(c(y,z) == 2)){
-      2
-    } else if(z == 1){
-      2    
-    } else {
-      1
-    }
-  })) %>% 
-  mutate(cough.bloodysputum = map_dbl(coughhb_ceoccur_v2, function(z){
-    if(is.na(z) | z == 3){
-      NA
-    } else {
-      z
-    }
-  }))
+  { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
+  select(-cough.cols)
 
 admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
@@ -431,7 +429,7 @@ admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "shortness.b
 
 
 
-# TREATMENTS
+#### TREATMENTS ####
 
 treatment.labels <- d.dict %>% 
   filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>%
@@ -450,7 +448,6 @@ treatment.labels[9] <- "Tracheostomy"
 treatment.labels[14] <- "Other"
 
 treatments <- tibble(field = treatment.colnames, label = treatment.labels)
-
 
 extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
   out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
@@ -557,7 +554,7 @@ patient.data <- patient.data %>%
     ifelse(x=="discharge", as.character(y), NA)
   }))  %>%
   dplyr::mutate(discharge.date = ymd(discharge.date)) %>%
-  # Consolidated age is the exact age at enrollment if this is present. Otherwise it is taken from the estimated age column. 
+  # Consolidated age is the exact age at enrolment if this is present. Otherwise it is taken from the estimated age column. 
   dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
     if(is.na(dob)){
       ageest
@@ -588,15 +585,22 @@ patient.data <- patient.data %>%
   dplyr::mutate(IMV.duration  = map_dbl(events, function(x) extract.named.column.from.events(x, "invasive_prdur", TRUE))) %>%
   # these are just for the sake of having more self-explanatory column names
   dplyr::mutate(admission.date = hostdat) %>%
-  dplyr::mutate(enrollment.date = dsstdat) %>%
+  dplyr::mutate(enrolment.date = dsstdat) %>%
   dplyr::mutate(onset.date = cestdat) %>%
   # start.date is either the admission date or the date of symptom onset, whichever is _later_ - hospital cases are counted from disease onset
   dplyr::mutate(start.date = map2_chr(admission.date, onset.date, function(x,y){
     as.character(max(x,y, na.rm = T))
   })) %>%
-  dplyr::mutate(start.date = ymd(start.date))
+  dplyr::mutate(start.date = ymd(start.date)) %>%
+  dplyr::mutate(antiviral.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmyn", TRUE) )) %>%
+  dplyr::mutate(antiviral.Ribavirin = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___1", TRUE) )) %>%
+  dplyr::mutate(antiviral.Lopinavir.Ritonvir = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___2", TRUE) )) %>%
+  dplyr::mutate(antiviral.Interferon.alpha = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___3", TRUE) )) %>%
+  dplyr::mutate(antiviral.Interferon.beta = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___4", TRUE) )) %>%
+  dplyr::mutate(antiviral.Neuraminidase.inhibitors = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___5", TRUE) )) %>%
+  dplyr::mutate(antiviral.other = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___6", TRUE) ))   %>%
+  dplyr::mutate(antiviral.freetext = map_chr(events, function(x) extract.named.column.from.events(x, "antiviral_cmtype", TRUE) ))
   
-
 compareNA <- function(v1,v2) {
   same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
   same[is.na(same)] <- FALSE
@@ -764,7 +768,7 @@ trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        one_of(comorbidities$field),
                                                        one_of(treatments$field),
                                                        admission.date,
-                                                       enrollment.date,
+                                                       enrolment.date,
                                                        onset.date,
                                                        ICU.admission.date,
                                                        ICU.discharge.date,
@@ -1355,7 +1359,7 @@ modified.km.plot <- function(data, ...) {
   
   # Exclude rows which no entries for length of stay
 
-  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
   
   #data2 <- data2 %>% 
     #mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
@@ -1404,20 +1408,19 @@ modified.km.plot.1 <- function(data, ...){
     prop.discharged <- nrow(outcome.date %>% filter(outcome == "discharge"))/total.patients
     list(day = x, prop.dead = prop.dead, prop.discharged = prop.discharged)
   }) %>% bind_rows() %>%
-    dplyr::mutate(prop.not.discharged = 1-prop.discharged) %>%
-    dplyr::select(-prop.discharged)
-  
+    dplyr::mutate(prop.not.discharged = 1-prop.discharged)
   
   
   
   final.dead <- timeline %>%  pull(prop.dead) %>% max()
-  final.discharged <- timeline %>% pull(prop.discharged) %>% min()
+  final.discharged <- timeline %>% pull(prop.discharged) %>% max()
   final.not.discharged <- timeline %>% pull(prop.not.discharged) %>% min()
   
   interpolation.line <- final.dead + (1-(final.discharged+final.dead))*(final.dead/(final.dead + final.discharged))
   
   timeline <- timeline %>%
     add_column(interpolation = interpolation.line) %>%
+    select(-prop.discharged) %>%
     pivot_longer(2:4, names_to = "stat", values_to = "value") %>%
     dplyr::mutate(stat = factor(stat, levels = c("prop.dead", "prop.not.discharged", "interpolation")))
   
@@ -1862,12 +1865,43 @@ status.by.time.after.admission <- function(data, ...){
     ylab("Proportion")
 }
 
+antiviral.use.upset <- function(data, ...){
+  
+  antiviral.mapper <- function(x){
+    switch(x,
+           "antiviral.Ribavirin" = "Ribavirin",
+           "antiviral.Lopinavir.Ritonvir" = "Lopinavir/Ritonvir",
+           "antiviral.Interferon.alpha" = "Interferon-alpha",
+           "antiviral.Interferon.beta" = "Interferon-beta",
+           "antiviral.Neuraminidase.inhibitors" =  "Neuraminidase inhibitor",
+           "antiviral.other" = "Other antiviral")
+  }
+  
+  data2 <- data %>%
+    filter(data.source == "UK") %>%
+    dplyr::select(subjid, starts_with("antiviral.")) %>%
 
-
-
-###### Required libraries #####
-library(boot)
-
+    pivot_longer(2:7, names_to = "antiviral", values_to = "value") %>%
+    mutate(antiviral = map_chr(antiviral, antiviral.mapper)) %>%
+    filter(!is.na(value)) %>%
+    mutate(value = as.logical(value)) %>%
+    group_by(subjid) %>%
+    dplyr::summarise(antivirals = list(antiviral), values = list(value)) %>%
+    dplyr::mutate(antivirals.used = map2(antivirals, values, function(c,p){
+      c[which(p)]
+    })) %>%
+    dplyr::select(-antivirals, -values)
+  
+  
+  
+  ggplot(data2, aes(x = antivirals.used)) + 
+    geom_bar(aes(y=..count../sum(..count..)), fill = "deepskyblue3", col = "black") + 
+    theme_bw() +
+    xlab("Antivirals used") +
+    ylab("Proportion of patients") +
+    scale_x_upset() 
+  
+}
 
 ##############################################################################
 # Function below calculates mean and variance estimates and confidence intervals (by bootstrap) for the following time-based distributions.

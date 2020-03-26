@@ -54,12 +54,15 @@ source(glue("{code.path}/output.R"))
 
 # Summary
 
-The results in this report have been produced using data from the ISARIC COVID-19 database up to the date of this report. **`r de$N.sites`** across **`r de$N.countries`** countries contributed data to this report.
+The results in this report have been produced using data from the ISARIC COVID-19 database up to the date of this report. **`r de$N.sites`** sites across **`r de$N.countries`** countries contributed data to this report.
 
 Data have been entered for **`r de$N.cases`** patients. 
 
-We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  Please note the caveats.  These are particularly relevant for our first global report as information is still incomplete for the many individuals who are still hospitalized, and note that most of the cases are from the UK. 
+We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  
 
+Please note the caveats.  These are particularly relevant for our first global report as information is still incomplete for the many patients who are still being treated. Please also note that we received more data for severely ill individuals than for people with relatively less severe illness.  Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected.
+
+Please note that at present most of the included cases are from the UK. 
 
 The cohort comprises `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
 
