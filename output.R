@@ -261,6 +261,9 @@ d.e <- function(data, ...){
               p.none = p.none,
               p.abx = p.abx,
               p.av = p.av,
+              p.o2 = p.o2,
+              p.NIV = p.NIV,
+              p.In.Ven = p.In.Ven,
               
               s.dat = s.dat,
               c.dat = c.dat,
