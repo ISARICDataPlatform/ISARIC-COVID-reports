@@ -10,6 +10,17 @@
 library(tidyverse)
 library(glue)
 
+paths <- read_csv("paths.csv", col_names = F)
+
+code.path <- paths[[which(paths$X1 == "code.path"), 2]]
+data.path <- paths[[which(paths$X1 == "data.path"), 2]]
+data.dict.file <- paths[[which(paths$X1 == "data.dict.file"), 2]]
+site.list.file <- paths[[which(paths$X1 == "site.list.file"), 2]]
+uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
+row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
+eot.data.file <- paths[[which(paths$X1 == "eot.data.file"), 2]]
+
+
 # file locations
 
 # paths <- read_csv("paths.csv", col_names = F)
