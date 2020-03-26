@@ -59,8 +59,8 @@ d.e <- function(data, ...){
   mean.adm.to.outcome <-  round(fit.summary.gamma(adm.outcome.func(data)$fit)$m, 1)
   adm.outcome.lower <-   round(fit.summary.gamma(adm.outcome.func(data)$fit)$lower.m, 1)
   adm.outcome.upper <-   round(fit.summary.gamma(adm.outcome.func(data)$fit)$upper.m, 1)
-  
-  
+  median.adm.to.outcome <- round(fit.summary.gamma(adm.outcome.func(data)$fit)$bmed$t0, 1)
+  cases.full.adm.outcome <- length(adm.outcome.func(data)$obs)
   
   # Onset to admission
   
@@ -72,7 +72,7 @@ d.e <- function(data, ...){
   mean.onset.to.adm <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$m, 1)
   mean.onset.to.adm.lower <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$lower.m, 1)
   mean.onset.to.adm.upper <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$upper.m, 1)
-  
+  median.onset.to.adm <- round(fit.summary.gamma(onset.adm.func(data)$fit)$bmed$t0, 1)
 
   
   # Distribution estimates - OBSERVED
@@ -182,6 +182,16 @@ d.e <- function(data, ...){
   
   t.dat <- treatment.use.plot(data)$data3
   
+  # Cough
+  
+  cough_pre <- summary(as.factor(patient.data$cough.any))[[1]]
+  cough_abs <- summary(as.factor(patient.data$cough.any))[[2]]
+  cough_unk <- summary(as.factor(patient.data$cough.any))[[3]]
+  
+  # p-value for comparison of length of stay by sex
+  
+  pval <- surv.plot.func(data)$pval
+  
   
   return(list(N.cases = N.cases,
               N.var = N.var,
@@ -219,10 +229,12 @@ d.e <- function(data, ...){
               mean.adm.to.outcome =  mean.adm.to.outcome,
               adm.outcome.lower =  adm.outcome.lower,
               adm.outcome.upper = adm.outcome.upper,
+              median.adm.to.outcome  =  median.adm.to.outcome ,
               
               mean.onset.to.adm = mean.onset.to.adm ,
               mean.onset.to.adm.lower =   mean.onset.to.adm.lower,
               mean.onset.to.adm.upper = mean.onset.to.adm.upper,
+              median.onset.to.adm =  median.onset.to.adm,
               
               # sd.onset.to.adm = sd.onset.to.adm,
               # sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
@@ -267,7 +279,13 @@ d.e <- function(data, ...){
               
               s.dat = s.dat,
               c.dat = c.dat,
-              t.dat = t.dat
+              t.dat = t.dat,
+              
+              cough_pre = cough_pre,
+              cough_abs = cough_abs,
+              cough_unk = cough_unk,
+              
+              pval = pval
   ))
   
   
