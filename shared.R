@@ -400,7 +400,18 @@ patient.data <- patient.data %>%
     list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
   })) %>% 
   { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
-  dplyr::select(-cough.cols)
+  dplyr::select(-cough.cols) %>%
+  mutate(cough.any = pmap_dbl(cough.nosputum, cough.sputum, cough.bloodysputum, function(x,y,z){
+    if(is.na(x)){
+      NA
+    } else {
+      if(all(c(x,y,z) == 2)){
+        2
+      } else {
+        1
+      }
+    }
+  }))
 
 admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
@@ -651,7 +662,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       multiple.periods <- F
     } else {
       # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on NIMV, 
-      # then the patient went on NIMV multiple times
+      # then the patient went on multiple times
       temp <- map_dbl(2:nrow(rows), function(x)  rows$daily.col[x] - rows$daily.col[x-1] )
       multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
     }
