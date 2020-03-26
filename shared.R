@@ -2173,12 +2173,14 @@ surv.plot.func <- function(data, ...){
       max(x, y, na.rm = T)
     }))
   data2$sex <- plyr::revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+   
+  df <- data2 %>% dplyr::select(sex, length.of.stay, censored) %>%
+    mutate(length.of.stay = abs(length.of.stay)) %>%
+    data.frame()
   
-  df <- data.frame(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), Censored = data2$censored )
-  
-  fit <- survival::survfit(Surv(length.of.stay, Censored) ~ sex, data = df)
-  #print(fit)
-  plt <- ggsurvplot(fit,
+  fit <- survival::survfit(Surv(length.of.stay, censored) ~ sex, data = df)
+
+  plt <- ggsurvplot(fit, data = df,
                     pval = T, pval.coord = c(0, 0.03), conf.int = T,
                     risk.table = F, # Add risk table
                     # risk.table.col = "strata", # Change risk table color by groups
