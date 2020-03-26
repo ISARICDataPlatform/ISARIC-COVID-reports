@@ -149,7 +149,7 @@ violin.age.func(patient.data)
 
 <!-- ``` -->
 
-**Figure 6**: Patient outcomes by epidemiological week (of 2020) of admission
+**Figure 6**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset)
 
 ```{r recruitment3, echo=FALSE}
 
