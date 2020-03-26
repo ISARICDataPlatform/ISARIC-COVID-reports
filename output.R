@@ -164,7 +164,10 @@ d.e <- function(data, ...){
   p.o2 <- paste(sprintf("%.1f", p.o2))
   
   # Note, proportions of ventilation have denominator O2
-  p.NIV <- 100 * df$
+  p.NIV <- 100 * df$NIV / df$O2
+  p.NIV <- paste(sprintf("%.1f", p.NIV))
+  p.In.Ven <- 100 * df$Inv.ven / df$O2
+  p.In.Ven <- paste(sprintf("%.1f", p.In.Ven))
   
   
   # Symptoms 
