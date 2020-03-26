@@ -400,7 +400,18 @@ patient.data <- patient.data %>%
     list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
   })) %>% 
   { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
-  dplyr::select(-cough.cols)
+  dplyr::select(-cough.cols) %>%
+  mutate(cough.any = pmap_dbl(list(cough.nosputum, cough.sputum, cough.bloodysputum), function(x,y,z){
+    if(is.na(x)){
+      NA
+    } else {
+      if(all(c(x,y,z) == 2)){
+        2
+      } else {
+        1
+      }
+    }
+  }))
 
 admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
@@ -639,7 +650,11 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
   } else {
     start.date <- rows %>% filter(daily.col == 1) %>% slice(1) %>% pull(consolidated.dssdat)
     last.date <- rows %>% filter(daily.col == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
-    if(last.date == rows %>% slice(n()) %>% pull(consolidated.dssdat)){
+    if(is.na(start.date)){
+      # sometimes happens. ever = TRUE but dates unknown
+      end.date <- NA
+      
+    } else if(last.date == rows %>% slice(n()) %>% pull(consolidated.dssdat)){
       # Patient was on at last report
       end.date <- NA
     } else {
@@ -647,11 +662,11 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       next.report.row <- max(which(rows$consolidated.dssdat == last.date)) + 1
       end.date <- rows$consolidated.dssdat[next.report.row]
     }
-    if(nrow(rows)<=2){
+    if(nrow(rows)<=2 | is.na(start.date)){
       multiple.periods <- F
     } else {
       # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on NIMV, 
-      # then the patient went on NIMV multiple times
+      # then the patient went on multiple times
       temp <- map_dbl(2:nrow(rows), function(x)  rows$daily.col[x] - rows$daily.col[x-1] )
       multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
     }
@@ -666,17 +681,34 @@ patient.data <- patient.data %>%
   mutate(NIMV.cols = map(NIMV.cols, function(x){
     names(x) <- glue("NIMV.{names(x)}")
     x
-  })) %>% 
-  { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>% 
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>%
+  dplyr::select(-NIMV.cols) %>%
   mutate(IMV.cols  = map(events, function(el){
     process.event.dates(el, "invasive_proccur", "daily_invasive_prtrt")
   })) %>%
   mutate(IMV.cols = map(IMV.cols, function(x){
     names(x) <- glue("IMV.{names(x)}")
     x
-  })) %>% 
-  { bind_cols(., bind_rows(!!!.$IMV.cols)) }
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
+  dplyr::select(-IMV.cols) %>%
+  mutate(ICU.cols  = map2(subjid,events, function(id, el){
 
+    process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
+  })) %>%
+  mutate(ICU.ever = unlist(ICU.cols)) %>%
+  dplyr::select(-ICU.cols)
+
+patient.data <- patient.data %>%
+  mutate(O2.ever = map_lgl(events, function(x){
+    x$O2.ever <- 0
+    x$O2.ever[x$daily_fio2_lborres > .21] <- 1
+    # to add O2 flow if it becomes available
+    x$O2.ever[x$daily_nasaloxy_cmtrt == 1] <- 1
+    x$O2.ever[x$oxygen_cmoccur == 1] <- 1
+    any(x$O2.ever)
+  }))
 
 # @todo this script needs to be more aware of the date of the dataset
 
@@ -783,6 +815,7 @@ trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        NIMV.end.date,
                                                        NIMV.duration,
                                                        NIMV.multiple.periods,
+                                                       O2.ever,
                                                        admission.to.exit,
                                                        onset.to.admission,
                                                        admission.to.censored,
@@ -1662,7 +1695,7 @@ treatment.upset <- function(data, ...) {
                  renal_proccur,
                  inotrop_cmtrt)
     )
-    detail$Pid_special <- i   
+    detail$subjid <- data$subjid[i]  
     # This is a PID made for this table and does not correlate with other
     # patient IDs
     if (i == 1) {
@@ -1685,16 +1718,6 @@ treatment.upset <- function(data, ...) {
   details$All_NA[details$allna == 1] <- 1
   details <- subset(details, All_NA == 0)
   
-  # Separate steroids according to route
-  
-  details$Oral_Steroid <- 
-    details$Intravenous_Steroid <- 
-    details$Inhaled_Steroid <- 
-    0
-  details$Oral_Steroid[details$corticost_cmroute == 1] <- 1
-  details$Intravenous_Steroid[details$corticost_cmroute == 2] <- 1
-  details$Inhaled_Steroid[details$corticost_cmroute == 3] <- 1
-  
   # Label variables for the plot
   details$Antiviral <- details$antiviral_cmyn
   details$Antibiotic <- details$antibiotic_cmyn
@@ -1708,33 +1731,32 @@ treatment.upset <- function(data, ...) {
   details$Inotropes <- details$inotrop_cmtrt
   
   # 1 is Yes, set anything else to 0 (No)
-  col_from <- 20 ## This will need changing if number of variables changed
+  col_from <- 17 ## This will need changing if number of variables changed
   col_to <- ncol(details)
   for (i in col_from:col_to) {
     details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
   }
   
-  # Any O2 therapy
-  details = details %>%
-    rowwise() %>%
-    mutate(Oxygen.Therapy = max(Supplemental.oxygen, NIV, Invasive.ventilation, 
-                                ECMO))
+  # Any O2 therapy - will include data from daily forms
+  z.temp <- subset(data, select = c(subjid, NIMV.ever, IMV.ever, O2.ever))
+  details <- merge(details, z.temp, by = "subjid")
+  details$O2.ever <- mutate(max(NIMV.ever, IMV.ever, O2.ever), data = details)
   
   treatments <- details %>%
     dplyr::select(
-      Pid_special, 
+      subjid, 
       Antiviral, 
       Antibiotic, 
       Antifungal, 
       Corticosteroid,
-      Oxygen.Therapy
+      O2.ever
     ) %>%
     pivot_longer(2:6, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) 
-  treatments$Treatment[treatments$Treatment == "Oxygen.Therapy"] <- 
+  treatments$Treatment[treatments$Treatment == "O2.ever"] <- 
     "Oxygen supplementation"
   treatments <- treatments %>%
-    group_by(Pid_special) %>%
+    group_by(subjid) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
     mutate(treatments.used = map2(Treatments, Presence, function(c,p){
       c[which(p)]
