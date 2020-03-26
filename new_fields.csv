@@ -40,6 +40,9 @@ antiviral.Interferon.beta,Interferon-beta use recorded,Taken from non-NA values 
 antiviral.Neuraminidase.inhibitors,Neuraminidase inhibitor use recorded,Taken from non-NA values of antiviral_cmyn__5 from the events table (not NA for UK only)
 antiviral.other,Other antiviral use recorded,Taken from non-NA values of antiviral_cmyn__6 from the events table (not NA for UK only)
 antiviral.freetext,Antiviral free text field contents,Taken from non-NA values of antiviral_cmtype from the events table (not NA for non-UK only)
+antibiotic.any,Any antibiotic reported on outcome form,"antibiotic_cmyn, renamed"
+antifungal.any,Any antifungal reported on outcome form,"antifung_cmyn, renamed"
+steroid.any,Any corticosteroid treatment reported on outcome form,"corticost_cmyn, renamed"
 NIMV.ever,Ever on NIMV,A 1 appears in noninvasive_proccur or daily_noninvasive_prtrt in the events table
 NIMV.start.date,NIMV start date,First daily_dsstdat for which a 1 appears in daily_noninvasive_prtrt
 NIMV.end.date,NIMV end date,First daily_dsstdat for which a 2 appears after a 1 in daily_noninvasive_prtrt (NA if never)
