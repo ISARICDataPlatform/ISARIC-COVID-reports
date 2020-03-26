@@ -401,7 +401,7 @@ patient.data <- patient.data %>%
   })) %>% 
   { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
   dplyr::select(-cough.cols) %>%
-  mutate(cough.any = pmap_dbl(cough.nosputum, cough.sputum, cough.bloodysputum, function(x,y,z){
+  mutate(cough.any = pmap_dbl(list(cough.nosputum, cough.sputum, cough.bloodysputum), function(x,y,z){
     if(is.na(x)){
       NA
     } else {
@@ -688,16 +688,16 @@ patient.data <- patient.data %>%
     x
   })) %>% 
   { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
-  dplyr::select(-IMV.cols) %>% 
-  mutate(ICU.cols  = map(events, function(el){
-    process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
-  })) %>%
-  mutate(ICU.cols = map(IMV.cols, function(x){
-    names(x) <- glue("ICU.{names(x)}")
-    x
-  })) %>% 
-  { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
-  dplyr::select(-ICU.cols)
+  dplyr::select(-IMV.cols) #%>% 
+  # mutate(ICU.cols  = map(events, function(el){
+  #   process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
+  # })) %>%
+  # mutate(ICU.cols = map(IMV.cols, function(x){
+  #   names(x) <- glue("ICU.{names(x)}")
+  #   x
+  # })) %>% 
+  # { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
+  # dplyr::select(-ICU.cols)
 
 
 # @todo this script needs to be more aware of the date of the dataset
