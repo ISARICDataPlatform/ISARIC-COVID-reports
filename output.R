@@ -188,6 +188,10 @@ d.e <- function(data, ...){
   cough_abs <- summary(as.factor(patient.data$cough.any))[[2]]
   cough_unk <- summary(as.factor(patient.data$cough.any))[[3]]
   
+  # p-value for comparison of length of stay by sex
+  
+  pval <- surv.plot.func(data)$pval
+  
   
   return(list(N.cases = N.cases,
               N.var = N.var,
@@ -279,7 +283,9 @@ d.e <- function(data, ...){
               
               cough_pre = cough_pre,
               cough_abs = cough_abs,
-              cough_unk = cough_unk
+              cough_unk = cough_unk,
+              
+              pval = pval
   ))
   
   
