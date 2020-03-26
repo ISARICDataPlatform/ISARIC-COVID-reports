@@ -1744,12 +1744,59 @@ treatment.upset <- function(data, ...) {
       c[which(p)]
     })) %>%
     dplyr::select(-Treatments, -Presence)
-  p <- ggplot(treatments, aes(x = treatments.used, y = prop)) + 
+  p <- ggplot(treatments, aes(x = treatments.used)) + 
     geom_bar(aes(y=..count../sum(..count..)), fill = "chartreuse3", col = "black") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
     ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
     scale_x_upset() 
+  
+  # A second plot for types of ventilation. This one will use the whole dataset
+  
+  vd <- subset(data, select = c(subjid, O2.ever, NIMV.ever, IMV.ever, ECMO.ever))
+  vd$allna <- 1
+  vd$allna[vd$O2.ever == TRUE] <- 0
+  vd$allna[is.na(vd$NIMV.ever) == FALSE] <- 0
+  vd$allna[is.na(vd$IMV.ever) == FALSE] <- 0
+  vd$allna[is.na(vd$ECMO.ever) == FALSE] <- 0
+  vd <- subset(vd, allna == 0)
+  vd$O2.ever[vd$NIMV.ever == TRUE] <- TRUE
+  vd$O2.ever[vd$IMV.ever == TRUE] <- TRUE
+  # 1 is Yes, set anything else to 0 (No)
+  for (i in 2:5) {
+    vd[, i][vd[, i] != TRUE | is.na(vd[, i]) == TRUE] <- FALSE
+  }
+  treatments <- vd %>%
+    dplyr::select(
+      subjid, 
+      O2.ever, NIMV.ever, IMV.ever, ECMO.ever
+    ) %>%
+    pivot_longer(2:4, names_to = "Treatment", values_to = "Present") %>%
+    mutate(Present = as.logical(Present)) 
+  # Change labels
+  treatments$Treatment[treatments$Treatment == "O2.ever"] <- 
+    "Any oxygen supplementation"
+  treatments$Treatment[treatments$Treatment == "NIMV.ever"] <- 
+    "Non-invasive ventilation"
+  treatments$Treatment[treatments$Treatment == "IMV.ever"] <- 
+    "Invasive ventilation"
+  treatments$Treatment[treatments$Treatment == "ECMO.ever"] <- 
+    "ECMO"
+  treatments <- treatments %>%
+    group_by(subjid) %>%
+    dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
+    mutate(treatments.used = map2(Treatments, Presence, function(c,p){
+      c[which(p)]
+    })) %>%
+    dplyr::select(-Treatments, -Presence) 
+  vent.plt <- ggplot(treatments, aes(x = treatments.used)) + 
+    geom_bar(aes(y=..count../sum(..count..)), fill = "blue", col = "black") + 
+    theme_bw() +
+    xlab("Oxygen therapies used during hospital admission") +
+    ylab("Proportion of patients") +
+    scale_x_upset() 
+  
+  
   # Counts
   N.treat <- nrow(details)
   N.abx <- sum(details$antibiotic.any, na.rm = FALSE)
@@ -1759,9 +1806,10 @@ treatment.upset <- function(data, ...) {
     mutate(Any = max(antiviral.any, antibiotic.any, antifungal.any, steroid.any))
   details$None <- 1 - details$Any
   N.none <- sum(details$None, na.rm = FALSE)
-  N.O2 <- sum(details$O2.ever, na.rm = FALSE)
-  N.NIV <- sum(details$NIMV.ever, na.rm = FALSE)
-  N.inv.vent <- sum(details$IMV.ever, na.rm = FALSE)
+  # Oxygen data now from whole dataset, not just those with completed records
+  N.O2 <- sum(data$O2.ever, na.rm = TRUE)
+  N.NIV <- sum(data$NIMV.ever, na.rm = TRUE)
+  N.inv.vent <- sum(data$IMV.ever, na.rm = TRUE)
   df = data.frame(
     All = N.treat, 
     Abx = N.abx, 
@@ -1771,7 +1819,7 @@ treatment.upset <- function(data, ...) {
     NIV = N.NIV,
     Inv.ven <- N.inv.vent
   )
-  return(list(p = p, df = df))
+  return(list(p = p, vent.plt = vent.plt, df = df))
 }
 
 ######### Timeline plot ##############
