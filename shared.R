@@ -1752,16 +1752,16 @@ treatment.upset <- function(data, ...) {
     scale_x_upset() 
   # Counts
   N.treat <- nrow(details)
-  N.abx <- sum(details$Antibiotic, na.rm = FALSE)
-  N.av <- sum(details$Antiviral, na.rm = FALSE)
+  N.abx <- sum(details$antibiotic.any, na.rm = FALSE)
+  N.av <- sum(details$antiviral.any, na.rm = FALSE)
   details = details %>%
     rowwise() %>%
-    mutate(Any = max(Antiviral, Antibiotic, Antifungal, Corticosteroid))
+    mutate(Any = max(antiviral.any, antibiotic.any, antifungal.any, steroid.any))
   details$None <- 1 - details$Any
   N.none <- sum(details$None, na.rm = FALSE)
   N.O2 <- sum(details$O2.ever, na.rm = FALSE)
-  N.NIV <- sum(details$NIV, na.rm = FALSE)
-  N.inv.vent <- sum(details$Invasive.ventilation, na.rm = FALSE)
+  N.NIV <- sum(details$NIMV.ever, na.rm = FALSE)
+  N.inv.vent <- sum(details$IMV.ever, na.rm = FALSE)
   df = data.frame(
     All = N.treat, 
     Abx = N.abx, 
