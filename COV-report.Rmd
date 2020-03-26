@@ -73,7 +73,7 @@ Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$
 
 <!-- Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr*100`% (95% CI: `r de$hfr.lower*100`%, `r de$hfr.upper*100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed. -->
 
-The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. 
+The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. These estimates are based on all cases which have complete records on length of hospital stay (N = `r cases.full.adm.outcome`)  
 
 There is no significant difference in length of hospital stay by sex.
 
@@ -212,7 +212,7 @@ adm.outcome.func(patient.data)$plt
 
 
 
-**Figure 12**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. See Methods section for details. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 12**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -333,7 +333,7 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 | Chest pain                    | `r de$s.dat$present[3]`        | `r de$s.dat$absent[3]`        | `r de$s.dat$unknown[3]`        |
 | Confusion                     | `r de$s.dat$present[4]`        | `r de$s.dat$absent[4]`        | `r de$s.dat$unknown[4]`        |
 | Conjuctivitis                 | `r de$s.dat$present[5]`        | `r de$s.dat$absent[5]`        | `r de$s.dat$unknown[5]`        |
-| Cough                         | `r sum(de$s.dat$present[6:8])` | `r sum(de$s.dat$absent[6:8])` | `r sum(de$s.dat$unknown[6:8])` |
+| Cough                         | `r cough_pre` | `r cough_abs` | `r cough_unk` |
 | Diarrhoea                     | `r de$s.dat$present[9]`        | `r de$s.dat$absent[9]`        | `r de$s.dat$unknown[9]`        |
 | Ear pain                      | `r de$s.dat$present[10]`       | `r de$s.dat$absent[10]`       | `r de$s.dat$unknown[10]`       |
 | Fatigue                       | `r de$s.dat$present[11]`       | `r de$s.dat$absent[11]`       | `r de$s.dat$unknown[11]`       |
