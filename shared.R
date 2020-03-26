@@ -1692,44 +1692,35 @@ violin.age.func <- function(data, ...){
 
 treatment.upset <- function(data, ...) {
   library(tidyr); library(tidyverse)
-  row_n <- nrow(data)
-  for (i in 1:row_n) {
-    events <- data$events[i]
-    detail <- events[[1]]
-    detail <- subset(
-      detail, 
-      select = c(dsterm,
-                 antiviral_cmyn, antiviral_cmtrt, 
-                 antibiotic_cmyn, 
-                 corticost_cmyn, corticost_cmroute,
-                 antifung_cmyn,
-                 oxygen_cmoccur, noninvasive_proccur, invasive_proccur, 
-                 extracorp_prtrt, 
-                 renal_proccur,
-                 inotrop_cmtrt)
+  detail <- subset(
+    data, 
+    select = c(dsterm, 
+               antiviral_cmyn, antiviral_cmtrt, 
+               antibiotic_cmyn, 
+               corticost_cmyn, corticost_cmroute,
+               antifung_cmyn,
+               oxygen_cmoccur, noninvasive_proccur, invasive_proccur, 
+               extracorp_prtrt, 
+               renal_proccur,
+               inotrop_cmtrt, 
+               subjid,
+               NIMV.ever, IMV.ever, O2.ever
     )
-    detail$subjid <- data$subjid[i]  
-    # This is a PID made for this table and does not correlate with other
-    # patient IDs
-    if (i == 1) {
-      details <- detail
-    } else {
-      details <- rbind(details, detail, deparse.level = 1)
-    }
-  }
+  )
+  
   
   # If no dsterm result then not the form that will have treatment details
   details$All_NA <- 1
   details$All_NA[is.na(details$dsterm) == FALSE] <- 0
   # Also, if all the treatment columns are NA then exclude
-  col_from <- 2
-  col_to <- ncol(details) - 2
-  details$allna <- 1
-  for (i in col_from:col_to) {
-    details$allna[is.na(details[, i]) == FALSE] <- 0
-  }
-  details$All_NA[details$allna == 1] <- 1
-  details <- subset(details, All_NA == 0)
+  #  col_from <- 2
+  #  col_to <- ncol(details) - 2
+  #  details$allna <- 1
+  #  for (i in col_from:col_to) {
+  #    details$allna[is.na(details[, i]) == FALSE] <- 0
+  #  }
+  #  details$All_NA[details$allna == 1] <- 1
+  #  details <- subset(details, All_NA == 0)
   
   # Label variables for the plot
   details$Antiviral <- details$antiviral_cmyn
@@ -1751,8 +1742,6 @@ treatment.upset <- function(data, ...) {
   }
   
   # Any O2 therapy - will include data from daily forms
-  z.temp <- subset(data, select = c(subjid, NIMV.ever, IMV.ever, O2.ever))
-  details <- merge(details, z.temp, by = "subjid")
   details$O2.ever <- mutate(max(NIMV.ever, IMV.ever, O2.ever), data = details)
   
   treatments <- details %>%
