@@ -160,6 +160,9 @@ d.e <- function(data, ...){
   p.av <- 100 * df$Av / df$All
   p.av <- paste(sprintf("%.1f", p.av))
   
+  p.o2 <- 100 * df$O2 / df$All
+  p.o2 <- paste(sprintf("%.1f", p.o2))
+  
   # Symptoms 
   
   s.dat <- symptom.prevalence(data)$data3
