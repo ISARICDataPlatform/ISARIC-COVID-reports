@@ -67,16 +67,20 @@ The cohort comprises `r de$N.males` males and `r de$N.females` females - sex is 
 
 The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
 
-Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients.
+Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr/100`% (95% CI: `r de$hfr.lower/100`%, `r de$hfr.upper/100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
 
 The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. 
 
+At the 0.05 significance level, there is no significant difference in length of hospital stay by sex (p-value $=$ 0.098). Refer to Figure 9.
+
 The observed mean  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`). Expected estimates^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates for fitted distribution account for unobserved outcomes.] for the mean durations of admission to outcome and symptom onset to hospital admission are provided in the summary tables at the end of this report. 
+
+The symptoms on admission represent the policy for hospital admission and containment at that time plus, whatever the case definition was. As time passes for most countries these will change. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
 
 
 `r length(de$a.icu)` cases were admitted into ICU. The observed mean duration from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` days (SD: `r round(sd(de$a.icu, na.rm=T), 1)` days). 
 
-The duration of ICU stay has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  The estimates for duration of ICU stay  are based on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`).
+The duration of stay in the intensive care unit (ICU) has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  The estimates for duration of ICU stay  are based on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`).
 
 
 `r length(de$a.nimv)` patients received non-invasive mechanical ventilation (NIV). The mean duration from admission to receiving NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days).
@@ -89,9 +93,6 @@ The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r
 
 
 The mean and SD for the duration of IMV - estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.	
-	
-
-Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr/100`% (95% CI: `r de$hfr.lower/100`%, `r de$hfr.upper/100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr/100`% (95% CI: `r de$cfr.lower/100`%, `r de$cfr.upper/100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed.
 
 Of `r de$n.treat` patients with completed details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. The aforementioned treatment categories should not be treated as mutually exclusive since some patients received multiple treatments.  `r de$p.o2`% received some degree of oxygen supplementation.  Of those receiving oxygen supplementation, `r de$p.NIV`% received non-invasive ventilation and `r de$p.In.Ven`% received invasive mechanical ventilation.
 
@@ -177,8 +178,17 @@ treatment.upset(patient.data)$p
 
 # Statistical Analysis
 
+ **Figure 9**: Survival analysis for length of hospital stay by sex. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated as tick marks. At 0.05 significance level, there is no significant difference in length of hospital stay by sex (p-value $<$ 0.05). 
 
-**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
+```{r survival, out.width= "80%"}
+
+include_graphics('survival-plot.png')
+
+```
+ 
+
+
+**Figure 10**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 ```{r onset.admission, out.width = '80%'}
 
@@ -187,7 +197,7 @@ onset.adm.func(patient.data)$plt
 ```
 
 
-**Figure 10**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
+**Figure 11**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 
 ```{r  adm.outcome, out.width = '80%'}
@@ -198,7 +208,7 @@ adm.outcome.func(patient.data)$plt
 
 
 
-**Figure 11**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. See Methods section for details. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 12**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. See Methods section for details. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -210,7 +220,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 12**: Number of sites per country
+**Figure 13**: Number of sites per country
 
 ```{r recruitment1, echo=FALSE}
 
@@ -218,7 +228,7 @@ sites.by.country(patient.data)
 
 ```
 
-**Figure 13**: Distribution of patients by country and outcome
+**Figure 14**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
@@ -249,6 +259,8 @@ Patient details were submitted electronically by participating sites to the ISAR
 Graphs have been used to represent the age distribution of patience by sex and status (dead, recovered & still in hospital), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
 
 Using a non-parametric Kaplan-Meier-based method (Ghani *et al.*, 2005), the case- fatality ratio (CFR) was estimated, as well as probabilities for death and recovery. This method estimates the CFR with the formula $a/(a+b)$, where $a$ and $b$ are the values of the cumulative incidence function for deaths and recoveries respectively, estimated at the last observed time point. In a competing risk context (i.e. where there are multiple endpoints),  the cumulative incidence function for an endpoint is equal to the product of the hazard function for that endpoint and the survival function assuming a composite endpoint. It is worth noting that this method assumes that future deaths and recoveries will occur with the same relative probabilities as have been observed so far. Binomial confidence intervals for the CFR were obtained by a normal approximation (See Ghani *et al.*, (2005)).
+
+A survival analysis was conducted to test whether significant differences exist between the lengths of hospital stay by sex.
 
 <!-- Another CFR estimation method, which uses observed outcomes only, was employed in this analysis. For this method, the CFR is calculated as the ratio of deaths to the sum of deaths and recoveries until the reference point (Wu *et al.*, 2020). Over time, the uncertainty around the estimate decreases due to an increase in completed outcomes. Exact binomial confidence intervals are plotted along with the risk estimate at each time point.  -->
 
