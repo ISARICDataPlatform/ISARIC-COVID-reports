@@ -2204,11 +2204,16 @@ surv.plot.func <- function(data, ...){
     dplyr::mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
       max(x, y, na.rm = T)
     }))
-  data2$sex <- plyr::revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+  data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
   
-  df <- data.frame(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), Censored = data2$censored )
+  data2$event <- as.factor(as.integer(as.logical(data2$censored))) # Now, TRUE= 1, FALSE = 0 
   
-  fit <- survival::survfit(Surv(length.of.stay, Censored) ~ sex, data = df)
+  data2$event <- revalue(data2$event, c('0'=1, '1'=0)) # changing to TRUE = 0 (i.e. censored, not experienced event), FALSE = 1 (not censored, experienced event)
+ # see ?survfit, True for alive (censored), and false for event (i.e. exit)
+  data2$event <- as.numeric(data2$event)
+  df <- tibble(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), event = data2$event)
+  
+  fit <- survfit(Surv(df$length.of.stay, df$event) ~ df$sex, data = df)
   #print(fit)
   plt <- ggsurvplot(fit,
                      pval = T, pval.coord = c(0, 0.03), conf.int = T,
