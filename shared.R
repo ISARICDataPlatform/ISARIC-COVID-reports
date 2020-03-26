@@ -1414,7 +1414,7 @@ modified.km.plot.1 <- function(data, ...){
   final.discharged <- timeline %>% pull(prop.discharged) %>% min()
   final.not.discharged <- timeline %>% pull(prop.not.discharged) %>% min()
   
-  interpolation.line <- final.dead + (1-(final.discharged+final.dead))*(final.dead/(final.dead + final.discharged)))
+  interpolation.line <- final.dead + (1-(final.discharged+final.dead))*(final.dead/(final.dead + final.discharged))
   
   timeline <- timeline %>%
     add_column(interpolation = interpolation.line) %>%
