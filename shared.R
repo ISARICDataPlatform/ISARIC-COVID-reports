@@ -1637,40 +1637,6 @@ violin.age.func <- function(data, ...){
 
 
 
-########## Survival plot ######
-
-
-surv_plot_func <- function(data, ...){
-  
-  
-  data2 <- data %>% filter(!is.na(admission.to.exit) | !is.na(admission.to.censored))
-  
-  data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(admission.to.exit, admission.to.censored, function(x,y){
-      max(x, y, na.rm = T)
-    }))
-  
-  
-  data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
-  
-  vdy <- tibble(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), Censored = data2$censored )
-  
-  
-  fit <- survfit(Surv(length.of.stay, Censored) ~ sex, data = vdy)
-  #print(fit)
-  plot <- ggsurvplot(fit,
-                     pval = T, conf.int = T,
-                     risk.table = F, # Add risk table
-                     # risk.table.col = "strata", # Change risk table color by groups
-                     linetype = "strata", # Change line type by groups
-                     #surv.median.line = "hv", # Specify median survival
-                     ggtheme = theme_bw(), # Change ggplot2 theme
-                     palette = c('#D2691E', '#BA55D3'),
-                     legend.labs = 
-                       c("Male", "Female"), title = (main = ' '), ylab = '1 - Probability of hospital exit' , legend = c(0.8, 0.9))
-  return(plot)
-}
-
 # Upset plot for treatments @todo add maximum parameter?
 
 treatment.upset <- function(data, ...) {
@@ -2139,6 +2105,36 @@ onset.adm.func <- function(data){
 }
 
 
+######### Survival plot ######
+
+
+surv.plot.func <- function(data1, ...){
+  
+  
+  data2 <- data1 %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+  
+  data2 <- data2 %>% 
+    dplyr::mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
+      max(x, y, na.rm = T)
+    }))
+  data2$sex <- plyr::revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+  
+  df <- data.frame(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), Censored = data2$censored )
+  
+  fit <- survival::survfit(Surv(length.of.stay, Censored) ~ sex, data = df)
+  #print(fit)
+  plot <- ggsurvplot(fit,
+                     pval = T, pval.coord = c(0, 0.03), conf.int = T,
+                     risk.table = F, # Add risk table
+                     # risk.table.col = "strata", # Change risk table color by groups
+                     linetype = "strata", # Change line type by groups
+                     #surv.median.line = "hv", # Specify median survival
+                     ggtheme = theme_bw(), # Change ggplot2 theme
+                     palette = c('#D2691E', '#BA55D3'),
+                     legend.labs = 
+                       c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , legend = c(0.8, 0.8))
+  return(plot)
+}
 
 
 
