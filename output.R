@@ -87,7 +87,7 @@ d.e <- function(data, ...){
   obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
   obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
   obs.sd.adm.outcome <- round(x_sd, 2)
-  
+  cases.full.adm.outcome <- length(adm.outcome.func(patient.data)$obs)
   
   # Onset to admission
   
@@ -140,8 +140,8 @@ d.e <- function(data, ...){
   # CFR
   
   cfr <- round(casefat2(data)$cfr, 2)
-  cfr.lower <-  round(casefat2(data)$lcfr, 2)
-  cfr.upper <-   round(casefat2(data)$ucfr, 2)
+  cfr.lower <-round(casefat2(data)$lcfr, 2)
+  cfr.upper <-  round(casefat2(data)$ucfr, 2)
   
   
   # HFR
@@ -190,7 +190,7 @@ d.e <- function(data, ...){
   
   # p-value
   
-  pval <- surv.plot.func(patient.data)$pval
+  #pval <- surv.plot.func(patient.data)$pval
   
   
   return(list(N.cases = N.cases,
@@ -242,6 +242,7 @@ d.e <- function(data, ...){
               obs.mean.adm.outcome.lower = obs.mean.adm.outcome.lower,
               obs.mean.adm.outcome.upper = obs.mean.adm.outcome.upper,
               obs.sd.adm.outcome  = obs.sd.adm.outcome,
+              cases.full.adm.outcome = cases.full.adm.outcome, 
               
               obs.mean.onset.adm =  obs.mean.onset.adm,
               obs.mean.onset.adm.lower = obs.mean.onset.adm.lower,
