@@ -400,7 +400,7 @@ patient.data <- patient.data %>%
     list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
   })) %>% 
   { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
-  select(-cough.cols)
+  dplyr::select(-cough.cols)
 
 admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
@@ -733,14 +733,14 @@ patient.data <- patient.data %>%
       NA
     }
   })) %>%
-  dplyr::mutate(admission.to.recovery = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
+  dplyr::mutate(admission.to.discharge = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
     if(compareNA(1, x)){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
       NA
     }
   })) %>%
-  dplyr::mutate(start.to.recovery = pmap_dbl(list(dsstdtcyn, dsstdtc, start.date), function(x, y, z){
+  dplyr::mutate(start.to.discharge = pmap_dbl(list(dsstdtcyn, dsstdtc, start.date), function(x, y, z){
     if(compareNA(1, x)){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
@@ -787,7 +787,8 @@ trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        onset.to.admission,
                                                        admission.to.censored,
                                                        admission.to.death,
-                                                       admission.to.recovery
+                                                       admission.to.discharge
+                                                       
 )
 
 
@@ -1136,7 +1137,7 @@ symptom.prevalence <- function(data, ...){
   nconds <- ncol(data2) - 1
   
   
-  combined.labeller <- bind_rows(comorbidities)
+  combined.labeller <- admission.symptoms
   
   
   data3 <- data2 %>%
