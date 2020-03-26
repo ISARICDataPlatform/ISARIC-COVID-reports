@@ -650,7 +650,11 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
   } else {
     start.date <- rows %>% filter(daily.col == 1) %>% slice(1) %>% pull(consolidated.dssdat)
     last.date <- rows %>% filter(daily.col == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
-    if(last.date == rows %>% slice(n()) %>% pull(consolidated.dssdat)){
+    if(is.na(start.date)){
+      # sometimes happens. ever = TRUE but dates unknown
+      end.date <- NA
+      
+    } else if(last.date == rows %>% slice(n()) %>% pull(consolidated.dssdat)){
       # Patient was on at last report
       end.date <- NA
     } else {
@@ -658,7 +662,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       next.report.row <- max(which(rows$consolidated.dssdat == last.date)) + 1
       end.date <- rows$consolidated.dssdat[next.report.row]
     }
-    if(nrow(rows)<=2){
+    if(nrow(rows)<=2 | is.na(start.date)){
       multiple.periods <- F
     } else {
       # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on NIMV, 
@@ -677,8 +681,8 @@ patient.data <- patient.data %>%
   mutate(NIMV.cols = map(NIMV.cols, function(x){
     names(x) <- glue("NIMV.{names(x)}")
     x
-  })) %>% 
-  { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>% 
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>%
   dplyr::select(-NIMV.cols) %>%
   mutate(IMV.cols  = map(events, function(el){
     process.event.dates(el, "invasive_proccur", "daily_invasive_prtrt")
@@ -686,18 +690,15 @@ patient.data <- patient.data %>%
   mutate(IMV.cols = map(IMV.cols, function(x){
     names(x) <- glue("IMV.{names(x)}")
     x
-  })) %>% 
+  })) %>%
   { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
-  dplyr::select(-IMV.cols) #%>% 
-  # mutate(ICU.cols  = map(events, function(el){
-  #   process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
-  # })) %>%
-  # mutate(ICU.cols = map(IMV.cols, function(x){
-  #   names(x) <- glue("ICU.{names(x)}")
-  #   x
-  # })) %>% 
-  # { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
-  # dplyr::select(-ICU.cols)
+  dplyr::select(-IMV.cols) %>%
+  mutate(ICU.cols  = map2(subjid,events, function(id, el){
+
+    process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
+  })) %>%
+  mutate(ICU.ever = unlist(ICU.cols)) %>%
+  dplyr::select(-ICU.cols)
 
 
 # @todo this script needs to be more aware of the date of the dataset

@@ -49,6 +49,7 @@ IMV.start.date,IMV start date,First daily_dsstdat for which a 1 appears in daily
 IMV.end.date,IMV end date,First daily_dsstdat for which a 2 appears after a 1 in daily_invasive_prtrt (NA if never)
 IMV.multiple.periods,Multiple periods on IMV,Two separate runs of 1s in daily_invasive_prtrt
 NIMV.duration,NIMV duration,NIMV.end.date - NIMV.start.date
+ICU.ever,Ever in ICU,A 1 appears in icu_hoterm or daily_hoterm in the events table
 admission.to.exit,Days from admission to exit,exit.date - admission.date
 onset.to.admission,Days from onset to admission,admission.date - onset.date (can be legitimately negative)
 start.to.exit,Days from start to exit ,exit.date - start.date
