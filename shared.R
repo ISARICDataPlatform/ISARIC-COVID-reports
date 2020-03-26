@@ -25,7 +25,7 @@ library(boot)
 # flags for inclusion of the three data files
 
 use.uk.data <- TRUE
-embargo.limit <- as.date("2020-30-22")
+embargo.limit <- ymd("2020-03-22")
 use.row.data <- TRUE
 use.eot.data <- TRUE
 
