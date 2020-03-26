@@ -60,7 +60,7 @@ Data have been entered for **`r de$N.cases`** patients.
 
 We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  
 
-Please note the caveats.  These are particularly relevant for our first global report as information is still incomplete for the many patients who are still being treated. Please also note that we received more data for severely ill individuals needing hospital treatment than for people with relatively less severe illness.  Outcomes from our data, such as the proportion dying, must therefore not be extrapolated to infer outcomes for the entire population of people who might become infected.
+Please note the caveats.  These are particularly relevant for our first global report as information is still incomplete for the many patients who are still being treated. Please also note that we received more data for severely ill individuals than for people with relatively less severe illness.  Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected.
 
 Please note that at present most of the included cases are from the UK. 
 
