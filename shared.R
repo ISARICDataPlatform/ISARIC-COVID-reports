@@ -693,8 +693,16 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
   dplyr::select(-IMV.cols) %>%
+  mutate(ECMO.cols  = map(events, function(el){
+    process.event.dates(el, "extracorp_prtrt", "daily_ecmo_prtrt")
+  })) %>%
+  mutate(ECMO.cols = map(ECMO.cols, function(x){
+    names(x) <- glue("ECMO.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$ECMO.cols)) } %>%
+  dplyr::select(-ECMO.cols) %>%
   mutate(ICU.cols  = map2(subjid,events, function(id, el){
-
     process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
   })) %>%
   mutate(ICU.ever = unlist(ICU.cols)) %>%
