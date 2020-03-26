@@ -2226,7 +2226,7 @@ surv.plot.func <- function(data1, ...){
                      ggtheme = theme_bw(), # Change ggplot2 theme
                      palette = c('#D2691E', '#BA55D3'),
                      legend.labs = 
-                       c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , legend = c(0.8, 0.8))
+                       c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , xlab = 'Time (in days) from admission', legend = c(0.8, 0.8))
   return(plot)
 }
 
