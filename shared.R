@@ -1760,7 +1760,10 @@ treatment.upset <- function(data, ...) {
       Oxygen.Therapy
     ) %>%
     pivot_longer(2:6, names_to = "Treatment", values_to = "Present") %>%
-    mutate(Present = as.logical(Present)) %>%
+    mutate(Present = as.logical(Present)) 
+  treatments$Treatment[treatments$Treatment == "Oxygen.Therapy"] <- 
+    "Oxygen supplementation"
+  treatments <- treatments %>%
     group_by(Pid_special) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
     mutate(treatments.used = map2(Treatments, Presence, function(c,p){
