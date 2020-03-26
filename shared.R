@@ -400,7 +400,18 @@ patient.data <- patient.data %>%
     list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
   })) %>% 
   { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
-  dplyr::select(-cough.cols)
+  dplyr::select(-cough.cols) %>%
+  mutate(cough.any = pmap_dbl(list(cough.nosputum, cough.sputum, cough.bloodysputum), function(x,y,z){
+    if(is.na(x)){
+      NA
+    } else {
+      if(all(c(x,y,z) == 2)){
+        2
+      } else {
+        1
+      }
+    }
+  }))
 
 admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
@@ -639,7 +650,11 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
   } else {
     start.date <- rows %>% filter(daily.col == 1) %>% slice(1) %>% pull(consolidated.dssdat)
     last.date <- rows %>% filter(daily.col == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
-    if(last.date == rows %>% slice(n()) %>% pull(consolidated.dssdat)){
+    if(is.na(start.date)){
+      # sometimes happens. ever = TRUE but dates unknown
+      end.date <- NA
+      
+    } else if(last.date == rows %>% slice(n()) %>% pull(consolidated.dssdat)){
       # Patient was on at last report
       end.date <- NA
     } else {
@@ -647,11 +662,11 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       next.report.row <- max(which(rows$consolidated.dssdat == last.date)) + 1
       end.date <- rows$consolidated.dssdat[next.report.row]
     }
-    if(nrow(rows)<=2){
+    if(nrow(rows)<=2 | is.na(start.date)){
       multiple.periods <- F
     } else {
       # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on NIMV, 
-      # then the patient went on NIMV multiple times
+      # then the patient went on multiple times
       temp <- map_dbl(2:nrow(rows), function(x)  rows$daily.col[x] - rows$daily.col[x-1] )
       multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
     }
@@ -666,18 +681,24 @@ patient.data <- patient.data %>%
   mutate(NIMV.cols = map(NIMV.cols, function(x){
     names(x) <- glue("NIMV.{names(x)}")
     x
-  })) %>% 
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>%
   dplyr::select(-NIMV.cols) %>%
-  { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>% 
   mutate(IMV.cols  = map(events, function(el){
     process.event.dates(el, "invasive_proccur", "daily_invasive_prtrt")
   })) %>%
   mutate(IMV.cols = map(IMV.cols, function(x){
     names(x) <- glue("IMV.{names(x)}")
     x
-  })) %>% 
+  })) %>%
   { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
-  dplyr::select(-IMV.cols)
+  dplyr::select(-IMV.cols) %>%
+  mutate(ICU.cols  = map2(subjid,events, function(id, el){
+
+    process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
+  })) %>%
+  mutate(ICU.ever = unlist(ICU.cols)) %>%
+  dplyr::select(-ICU.cols)
 
 
 # @todo this script needs to be more aware of the date of the dataset

@@ -5,9 +5,10 @@ flag.url,Flag URL,"Flag URL for the dashboard, linked in shared.R"
 data.source,Dataset,UK/ISARIC/EOT
 liver.disease,Combined flag for liver disease,mildliver OR modliv
 diabetes,Combined flag for diabetes,diabetes_mhyn OR diabetescom_mhyn
-cough.nosputum,Cleaned field for cough (no sputum),Set to 2 (no) for patients reporting a different cough
-cough.sputum,Cleaned field for cough (sputum),Set to 2 (no) for patients reporting bloody sputum
-cough.bloodysputum,Cleaned field for cough (bloody sputum),"coughhb_ceoccur_v2, renamed"
+cough.nosputum,Cleaned field for cough (no sputum),cough_ceoccur_v2 unless coughspiut_ceoccur_v2 or coughhb_ceoccur_v2 == 1 in which case this =2. If any cough*_ceoccur_v2 is NA or 3 then all three are set to NA
+cough.sputum,Cleaned field for cough (sputum),coughsput_ceoccur_v2 unless coughhb_ceoccur_v2 == 1 in which case this =2. If any cough*_ceoccur_v2 is NA or 3 then all three are set to NA
+cough.bloodysputum,Cleaned field for cough (bloody sputum),"coughhb_ceoccur_v2, renamed. If any cough*_ceoccur_v2 is NA or 3 then all three are set to NA"
+cough.any,Any cough field,cough.nosputum OR cough.sputum OR cough.bloodysputum
 shortness.breath,Combined flag for shortness of breath,shortbreath_ceoccur_v2 OR lowerchest_ceoccur_v2
 symptoms.recorded,Symptoms at admission recorded for this patient,Requires all symptom fields in the first row to not be NA
 comorbidities.recorded,Comorbidities recorded for this patient,Requires all comorbidity fields in the first row to not be NA
@@ -20,7 +21,7 @@ outcome.date.known,Outcome date known,"If censored==TRUE then 2 (no), otherwise 
 outcome.date,Outcome date known,"If censored==TRUE then NA, otherwise dsterm from rows with starting with ""dischargeoutcome"" or ""dischargedeath"""
 death.date,Death date,"outcome.date for those with outcome==""death"""
 discharge.date,Discharge date,"outcome.date for those with outcome==""discharge"""
-consolidated.age,Age,If agedat is given this is calculated using dsstdat. If not then age_estimateyears is used instead. Values of age_estimateyears between 0 and 1 are assumed to be data entry errors and multipled by 100.
+consolidated.age,Age,If agedat is given this is calculated using that and dsstdat. If not then age_estimateyears is used instead. Values of age_estimateyears between 0 and 1 are assumed to be data entry errors and multipled by 100.
 agegp5,Age group in five-year intervals (to 90),Derived from consolidated.age
 agegp10,Age group in ten-year intervals (to 70),Derived from consolidated.age
 ICU.admission.date,ICU admission date,Taken from non-NA values of icu_hostdat from the events table
@@ -48,6 +49,7 @@ IMV.start.date,IMV start date,First daily_dsstdat for which a 1 appears in daily
 IMV.end.date,IMV end date,First daily_dsstdat for which a 2 appears after a 1 in daily_invasive_prtrt (NA if never)
 IMV.multiple.periods,Multiple periods on IMV,Two separate runs of 1s in daily_invasive_prtrt
 NIMV.duration,NIMV duration,NIMV.end.date - NIMV.start.date
+ICU.ever,Ever in ICU,A 1 appears in icu_hoterm or daily_hoterm in the events table
 admission.to.exit,Days from admission to exit,exit.date - admission.date
 onset.to.admission,Days from onset to admission,admission.date - onset.date (can be legitimately negative)
 start.to.exit,Days from start to exit ,exit.date - start.date
