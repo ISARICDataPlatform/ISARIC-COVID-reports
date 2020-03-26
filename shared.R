@@ -1747,7 +1747,8 @@ treatment.upset <- function(data, ...) {
   # Any O2 therapy
   details = details %>%
     rowwise() %>%
-    mutate(Oxygen.Therapy = max(Supplemental.oxygen, NIV, Invasive.ventilation, ECMO))
+    mutate(Oxygen.Therapy = max(Supplemental.oxygen, NIV, Invasive.ventilation, 
+                                ECMO))
   
   treatments <- details %>%
     dplyr::select(
@@ -1784,8 +1785,15 @@ treatment.upset <- function(data, ...) {
     mutate(Any = max(Antiviral, Antibiotic, Antifungal, Corticosteroid))
   details$None <- 1 - details$Any
   N.none <- sum(details$None, na.rm = FALSE)
+  N.O2 <- sum(details$Oxygen.Therapy, na.rm = FALSE)
   
-  df = data.frame(All = N.treat, Abx = N.abx, Av = N.av, None = N.none)
+  df = data.frame(
+    All = N.treat, 
+    Abx = N.abx, 
+    Av = N.av, 
+    None = N.none, 
+    O2 = N.O2
+  )
   
   return(list(p = p, df = df))
 }
