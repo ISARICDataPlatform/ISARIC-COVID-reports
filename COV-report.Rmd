@@ -180,17 +180,18 @@ treatment.upset(patient.data)$p
 
 # Statistical Analysis
 
- <!-- **Figure 9**: Survival analysis for length of hospital stay by sex. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated as tick marks.  -->
+**Figure 9**: Survival analysis for length of hospital stay by sex. The y-axis shows the probability of missing discharge (i.e. remaining in hospital) at any given time. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated by tick marks. A p-value less than 0.05 is an indication of a significant difference in duration of hospital stay by sex. 
 
-```{r survival, out.width= "80%", evaluate=FALSE, include=FALSE}
 
-#survival.plot.func(data)$plt
+```{r survival, out.width= "80%", evaluate=FALSE}
+
+survival.plot.func(data)$plt
 
 ```
  
 
 
-**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
+**Figure 10**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 ```{r onset.admission, out.width = '80%'}
 
@@ -199,7 +200,7 @@ onset.adm.func(patient.data)$plt
 ```
 
 
-**Figure 10**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
+**Figure 11**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 
 ```{r  adm.outcome, out.width = '80%'}
@@ -210,7 +211,7 @@ adm.outcome.func(patient.data)$plt
 
 
 
-**Figure 11**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 12**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -222,7 +223,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 12**: Number of sites per country
+**Figure 13**: Number of sites per country
 
 ```{r recruitment1, echo=FALSE}
 
@@ -230,7 +231,7 @@ sites.by.country(patient.data)
 
 ```
 
-**Figure 13**: Distribution of patients by country and outcome
+**Figure 14**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
@@ -261,6 +262,8 @@ Patient details were submitted electronically by participating sites to the ISAR
 Graphs have been used to represent the age distribution of patience by sex and status (dead, recovered & still in hospital), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
 
 Using a non-parametric Kaplan-Meier-based method (Ghani *et al.*, 2005), the case- fatality ratio (CFR) was estimated, as well as probabilities for death and recovery. This method estimates the CFR with the formula $a/(a+b)$, where $a$ and $b$ are the values of the cumulative incidence function for deaths and recoveries respectively, estimated at the last observed time point. In a competing risk context (i.e. where there are multiple endpoints),  the cumulative incidence function for an endpoint is equal to the product of the hazard function for that endpoint and the survival function assuming a composite endpoint. It is worth noting that this method assumes that future deaths and recoveries will occur with the same relative probabilities as have been observed so far. Binomial confidence intervals for the CFR were obtained by a normal approximation (See Ghani *et al.*, (2005)).
+
+A survival analysis was performed to test whether significant differences exist in the length of hospital stay by sex.
 
 <!-- Another CFR estimation method, which uses observed outcomes only, was employed in this analysis. For this method, the CFR is calculated as the ratio of deaths to the sum of deaths and recoveries until the reference point (Wu *et al.*, 2020). Over time, the uncertainty around the estimate decreases due to an increase in completed outcomes. Exact binomial confidence intervals are plotted along with the risk estimate at each time point.  -->
 

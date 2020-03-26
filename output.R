@@ -188,6 +188,10 @@ d.e <- function(data, ...){
   cough_abs <- summary(as.factor(patient.data$cough))[[1]]
   cough_unk <- summary(as.factor(patient.data$cough))[[3]]
   
+  # p-value
+  
+  pval <- surv.plot.func(patient.data)$pval
+  
   
   return(list(N.cases = N.cases,
               N.var = N.var,
