@@ -2211,7 +2211,7 @@ surv.plot.func <- function(data1, ...){
   
   fit <- survival::survfit(Surv(length.of.stay, censored) ~ sex, data = df)
   #print(fit)
-  plot <- ggsurvplot(fit, data = df,
+  plot <- ggsurvplot(fit, data = df, 
                      pval = T, pval.coord = c(0, 0.03), conf.int = T,
                      risk.table = F, # Add risk table
                      # risk.table.col = "strata", # Change risk table color by groups
