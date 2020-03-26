@@ -163,6 +163,10 @@ d.e <- function(data, ...){
   p.o2 <- 100 * df$O2 / df$All
   p.o2 <- paste(sprintf("%.1f", p.o2))
   
+  # Note, proportions of ventilation have denominator O2
+  p.NIV <- 100 * df$
+  
+  
   # Symptoms 
   
   s.dat <- symptom.prevalence(data)$data3

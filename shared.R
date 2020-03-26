@@ -1786,13 +1786,17 @@ treatment.upset <- function(data, ...) {
   details$None <- 1 - details$Any
   N.none <- sum(details$None, na.rm = FALSE)
   N.O2 <- sum(details$Oxygen.Therapy, na.rm = FALSE)
+  N.NIV <- sum(details$NIV, na.rm = FALSE)
+  N.inv.vent <- sum(details$Invasive.ventilation, na.rm = FALSE)
   
   df = data.frame(
     All = N.treat, 
     Abx = N.abx, 
     Av = N.av, 
     None = N.none, 
-    O2 = N.O2
+    O2 = N.O2,
+    NIV = N.NIV,
+    Inv.ven <- N.inv.vent
   )
   
   return(list(p = p, df = df))
