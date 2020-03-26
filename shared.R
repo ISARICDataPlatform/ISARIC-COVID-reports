@@ -667,6 +667,7 @@ patient.data <- patient.data %>%
     names(x) <- glue("NIMV.{names(x)}")
     x
   })) %>% 
+  dplyr::select(-NIMV.cols) %>%
   { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>% 
   mutate(IMV.cols  = map(events, function(el){
     process.event.dates(el, "invasive_proccur", "daily_invasive_prtrt")
@@ -675,7 +676,8 @@ patient.data <- patient.data %>%
     names(x) <- glue("IMV.{names(x)}")
     x
   })) %>% 
-  { bind_cols(., bind_rows(!!!.$IMV.cols)) }
+  { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
+  dplyr::select(-IMV.cols)
 
 
 # @todo this script needs to be more aware of the date of the dataset
