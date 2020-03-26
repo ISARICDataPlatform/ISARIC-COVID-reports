@@ -40,12 +40,12 @@ antiviral.Neuraminidase.inhibitors,Neuraminidase inhibitor use recorded,Taken fr
 antiviral.other,Other antiviral use recorded,Taken from non-NA values of antiviral_cmyn__6 from the events table (not NA for UK only)
 antiviral.freetext,Antiviral free text field contents,Taken from non-NA values of antiviral_cmtype from the events table (not NA for non-UK only)
 NIMV.ever,Ever on NIMV,A 1 appears in noninvasive_proccur or daily_noninvasive_prtrt in the events table
-NIMV.start.date,NIMV start date,First daily form entry for which a 1 appears in daily_noninvasive_prtrt
-NIMV.end.date,NIMV end date,First daily form entry for which a 2 appears after a 1 in daily_noninvasive_prtrt (NA if never)
+NIMV.start.date,NIMV start date,First daily_dsstdat for which a 1 appears in daily_noninvasive_prtrt
+NIMV.end.date,NIMV end date,First daily_dsstdat for which a 2 appears after a 1 in daily_noninvasive_prtrt (NA if never)
 NIMV.multiple.periods,Multiple periods on NIMV,Two separate runs of 1s in daily_noninvasive_prtrt
 IMV.ever,Ever on IMV,A 1 appears in invasive_proccur or daily_invasive_prtrt in the events table
-IMV.start.date,IMV start date,First daily form entry for which a 1 appears in daily_invasive_prtrt
-IMV.end.date,IMV end date,First daily form entry for which a 2 appears after a 1 in daily_invasive_prtrt (NA if never)
+IMV.start.date,IMV start date,First daily_dsstdat for which a 1 appears in daily_invasive_prtrt
+IMV.end.date,IMV end date,First daily_dsstdat for which a 2 appears after a 1 in daily_invasive_prtrt (NA if never)
 IMV.multiple.periods,Multiple periods on IMV,Two separate runs of 1s in daily_invasive_prtrt
 NIMV.duration,NIMV duration,NIMV.end.date - NIMV.start.date
 admission.to.exit,Days from admission to exit,exit.date - admission.date
