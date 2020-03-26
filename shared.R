@@ -25,7 +25,7 @@ library(boot)
 # flags for inclusion of the three data files
 
 use.uk.data <- TRUE
-embargo.limit <- today()
+embargo.limit <- ymd("2020-03-22")
 use.row.data <- TRUE
 use.eot.data <- TRUE
 
@@ -272,8 +272,8 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
-patient.data <- demog.data %>% left_join(event.data) #%>%
-  # filter(dsstdat < embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
+patient.data <- demog.data %>% left_join(event.data) %>%
+  filter(dsstdat <= embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
 
 #### Comorbitities, symptoms, and treatments ####
 
@@ -693,8 +693,21 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
   dplyr::select(-IMV.cols) %>%
+<<<<<<< HEAD
   mutate(ICU.cols  = map2(subjid,events, function(id, el){
 
+=======
+  mutate(ECMO.cols  = map(events, function(el){
+    process.event.dates(el, "extracorp_prtrt", "daily_ecmo_prtrt")
+  })) %>%
+  mutate(ECMO.cols = map(ECMO.cols, function(x){
+    names(x) <- glue("ECMO.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$ECMO.cols)) } %>%
+  dplyr::select(-ECMO.cols) %>%
+  mutate(ICU.cols  = map2(subjid,events, function(id, el){
+>>>>>>> f3833c3e002037e6b625bf0dd44212c9fa45a8d5
     process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
   })) %>%
   mutate(ICU.ever = unlist(ICU.cols)) %>%
@@ -1938,12 +1951,13 @@ antiviral.use.upset <- function(data, ...){
 # For bootstrap
 samp.mean <- function(x, i) {mean(x[i])} 
 samp.var <- function(x, i){var(x[i])}
+samp.median <- function(x,i){median(x[i])}
 
 fit.summary.gamma <- function(fit){
   
   m <- fit$estimate[['shape']]/fit$estimate[['rate']]       # mean
   v <- fit$estimate[['shape']]/(fit$estimate[['rate']])^2   # variance
-  
+
   set.seed(101)
   # Sample
   X = rgamma(1e3, shape = fit$estimate[['shape']], rate = fit$estimate[['rate']] )
@@ -1957,10 +1971,16 @@ fit.summary.gamma <- function(fit){
   # CI
   lower.v <- boot.ci(bv, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
   upper.v <- boot.ci(bv, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
+  # Bootstrap (median)
+  bmed <- boot(data = X, statistic = samp.median, R=1000 )
+  # CI
+  lower.med <- boot.ci(bmed, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
+  upper.med <- boot.ci(bmed, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
   
   
   return(list(m=m, lower.m = lower.m, upper.m = upper.m,  v=v, 
-              lower.v = lower.v, upper.v = upper.v))
+              lower.v = lower.v, upper.v = upper.v, bmed = bmed, lower.med = lower.med,
+              upper.med = upper.med))
   
 }
 
@@ -2104,8 +2124,6 @@ adm.outcome.func <- function(data){
   
   data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   
-  obs <- round.zeros(data2$start.to.exit[!is.na(data2$start.to.exit)])
-  
   data2 <- data2 %>% 
     mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
       max(x, y, na.rm = T)
@@ -2117,12 +2135,13 @@ adm.outcome.func <- function(data){
   
   pos.cens <- which(data2$censored == 'TRUE')
   
-  
   left <- c(admit.discharge)
   right <- replace(admit.discharge, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
   t <- data.frame(x = admit.discharge)
+  
+  obs <- right[!(is.na(right))] # cases with completed duration days.
   
  
   plt <- ggplot(data = t) + 
@@ -2181,10 +2200,9 @@ onset.adm.func <- function(data){
 ######### Survival plot ######
 
 
-surv.plot.func <- function(data1, ...){
-  
-  
-  data2 <- data1 %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+surv.plot.func <- function(data, ...){
+
+  data2 <- data %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   
   data2 <- data2 %>% 
     dplyr::mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
@@ -2206,7 +2224,11 @@ surv.plot.func <- function(data1, ...){
                      palette = c('#D2691E', '#BA55D3'),
                      legend.labs = 
                        c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , legend = c(0.8, 0.8))
-  return(plot)
+  
+  pval <- round(surv_pvalue(fit)$pval, 2)
+  
+  return(list(plt = plt, pval=pval))
+  
 }
 
 
