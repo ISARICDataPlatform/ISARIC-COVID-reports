@@ -1918,12 +1918,13 @@ antiviral.use.upset <- function(data, ...){
 # For bootstrap
 samp.mean <- function(x, i) {mean(x[i])} 
 samp.var <- function(x, i){var(x[i])}
+samp.median <- function(x,i){median(x[i])}
 
 fit.summary.gamma <- function(fit){
   
   m <- fit$estimate[['shape']]/fit$estimate[['rate']]       # mean
   v <- fit$estimate[['shape']]/(fit$estimate[['rate']])^2   # variance
-  
+
   set.seed(101)
   # Sample
   X = rgamma(1e3, shape = fit$estimate[['shape']], rate = fit$estimate[['rate']] )
@@ -1937,10 +1938,16 @@ fit.summary.gamma <- function(fit){
   # CI
   lower.v <- boot.ci(bv, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
   upper.v <- boot.ci(bv, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
+  # Bootstrap (median)
+  bmed <- boot(data = X, statistic = samp.median, R=1000 )
+  # CI
+  lower.med <- boot.ci(bmed, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
+  upper.med <- boot.ci(bmed, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
   
   
   return(list(m=m, lower.m = lower.m, upper.m = upper.m,  v=v, 
-              lower.v = lower.v, upper.v = upper.v))
+              lower.v = lower.v, upper.v = upper.v, bmed = bmed, lower.med = lower.med,
+              upper.med = upper.med))
   
 }
 
@@ -2084,8 +2091,6 @@ adm.outcome.func <- function(data){
   
   data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   
-  obs <- round.zeros(data2$start.to.exit[!is.na(data2$start.to.exit)])
-  
   data2 <- data2 %>% 
     mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
       max(x, y, na.rm = T)
@@ -2097,12 +2102,13 @@ adm.outcome.func <- function(data){
   
   pos.cens <- which(data2$censored == 'TRUE')
   
-  
   left <- c(admit.discharge)
   right <- replace(admit.discharge, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
   t <- data.frame(x = admit.discharge)
+  
+  obs <- right[!(is.na(right))] # cases with completed duration days.
   
  
   plt <- ggplot(data = t) + 
