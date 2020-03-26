@@ -160,6 +160,7 @@ d.e <- function(data, ...){
   p.av <- 100 * df$Av / df$All
   p.av <- paste(sprintf("%.1f", p.av))
   
+  n.o2 <- df$O2
   p.o2 <- 100 * df$O2 / df$All
   p.o2 <- paste(sprintf("%.1f", p.o2))
   
@@ -272,6 +273,8 @@ d.e <- function(data, ...){
               p.none = p.none,
               p.abx = p.abx,
               p.av = p.av,
+              
+              n.o2 = n.o2,
               p.o2 = p.o2,
               p.NIV = p.NIV,
               p.In.Ven = p.In.Ven,
