@@ -610,8 +610,11 @@ patient.data <- patient.data %>%
   dplyr::mutate(antiviral.Interferon.beta = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___4", TRUE) )) %>%
   dplyr::mutate(antiviral.Neuraminidase.inhibitors = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___5", TRUE) )) %>%
   dplyr::mutate(antiviral.other = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___6", TRUE) ))   %>%
-  dplyr::mutate(antiviral.freetext = map_chr(events, function(x) extract.named.column.from.events(x, "antiviral_cmtype", TRUE) ))
-  
+  dplyr::mutate(antiviral.freetext = map_chr(events, function(x) extract.named.column.from.events(x, "antiviral_cmtype", TRUE) )) %>%
+  dplyr::mutate(antibiotic.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antibiotic_cmyn", TRUE) )) %>%
+  dplyr::mutate(antifungal.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antifung_cmyn", TRUE) )) %>%
+  dplyr::mutate(steroid.any = map_dbl(events, function(x) extract.named.column.from.events(x, "corticost_cmyn", TRUE) )) 
+
 compareNA <- function(v1,v2) {
   same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
   same[is.na(same)] <- FALSE
@@ -632,7 +635,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
     ever <- any((check.rows$summary.col == 1) | (check.rows$daily.col == 1), na.rm = T)
   }
   
-
+  
   rows <- subtbl %>% filter(!is.na(daily.col)) %>%
     mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
     mutate(consolidated.dssdat = ymd(consolidated.dssdat))
@@ -676,8 +679,8 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
 
 patient.data <- patient.data %>% 
   mutate(NIMV.cols  = map(events, function(el){
-  process.event.dates(el, "noninvasive_proccur", "daily_noninvasive_prtrt")
-})) %>%
+    process.event.dates(el, "noninvasive_proccur", "daily_noninvasive_prtrt")
+  })) %>%
   mutate(NIMV.cols = map(NIMV.cols, function(x){
     names(x) <- glue("NIMV.{names(x)}")
     x
@@ -708,6 +711,15 @@ patient.data <- patient.data %>%
   mutate(ICU.ever = unlist(ICU.cols)) %>%
   dplyr::select(-ICU.cols)
 
+patient.data <- patient.data %>%
+  mutate(O2.ever = map_lgl(events, function(x){
+    x$O2.ever <- 0
+    x$O2.ever[x$daily_fio2_lborres > .21] <- 1
+    # to add O2 flow if it becomes available
+    x$O2.ever[x$daily_nasaloxy_cmtrt == 1] <- 1
+    x$O2.ever[x$oxygen_cmoccur == 1] <- 1
+    any(x$O2.ever)
+  }))
 
 # @todo this script needs to be more aware of the date of the dataset
 
@@ -814,6 +826,7 @@ trimmed.patient.data <- patient.data %>% dplyr::select(subjid,
                                                        NIMV.end.date,
                                                        NIMV.duration,
                                                        NIMV.multiple.periods,
+                                                       O2.ever,
                                                        admission.to.exit,
                                                        onset.to.admission,
                                                        admission.to.censored,
@@ -856,7 +869,7 @@ age.pyramid <- function(data, ...){
   
   plot.breaks <- seq(-(ceiling(max.count/10)*10), ceiling(max.count/10)*10, by = 10)
   plot.labels <- as.character(c(rev(seq(10, ceiling(max.count/10)*10, by = 10)), 0, seq(10, ceiling(max.count/10)*10, by= 10)))
-
+  
   ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp5, y=count, fill = outcome), stat = "identity", col = "black") +
     geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
@@ -1110,7 +1123,7 @@ symptoms.upset <- function(data, max.symptoms, ...){
     dplyr::select(-Conditions, -Presence)
   
   #other.conditions.tbl <- data %>%
-    #dplyr::select(subjid, one_of(admission.symptoms$field) & !one_of(most.common)) 
+  #dplyr::select(subjid, one_of(admission.symptoms$field) & !one_of(most.common)) 
   
   other.conditions.tbl <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms %>% filter(!(field %in% most.common)) %>% pull(field)))
@@ -1187,10 +1200,10 @@ symptom.prevalence <- function(data, ...){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown")) %>%
-   dplyr::left_join(combined.labeller, by = c("Condition" = "field"))
-    
-    
-
+    dplyr::left_join(combined.labeller, by = c("Condition" = "field"))
+  
+  
+  
   data2 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
     group_by(Condition) %>%
@@ -1216,7 +1229,7 @@ symptom.prevalence <- function(data, ...){
     pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
     dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
     filter(label != "Other")
- 
+  
   
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
@@ -1226,10 +1239,10 @@ symptom.prevalence <- function(data, ...){
     scale_fill_manual(values = c("deepskyblue1", "deepskyblue4"), name = "Symptom\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
-   return(list(plt = plt, data3 = data3))
+  return(list(plt = plt, data3 = data3))
   
   
-  }
+}
 
 # Prevalence of comorbidities
 
@@ -1256,7 +1269,7 @@ comorbidity.prevalence <- function(data, ...){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
-
+  
   
   combined.labeller <- bind_rows(comorbidities %>% add_column(type = "Comorbidities"), 
                                  admission.symptoms %>% add_column(type = "Symptoms at\nadmission"))
@@ -1342,7 +1355,7 @@ treatment.use.plot <- function(data, ...){
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
   
   
- 
+  
   data2 <- data2 %>%
     pivot_longer(2:(ntr + 1), names_to = "Treatment", values_to = "Present") %>%
     group_by(Treatment) %>%
@@ -1368,7 +1381,7 @@ treatment.use.plot <- function(data, ...){
     pivot_longer(c(prop.yes, prop.no), names_to = "treated", values_to = "Proportion") %>%
     dplyr::mutate(affected = map_lgl(treated, function(x) x == "prop.yes")) 
   
- plt<-  ggplot(data2) + 
+  plt<-  ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
     theme_bw() + 
     coord_flip() + 
@@ -1390,15 +1403,15 @@ modified.km.plot <- function(data, ...) {
   # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
   
   # Exclude rows which no entries for length of stay
-
+  
   data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
   
   #data2 <- data2 %>% 
-    #mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
-
+  #mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
+  
   data2 <- data2 %>% 
     mutate(length.of.stay = map2_dbl(start.to.exit, start.to.censored, function(x,y){
-
+      
       max(x, y, na.rm = T)
     }))
   
@@ -1605,9 +1618,9 @@ violin.sex.func <- function(data, ...){
   # This is to include dates for individuals still in hospital
   
   data2 <- data2 %>% 
-  mutate(length.of.stay = abs(round.zeros(start.to.exit)))  %>%#, admission.to.censored, function(x,y){
-  #     max(x, y, na.rm = T)
-  #   })) %>%
+    mutate(length.of.stay = abs(round.zeros(start.to.exit)))  %>%#, admission.to.censored, function(x,y){
+    #     max(x, y, na.rm = T)
+    #   })) %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
@@ -1677,122 +1690,78 @@ violin.age.func <- function(data, ...){
 
 treatment.upset <- function(data, ...) {
   library(tidyr); library(tidyverse)
-  row_n <- nrow(data)
-  for (i in 1:row_n) {
-    events <- data$events[i]
-    detail <- events[[1]]
-    detail <- subset(
-      detail, 
-      select = c(dsterm,
-                 antiviral_cmyn, antiviral_cmtrt, 
-                 antibiotic_cmyn, 
-                 corticost_cmyn, corticost_cmroute,
-                 antifung_cmyn,
-                 oxygen_cmoccur, noninvasive_proccur, invasive_proccur, 
-                 extracorp_prtrt, 
-                 renal_proccur,
-                 inotrop_cmtrt)
+  details <- subset(
+    data, 
+    select = c(subjid,
+               antibiotic.any,
+               antiviral.any,
+               antifungal.any,
+               steroid.any,
+               NIMV.ever, IMV.ever, O2.ever
     )
-    detail$Pid_special <- i   
-    # This is a PID made for this table and does not correlate with other
-    # patient IDs
-    if (i == 1) {
-      details <- detail
-    } else {
-      details <- rbind(details, detail, deparse.level = 1)
-    }
-  }
-  
-  # If no dsterm result then not the form that will have treatment details
-  details$All_NA <- 1
-  details$All_NA[is.na(details$dsterm) == FALSE] <- 0
-  # Also, if all the treatment columns are NA then exclude
+  )
+  # Do not plot if all NA - likely just not had outcome form
   col_from <- 2
-  col_to <- ncol(details) - 2
+  col_to <- ncol(details) - 1  # -1 as O2.ever is never NA
   details$allna <- 1
   for (i in col_from:col_to) {
     details$allna[is.na(details[, i]) == FALSE] <- 0
   }
-  details$All_NA[details$allna == 1] <- 1
-  details <- subset(details, All_NA == 0)
-  
-  # Separate steroids according to route
-  
-  details$Oral_Steroid <- 
-    details$Intravenous_Steroid <- 
-    details$Inhaled_Steroid <- 
-    0
-  details$Oral_Steroid[details$corticost_cmroute == 1] <- 1
-  details$Intravenous_Steroid[details$corticost_cmroute == 2] <- 1
-  details$Inhaled_Steroid[details$corticost_cmroute == 3] <- 1
-  
-  # Label variables for the plot
-  details$Antiviral <- details$antiviral_cmyn
-  details$Antibiotic <- details$antibiotic_cmyn
-  details$Antifungal <- details$antifung_cmyn
-  details$Corticosteroid <- details$corticost_cmyn
-  details$Supplemental.oxygen <- details$oxygen_cmoccur
-  details$NIV <- details$noninvasive_proccur
-  details$Invasive.ventilation <- details$invasive_proccur
-  details$ECMO <- details$extracorp_prtrt 
-  details$RRT <- details$renal_proccur
-  details$Inotropes <- details$inotrop_cmtrt
-  
+  details <- subset(details, allna == 0)
   # 1 is Yes, set anything else to 0 (No)
-  col_from <- 20 ## This will need changing if number of variables changed
-  col_to <- ncol(details)
-  for (i in col_from:col_to) {
+  for (i in 2:5) {
     details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
   }
-  
-  # Any O2 therapy
-  details = details %>%
-    rowwise() %>%
-    mutate(Oxygen.Therapy = max(Supplemental.oxygen, NIV, Invasive.ventilation, 
-                                ECMO))
-  
+  # Any O2 therapy - will include data from daily forms
+  details$O2.ever[details$NIMV.ever == TRUE] <- TRUE
+  details$O2.ever[details$IMV.ever == TRUE] <- TRUE
   treatments <- details %>%
     dplyr::select(
-      Pid_special, 
-      Antiviral, 
-      Antibiotic, 
-      Antifungal, 
-      Corticosteroid,
-      Oxygen.Therapy
+      subjid, 
+      antiviral.any, 
+      antibiotic.any, 
+      antifungal.any, 
+      steroid.any,
+      O2.ever
     ) %>%
     pivot_longer(2:6, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) 
-  treatments$Treatment[treatments$Treatment == "Oxygen.Therapy"] <- 
+  # Change labels
+  treatments$Treatment[treatments$Treatment == "O2.ever"] <- 
     "Oxygen supplementation"
+  treatments$Treatment[treatments$Treatment == "antiviral.any"] <- 
+    "Antiviral"
+  treatments$Treatment[treatments$Treatment == "antibiotic.any"] <- 
+    "Antibiotic"
+  treatments$Treatment[treatments$Treatment == "antifungal.any"] <- 
+    "Antifungal"
+  treatments$Treatment[treatments$Treatment == "steroid.any"] <- 
+    "Corticosteroid"
   treatments <- treatments %>%
-    group_by(Pid_special) %>%
+    group_by(subjid) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
     mutate(treatments.used = map2(Treatments, Presence, function(c,p){
       c[which(p)]
     })) %>%
     dplyr::select(-Treatments, -Presence)
-  
   p <- ggplot(treatments, aes(x = treatments.used, y = prop)) + 
     geom_bar(aes(y=..count../sum(..count..)), fill = "chartreuse3", col = "black") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
     ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
     scale_x_upset() 
-  
   # Counts
-  
   N.treat <- nrow(details)
-  N.abx <- sum(details$Antibiotic, na.rm = FALSE)
-  N.av <- sum(details$Antiviral, na.rm = FALSE)
+  N.abx <- sum(details$antibiotic.any, na.rm = FALSE)
+  N.av <- sum(details$antiviral.any, na.rm = FALSE)
   details = details %>%
     rowwise() %>%
-    mutate(Any = max(Antiviral, Antibiotic, Antifungal, Corticosteroid))
+    mutate(Any = max(antiviral.any, antibiotic.any, antifungal.any, steroid.any))
   details$None <- 1 - details$Any
   N.none <- sum(details$None, na.rm = FALSE)
-  N.O2 <- sum(details$Oxygen.Therapy, na.rm = FALSE)
-  N.NIV <- sum(details$NIV, na.rm = FALSE)
-  N.inv.vent <- sum(details$Invasive.ventilation, na.rm = FALSE)
-  
+  N.O2 <- sum(details$O2.ever, na.rm = FALSE)
+  N.NIV <- sum(details$NIMV.ever, na.rm = FALSE)
+  N.inv.vent <- sum(details$IMV.ever, na.rm = FALSE)
   df = data.frame(
     All = N.treat, 
     Abx = N.abx, 
@@ -1802,7 +1771,6 @@ treatment.upset <- function(data, ...) {
     NIV = N.NIV,
     Inv.ven <- N.inv.vent
   )
-  
   return(list(p = p, df = df))
 }
 
@@ -1912,7 +1880,7 @@ antiviral.use.upset <- function(data, ...){
   data2 <- data %>%
     filter(data.source == "UK") %>%
     dplyr::select(subjid, starts_with("antiviral.")) %>%
-
+    
     pivot_longer(2:7, names_to = "antiviral", values_to = "value") %>%
     mutate(antiviral = map_chr(antiviral, antiviral.mapper)) %>%
     filter(!is.na(value)) %>%
@@ -1953,7 +1921,7 @@ fit.summary.gamma <- function(fit){
   
   m <- fit$estimate[['shape']]/fit$estimate[['rate']]       # mean
   v <- fit$estimate[['shape']]/(fit$estimate[['rate']])^2   # variance
-
+  
   set.seed(101)
   # Sample
   X = rgamma(1e3, shape = fit$estimate[['shape']], rate = fit$estimate[['rate']] )
@@ -2139,7 +2107,7 @@ adm.outcome.func <- function(data){
   
   obs <- right[!(is.na(right))] # cases with completed duration days.
   
- 
+  
   plt <- ggplot(data = t) + 
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
     geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
@@ -2196,38 +2164,36 @@ onset.adm.func <- function(data){
 ######### Survival plot ######
 
 
-surv.plot.func <- function(data1, ...){
-
-  data2 <- data1 %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+surv.plot.func <- function(data, ...){
+  
+  data2 <- data %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   
   data2 <- data2 %>% 
     dplyr::mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
       max(x, y, na.rm = T)
     }))
-  data2$sex <- revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+  data2$sex <- plyr::revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
+   
+  df <- data2 %>% dplyr::select(sex, length.of.stay, censored) %>%
+    mutate(length.of.stay = abs(length.of.stay)) %>%
+    data.frame()
   
+  fit <- survival::survfit(Surv(length.of.stay, censored) ~ sex, data = df)
 
-  data2$event <- as.factor(as.integer(as.logical(data2$censored))) # Now, TRUE= 1, FALSE = 0 
+  plt <- ggsurvplot(fit, data = df,
+                    pval = T, pval.coord = c(0, 0.03), conf.int = T,
+                    risk.table = F, # Add risk table
+                    # risk.table.col = "strata", # Change risk table color by groups
+                    linetype = "strata", # Change line type by groups
+                    #surv.median.line = "hv", # Specify median survival
+                    ggtheme = theme_bw(), # Change ggplot2 theme
+                    palette = c('#D2691E', '#BA55D3'),
+                    legend.labs = c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , legend = c(0.8, 0.8))
   
-  data2$event <- revalue(data2$event, c('0'=1, '1'=0)) # changing to TRUE = 0 (i.e. censored, not experienced event), FALSE = 1 (not censored, experienced event)
- # see ?survfit, True for alive (censored), and false for event (i.e. exit)
-  data2$event <- as.numeric(data2$event)
-  df <- tibble(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), event = data2$event)
+  pval <- round(surv_pvalue(fit)$pval, 2)
   
-  fit <- survfit(Surv(df$length.of.stay, df$event) ~ df$sex, data = df)
-
-  #print(fit)
-  plot <- ggsurvplot(fit, data = df, 
-                     pval = T, pval.coord = c(0, 0.03), conf.int = T,
-                     risk.table = F, # Add risk table
-                     # risk.table.col = "strata", # Change risk table color by groups
-                     linetype = "strata", # Change line type by groups
-                     #surv.median.line = "hv", # Specify median survival
-                     ggtheme = theme_bw(), # Change ggplot2 theme
-                     palette = c('#D2691E', '#BA55D3'),
-                     legend.labs = 
-                       c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability' , xlab = 'Time (in days) from admission', legend = c(0.8, 0.8))
-  return(plot)
+  return(list(plt = plt, pval=pval))
+  
 }
 
 

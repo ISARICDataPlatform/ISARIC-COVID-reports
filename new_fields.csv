@@ -53,6 +53,7 @@ ECMO.start.date,ECMO start date,First daily_dsstdat for which a 1 appears in dai
 ECMO.end.date,ECMO end date,First daily_dsstdat for which a 2 appears after a 1 in daily_ecmo_prtrt (NA if never)
 ECMO.multiple.periods,Multiple periods on ECMO,Two separate runs of 1s in daily_ecmo_prtrt
 NIMV.duration,NIMV duration,NIMV.end.date - NIMV.start.date
+O2.ever,Ever had oxygen therapy,"Takes any of FiO2 > .21 on daily sheet, high flow oxygen on daily sheet, or O2 ticked on outcome sheet"
 ICU.ever,Ever in ICU,A 1 appears in icu_hoterm or daily_hoterm in the events table
 admission.to.exit,Days from admission to exit,exit.date - admission.date
 onset.to.admission,Days from onset to admission,admission.date - onset.date (can be legitimately negative)
