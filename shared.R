@@ -2197,8 +2197,7 @@ onset.adm.func <- function(data){
 
 
 surv.plot.func <- function(data1, ...){
-  
-  
+
   data2 <- data1 %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   
   data2 <- data2 %>% 
@@ -2207,11 +2206,12 @@ surv.plot.func <- function(data1, ...){
     }))
   data2$sex <- plyr::revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
   
-  df <- data.frame(sex = data2$sex, length.of.stay = abs(data2$length.of.stay), Censored = data2$censored )
+  df <- data2 %>% dplyr::select(sex, length.of.stay, censored) %>%
+    mutate(length.of.stay = abs(length.of.stay))
   
-  fit <- survival::survfit(Surv(length.of.stay, Censored) ~ sex, data = df)
+  fit <- survival::survfit(Surv(length.of.stay, censored) ~ sex, data = df)
   #print(fit)
-  plot <- ggsurvplot(fit,
+  plot <- ggsurvplot(fit, data = df,
                      pval = T, pval.coord = c(0, 0.03), conf.int = T,
                      risk.table = F, # Add risk table
                      # risk.table.col = "strata", # Change risk table color by groups
