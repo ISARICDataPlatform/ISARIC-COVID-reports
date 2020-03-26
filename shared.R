@@ -272,7 +272,7 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
-patient.data <- demog.data %>% left_join(event.data) #%>%
+patient.data <- demog.data %>% left_join(event.data) %>%
   filter(dsstdat <= embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
 
 #### Comorbitities, symptoms, and treatments ####
