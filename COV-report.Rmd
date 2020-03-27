@@ -86,9 +86,9 @@ Up to the date of this report, data have been entered for **`r de$N.cases.full`*
 
 We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  
 
-Please note the caveats below, which are particularly relevant for our first global report as information is incomplete for the many patients who are still being treated. Note that we received more data for severely ill individuals than for people with relatively less severe illness. Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. At present, many of the included cases are from the United Kingdom.
+Please note the caveats below, which are particularly relevant for our first global report as information is incomplete for the many patients who are still being treated. Note that we received more data for severely ill individuals than for people with relatively less severe illness. Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. Many of the included cases are from the United Kingdom.
 
-The analysis detailed in this report only includes individuals for whom data collection commenced on or before `r de$embargo.limit`. By excluding patients enrolled after this date, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. 
+The analysis detailed in this report only includes individuals for whom data collection commenced on or before `r de$embargo.limit`. We have applied a 14-day rule to focus analysis on individuals who are more likely to have a recorded outcome. By excluding patients enrolled during the last 14 days, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. However, this limits our analysis to this restricted cohort despite the much larger volumes of data held in the database.  
 
 The cohort comprises **`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
 
@@ -301,15 +301,7 @@ All analysis were performed using the R statistical software (R Core Team, 2019)
 
 # Caveats
 
-## Caveat to all data
-
 Patient data are collected and uploaded from start of admission, however a complete patient data set is not available until the episode of care is complete. This causes a predictable lag in available data influenced by the duration of admission which is greatest for the sickest patients, and accentuated during the up-phase of the outbreak.
-
-
-## Caveat to UK data
-
-In the UK, up to 10th March 2020, people with positive swabs were admitted to hospital as part of the containment strategy. Many of these people had recently been abroad, particularly Italy. Since 11th March 2020, admission is mostly based upon need for treatment of COVID-19 disease. This may explain the younger age of the UK group and the fewer comorbidities reported when compared with reports from China and Italy.
-
 
 
 # Summary Tables
@@ -444,10 +436,12 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 * Daniel Plotkin
 * Mark Pritchard
 * Calum Semple 
-
-
-
-
+*	Kenneth Bailie
+*	Ewen Harrison
+*	Clark Russell
+*	Louise Sigfrid
+* Karl Holden
+*	All those who contributed the data, which enabled this report.
 
 # References
 
