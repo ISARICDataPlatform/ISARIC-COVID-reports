@@ -846,7 +846,6 @@ violin.age.func <- function(data, ...){
 # Upset plot for treatments @todo add maximum parameter?
 
 treatment.upset.prep <- function(data, ...) {
-  library(tidyr); library(tidyverse)
   details <- subset(
     data, 
     select = c(subjid,

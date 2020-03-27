@@ -449,8 +449,8 @@ treatment.labels <- d.dict %>%
   map_chr(function(x) sub("\\?+$", "", x)) %>%
   map_chr(function(x) sub("\\s+$", "", x)) 
 
-treatment.labels[8] <- "Inhaled nitric oxide"
-treatment.labels[9] <- "Tracheostomy" 
+treatment.labels[9] <- "Inhaled nitric oxide"
+treatment.labels[10] <- "Tracheostomy" 
 treatment.labels[14] <- "Other"
 
 treatments <- tibble(field = treatment.colnames, label = treatment.labels)
