@@ -432,12 +432,15 @@ Patient data are collected and uploaded from start of admission, however a compl
 
 # ISARIC Team Members
 
+*	Kenneth Bailie
 * Gail Carson
 * Emmanuelle A. Dankwa
 * Annemarie Docherty 
 * Christl A. Donnelly
 * Christophe Fraser
 * Matthew Hall
+*	Ewen Harrison
+* Karl Holden
 * Peter Horby
 * Kalynn Kennon
 * James Lee
@@ -446,12 +449,9 @@ Patient data are collected and uploaded from start of admission, however a compl
 * Piero Olliaro
 * Daniel Plotkin
 * Mark Pritchard
-* Calum Semple 
-*	Kenneth Bailie
-*	Ewen Harrison
 *	Clark Russell
+* Calum Semple 
 *	Louise Sigfrid
-* Karl Holden
 *	All those who contributed the data, which enabled this report.
 
 # References
