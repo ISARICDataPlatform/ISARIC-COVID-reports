@@ -146,7 +146,7 @@ d.e <- function(data, ...){
   hfr.lower <- round(db[nrow(db), 'lower'], 2)
   
   # Treatments data
-  df <- treatment.upset(data)$df
+  df <- treatment.upset.numbers(data)
   n.treat <- df$All
   p.none <- 100 * df$None / df$All 
   p.none <- paste(sprintf("%.1f", p.none))

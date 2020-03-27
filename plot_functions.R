@@ -847,7 +847,7 @@ violin.age.func <- function(data, ...){
 
 # Upset plot for treatments @todo add maximum parameter?
 
-treatment.upset <- function(data, ...) {
+treatment.upset.prep <- function(data, ...) {
   library(tidyr); library(tidyverse)
   details <- subset(
     data, 
@@ -874,6 +874,12 @@ treatment.upset <- function(data, ...) {
   # Any O2 therapy - will include data from daily forms
   details$O2.ever[details$NIMV.ever == TRUE] <- TRUE
   details$O2.ever[details$IMV.ever == TRUE] <- TRUE
+  
+  return(details)
+}
+
+treatment.upset <- function(data, ...) {
+  details <- treatment.upset.prep(data)
   treatments <- details %>%
     dplyr::select(
       subjid, 
@@ -910,6 +916,10 @@ treatment.upset <- function(data, ...) {
     ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
     scale_x_upset() 
   
+  return(p)
+}
+
+treatment.upset.ventilation <- function(data, ...) {
   # A second plot for types of ventilation. This one will use the whole dataset
   
   vd <- subset(data, select = c(subjid, O2.ever, NIMV.ever, IMV.ever, ECMO.ever))
@@ -955,7 +965,11 @@ treatment.upset <- function(data, ...) {
     ylab("Proportion of patients") +
     scale_x_upset() 
   
-  
+  return(vent.plt)
+}  
+
+treatment.upset.numbers <- function(data, ...) {
+  details <- treatment.upset.prep(data)
   # Counts
   N.treat <- nrow(details)
   N.abx <- sum(details$antibiotic.any, na.rm = FALSE)
@@ -978,8 +992,9 @@ treatment.upset <- function(data, ...) {
     NIV = N.NIV,
     Inv.ven <- N.inv.vent
   )
-  return(list(p = p, vent.plt = vent.plt, df = df))
+  return(df)
 }
+
 
 ######### Timeline plot ##############
 # @todo add ICU. Add IMV.
