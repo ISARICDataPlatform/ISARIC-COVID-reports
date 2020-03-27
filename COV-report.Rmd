@@ -75,26 +75,26 @@ Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$
 
 The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. These estimates are based on all cases which have complete records on length of hospital stay (N = `r cases.full.adm.outcome`).
 
-The observed mean  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`). Expected estimates^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates for fitted distribution account for unobserved outcomes.] for the mean durations of admission to outcome and symptom onset to hospital admission are provided in the summary tables at the end of this report. 
+The observed mean  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`). Expected estimates^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates account for unobserved outcomes.], accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
 The symptoms on admission represent the policy for hospital admission and containment at that time plus, whatever the case definition was. As time passes for most countries these will change. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
 
 
-`r length(de$a.icu)` cases were admitted into ICU. The observed mean duration from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` days (SD: `r round(sd(de$a.icu, na.rm=T), 1)` days). 
+`r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted into intensive care unit (ICU). The observed mean duration (in days) from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` (SD: `r round(sd(de$a.icu, na.rm=T), 1)`). The mean and SD have been estimated from  records on cases with complete date records on hospital admission and ICU entry ($N =$ `r length(de$a.icu)`).
 
-The duration of stay in the intensive care unit (ICU) has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  The estimates for duration of ICU stay  are based on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`).
+The duration of stay in the ICU has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  The estimates for duration of ICU stay  are based on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`).
 
 
-`r length(de$a.nimv)` patients received non-invasive mechanical ventilation (NIV). The mean duration from admission to receiving NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days).
+`r sum(patient.data$NIMV.ever == 'TRUE', na.rm = T)` patients received non-invasive mechanical ventilation (NIV). The mean duration from admission to receiving NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days). The mean and SD have been estimated from  records on cases with complete records on dates of hospital admission and NIV onset ($N =$ `r length(de$a.nimv)`).
 
 
 The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days).  The estimates for duration of NIV treatment  are based on only those cases with have complete NIV duration records (N = `r length(de$d.nimv)`).
 
 
-`r length(de$a.imv)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days).
+`r sum(patient.data$IMV.ever == 'TRUE', na.rm = T)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days). The mean and SD have been estimated from  records on cases with complete records on dates of hospital admission and IMV onset ($N =$ `r length(de$a.imv)`).
 
 
-The mean and SD for the duration of IMV - estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.	
+The mean and SD for the duration of IMV - estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.
 
 Of `r de$n.treat` patients with complete details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. The aforementioned treatment categories should not be treated as mutually exclusive since some patients received multiple treatments.  `r de$p.o2`% received some degree of oxygen supplementation.  Of those receiving oxygen supplementation, `r de$p.NIV`% received non-invasive ventilation and `r de$p.In.Ven`% received invasive mechanical ventilation.
 
@@ -111,7 +111,7 @@ age.pyramid(patient.data)
 
 ```
 
-**Figure 2**: Top: Frequency of symptoms seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common symptoms, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity. The "Any other" category contains all remaining symptoms in the top plot.
+**Figure 2**: Top: Frequency of symptoms seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common symptoms, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining symptoms in the top plot.
 
 
 ```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
@@ -180,18 +180,18 @@ treatment.upset(patient.data)$p
 
 # Statistical Analysis
 
-<!-- **Figure 9**: Survival analysis for length of hospital stay by sex. The y-axis shows the probability of missing discharge (i.e. remaining in hospital) at any given time. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated by tick marks. A p-value less than 0.05 is an indication of a significant difference in duration of hospital stay by sex.  -->
+**Figure 9**: Survival analysis for length of hospital stay by sex. The y-axis shows the probability of missing discharge (i.e. remaining in hospital) at any given time. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated by tick marks. A p-value less than 0.05 is an indication of a significant difference in duration of hospital stay by sex.
 
 
-```{r survival, out.width= "80%", evaluate=FALSE, include=FALSE}
+```{r survival, out.width= "80%"}
 
-#survival.plot.func(data)$plt
+survival.plot.func(data)$plt
 
 ```
  
 
 
-**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
+**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean.
 
 ```{r onset.admission, out.width = '80%'}
 
@@ -323,7 +323,7 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 
 **Table 2:** Prevalence of Symptoms, Comorbidities and Treatments
 
-| **Symptoms**                      | Present                        | Absent                        | Unknown                        |
+| **Symptoms**                      | **Present**                        | **Absent**                        | **Unknown**                        |
 |-------------------------------|--------------------------------|-------------------------------|--------------------------------|
 | Abdominal pain                | `r de$s.dat$present[1]`        | `r de$s.dat$absent[1]`        | `r de$s.dat$unknown[1]`        |
 | Bleeding                      | `r de$s.dat$present[2]`        | `r de$s.dat$absent[2]`        | `r de$s.dat$unknown[2]`        |
@@ -370,14 +370,14 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 | Extracorporeal support        | `r de$t.dat$present[5]`        | `r de$t.dat$absent[5]`        | `r de$t.dat$unknown[5]`        |
 | Inhaled nitric oxide          | `r de$t.dat$present[6]`        | `r de$t.dat$absent[6]`        | `r de$t.dat$unknown[6]`        |
 | Inotropes / vasopressors      | `r de$t.dat$present[7]`        | `r de$t.dat$absent[7]`        | `r de$t.dat$unknown[7]`        |
-| Invasive ventilation          | `r length(de$a.imv)`        | `r de$t.dat$absent[8]`        | `r de$N.cases - length(de$a.imv) - de$t.dat$absent[8]`        |
-| Non-invasive ventilation      | `r length(de$a.nimv)`        | `r de$t.dat$absent[9]`        | `r de$N.cases- length(de$a.nimv) - de$t.dat$absent[9]`        |
-| Oxygen therapy                | `r de$t.dat$present[11]`       | `r de$t.dat$absent[11]`       | `r de$t.dat$unknown[11]`       |
+| Invasive ventilation          | `r sum(patient.data$IMV.ever=='TRUE', na.rm=T)`        | `r summary(patient.data$IMV.ever=='FALSE', na.rm=T)`        | `r de$N.cases - sum(patient.data$IMV.ever=='TRUE', na.rm=T) - sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        |
+| Non-invasive ventilation      | `r sum(patient.data$NIMV.ever=='TRUE', na.rm=T)`          | `r sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`          | `r de$N.cases- sum(patient.data$NIMV.ever=='TRUE', na.rm=T) - sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`        |
+| Oxygen therapy                | `r sum(patient.data$o2.ever=='TRUE', na.rm=T)`       | `r sum(patient.data$o2.ever=='FALSE', na.rm=T)`       | `r de$N.cases -  sum(patient.data$o2.ever=='TRUE', na.rm=T) - sum(patient.data$o2.ever=='FALSE', na.rm=T)`       |
 | Prone ventilation             | `r de$t.dat$present[12]`       | `r de$t.dat$absent[12]`       | `r de$t.dat$unknown[12]`       |
 | Renal replacement therapy     | `r de$t.dat$present[13]`       | `r de$t.dat$absent[13]`       | `r de$t.dat$unknown[13]`       |
 | Tracheostomy inserted         | `r de$t.dat$present[14]`       | `r de$t.dat$absent[14]`       | `r de$t.dat$unknown[14]`       |
 | Other                         | `r de$t.dat$present[10]`       | `r de$t.dat$absent[10]`       | `r de$t.dat$unknown[10]`       |
-
+| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$o2.ever=='FALSE', na.rm=T)` | `r de$N.cases- sum(patient.data$o2.ever=='TRUE', na.rm=T)- sum(patient.data$o2.ever=='FALSE', na.rm=T)`|
 
 <br /><br /><br />
 
