@@ -80,7 +80,6 @@ The observed mean  number of days from (first) symptom onset to hospital admissi
 The symptoms on admission represent the policy for hospital admission and containment at that time plus, whatever the case definition was. As time passes for most countries these will change. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
 
 
-
 `r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted into intensive care unit (ICU). The observed mean duration (in days) from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` (SD: `r round(sd(de$a.icu, na.rm=T), 1)`). The mean and SD have been estimated from  records on cases with complete date records on hospital admission and ICU entry ($N =$ `r length(de$a.icu)`).
 
 
@@ -182,12 +181,12 @@ treatment.upset(patient.data)$p
 
 # Statistical Analysis
 
-**Figure 9**: Survival analysis for length of hospital stay by sex. The y-axis shows the probability of missing discharge (i.e. remaining in hospital) at any given time. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated by tick marks. A p-value less than 0.05 is an indication of a significant difference in duration of hospital stay by sex.
+<!-- **Figure 9**: Survival analysis for length of hospital stay by sex. The y-axis shows the probability of missing discharge (i.e. remaining in hospital) at any given time. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated by tick marks. A p-value less than 0.05 is an indication of a significant difference in duration of hospital stay by sex. -->
 
 
-```{r survival, out.width= "80%"}
+```{r survival, out.width= "80%", eval=FALSE}
 
-survival.plot.func(data)$plt
+#survival.plot.func(data)$plt
 
 ```
  
