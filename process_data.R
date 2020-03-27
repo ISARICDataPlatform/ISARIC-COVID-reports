@@ -82,8 +82,12 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
            "SK" = "South Korea",
            "SWE" = "Sweden",
            "TUR" = "Turkey",
-           "UK" = "UK"
-    )
+           "UK" = "UK",
+           "BRA" = "Brazil",
+           "EQU" = "Ecuador",
+           "CHI" = "Chile",
+           NA
+    ) 
   })) %>%
   mutate(flag.url = map_chr(country.code, function(x){
     switch(x,
@@ -141,7 +145,11 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
            "SK" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/kr.svg",
            "SWE" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/se.svg",
            "TUR" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/tr.svg",
-           "UK" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/gb.svg")
+           "UK" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/gb.svg",
+           "BRA" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/br.svg",
+           "EQU" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/ec.svg",
+           "CHI" = "https://cdn.rawgit.com/lipis/flag-icon-css/master/flags/4x3/cl.svg",
+           NA)
   }))
 
 
