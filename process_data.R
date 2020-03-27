@@ -5,9 +5,10 @@
 # flags for inclusion of the three data files
 
 use.uk.data <- TRUE
-embargo.limit <- ymd("2020-03-22")
 use.row.data <- TRUE
 use.eot.data <- TRUE
+
+embargo.limit <- ymd("2020-03-22")
 
 if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
@@ -253,7 +254,7 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
 patient.data <- demog.data %>% left_join(event.data) %>%
-  filter(dsstdat <= embargo.limit | data.source != "UK") # exclude all UK cases on or after embargo limit
+  filter(dsstdat <= embargo.limit) # exclude all UK cases on or after embargo limit
 
 #### Comorbitities, symptoms, and treatments ####
 
