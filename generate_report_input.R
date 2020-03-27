@@ -261,7 +261,12 @@ d.e <- function(data, ...){
               
               s.dat = s.dat,
               c.dat = c.dat,
-              t.dat = t.dat
+              t.dat = t.dat,
+              
+              cough_pre = cough_pre,
+              cough_abs = cough_abs,
+              cough_unk = cough_unk
+              
               
               #surv.sum = surv.sum
   ))
