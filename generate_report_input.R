@@ -44,10 +44,13 @@ d.e <- function(data, ...){
   
   # Admission to outcome
   
-  mean.adm.to.outcome <-  round(fit.summary.gamma(adm.outcome.func(data)$fit)$m, 1)
-  adm.outcome.lower <-   round(fit.summary.gamma(adm.outcome.func(data)$fit)$lower.m, 1)
-  adm.outcome.upper <-   round(fit.summary.gamma(adm.outcome.func(data)$fit)$upper.m, 1)
-  median.adm.to.outcome <- round(fit.summary.gamma(adm.outcome.func(data)$fit)$bmed$t0, 1)
+  adm.out.func.1 <- adm.outcome.func(data)
+  gamma.adm.outcome.fit <- fit.summary.gamma(adm.out.func.1$fit)
+  
+  mean.adm.to.outcome <-  round(gamma.adm.outcome.fit$m, 1)
+  adm.outcome.lower <-   round(gamma.adm.outcome.fit$lower.m, 1)
+  adm.outcome.upper <-   round(gamma.adm.outcome.fit$upper.m, 1)
+  median.adm.to.outcome <- round(gamma.adm.outcome.fit$bmed$t0, 1)
   
   
   # Onset to admission
@@ -57,17 +60,21 @@ d.e <- function(data, ...){
   # sd.onset.to.adm.upper <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$upper.v), 1)
   # 
   
-  mean.onset.to.adm <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$m, 1)
-  mean.onset.to.adm.lower <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$lower.m, 1)
-  mean.onset.to.adm.upper <-  round(fit.summary.gamma(onset.adm.func(data)$fit)$upper.m, 1)
-  median.onset.to.adm <- round(fit.summary.gamma(onset.adm.func(data)$fit)$bmed$t0, 1)
+  onset.adm.fn.1
+  gamma.onset.adm.fit <- fit.summary.gamma(onset.adm.fn.1$fit)
+  
+  
+  mean.onset.to.adm <-  round(gamma.onset.adm.fit$m, 1)
+  mean.onset.to.adm.lower <-  round(gamma.onset.adm.fit$lower.m, 1)
+  mean.onset.to.adm.upper <-  round(gamma.onset.adm.fit$upper.m, 1)
+  median.onset.to.adm <- round(gamma.onset.adm.fit$bmed$t0, 1)
 
   
   # Distribution estimates - OBSERVED
   
   # Admission to outcome
   
-  x <- adm.outcome.func(data)$obs
+  x <- adm.out.func.1$obs
   x_mean <- mean(x, na.rm = T)
   x_sd <- sd(x, na.rm = T)
   
@@ -79,7 +86,7 @@ d.e <- function(data, ...){
   
   # Onset to admission
   
-  y <- onset.adm.func(data)$obs
+  y <- onset.adm.fn.1$obs
   y_mean <- sd(y, na.rm = T)
   y_sd <- mean(y, na.rm = T)
   
