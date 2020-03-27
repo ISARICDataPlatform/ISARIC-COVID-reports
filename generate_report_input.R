@@ -195,7 +195,7 @@ d.e <- function(data, datafull, ...){
   
   
   return(list(N.cases = N.cases,
-              N.cases.full = N.cases.full
+              N.cases.full = N.cases.full,
               N.var = N.var,
               N.sites.full = N.sites.full,
               N.countries.full = N.countries.full,
