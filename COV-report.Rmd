@@ -13,13 +13,30 @@ output:
     toc_depth: '2'
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 library(tidyverse)
 library(glue)
-library(gridExtra)
-library(dplyr)
+library(viridis)
+library(ggupset)
+library(sf)
+library(rgeos)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(magrittr)
+library(binom)
+library(plyr)
+library(fitdistrplus)
+library(lubridate)
+library(grid)
+library(binom)
+library(boot)
+library(survival)
+library(survminer)
+library(broom)
+
+reprocess.data <- FALSE
 
 # file locations
 
@@ -33,12 +50,21 @@ uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
 row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
 eot.data.file <- paths[[which(paths$X1 == "eot.data.file"), 2]]
 
-
-
 # Source files
 
-source(glue("{code.path}/shared.R"))
-source(glue("{code.path}/output.R"))
+if(!(reprocess.data) & file.exists(glue("{code.path}/patient_data_{today()}.rda"))){
+  load(glue("{code.path}/patient_data_{today()}.rda"))
+} else {
+  source(glue("{code.path}/process_data.R"))
+}
+
+source(glue("{code.path}/plot_functions.R"))
+
+if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}.rda"))){
+  load(glue("{code.path}/report_input_data_{today()}.rda"))
+} else {
+  source(glue("{code.path}/generate_report_input.R"))
+}
 
 ```
 
@@ -372,12 +398,12 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 | Inotropes / vasopressors      | `r de$t.dat$present[7]`        | `r de$t.dat$absent[7]`        | `r de$t.dat$unknown[7]`        |
 | Invasive ventilation          | `r sum(patient.data$IMV.ever=='TRUE', na.rm=T)`        | `r sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        | `r de$N.cases - sum(patient.data$IMV.ever=='TRUE', na.rm=T) - sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        |
 | Non-invasive ventilation      | `r sum(patient.data$NIMV.ever=='TRUE', na.rm=T)`          | `r sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`          | `r de$N.cases- sum(patient.data$NIMV.ever=='TRUE', na.rm=T) - sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`        |
-| Oxygen therapy                | `r sum(patient.data$o2.ever=='TRUE', na.rm=T)`       | `r sum(patient.data$o2.ever=='FALSE', na.rm=T)`       | `r de$N.cases -  sum(patient.data$o2.ever=='TRUE', na.rm=T) - sum(patient.data$o2.ever=='FALSE', na.rm=T)`       |
+| Oxygen therapy                | `r sum(patient.data$O2.ever=='TRUE', na.rm=T)`       | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)`       | `r de$N.cases -  sum(patient.data$O2.ever=='TRUE', na.rm=T) - sum(patient.data$O2.ever=='FALSE', na.rm=T)`       |
 | Prone ventilation             | `r de$t.dat$present[12]`       | `r de$t.dat$absent[12]`       | `r de$t.dat$unknown[12]`       |
 | Renal replacement therapy     | `r de$t.dat$present[13]`       | `r de$t.dat$absent[13]`       | `r de$t.dat$unknown[13]`       |
 | Tracheostomy inserted         | `r de$t.dat$present[14]`       | `r de$t.dat$absent[14]`       | `r de$t.dat$unknown[14]`       |
 | Other                         | `r de$t.dat$present[10]`       | `r de$t.dat$absent[10]`       | `r de$t.dat$unknown[10]`       |
-| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$o2.ever=='FALSE', na.rm=T)` | `r de$N.cases- sum(patient.data$o2.ever=='TRUE', na.rm=T)- sum(patient.data$o2.ever=='FALSE', na.rm=T)`|
+| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)` | `r de$N.cases- sum(patient.data$O2.ever=='TRUE', na.rm=T)- sum(patient.data$O2.ever=='FALSE', na.rm=T)`|
 
 <br /><br /><br />
 
