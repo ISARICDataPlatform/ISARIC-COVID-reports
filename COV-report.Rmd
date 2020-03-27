@@ -88,7 +88,7 @@ We thank all of the data contributors for collecting standardised data during th
 
 Please note the caveats below, which are particularly relevant for our first global report as information is incomplete for the many patients who are still being treated. Note that we received more data for severely ill individuals than for people with relatively less severe illness. Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. At present, many of the included cases are from the United Kingdom.
 
-The analysis detailed in this report only includes individuals for whom data collection commenced on or before 13 March  2020. By excluding patients enrolled after this date, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. 
+The analysis detailed in this report only includes individuals for whom data collection commenced on or before `r de$embargo.limit`. By excluding patients enrolled after this date, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. 
 
 The cohort comprises **`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
 
