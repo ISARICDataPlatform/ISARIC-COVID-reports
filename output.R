@@ -39,18 +39,6 @@ d.e <- function(data, ...){
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
   N.healthworkers <- summary(as.factor(patient.data$healthwork_erterm))[[1]]
   
-  eth.1 <- N.cases - summary(as.factor(data$ethnic___1))[[1]]
-  eth.2 <- N.cases - summary(as.factor(data$ethnic___2))[[1]]
-  eth.3 <- N.cases - summary(as.factor(data$ethnic___3))[[1]]
-  eth.4 <- N.cases - summary(as.factor(data$ethnic___4))[[1]]
-  eth.5 <- N.cases - summary(as.factor(data$ethnic___5))[[1]]
-  eth.6 <- N.cases - summary(as.factor(data$ethnic___6))[[1]]
-  eth.7 <- N.cases - summary(as.factor(data$ethnic___7))[[1]]
-  eth.8 <- N.cases - summary(as.factor(data$ethnic___8))[[1]]
-  eth.9 <- N.cases - summary(as.factor(data$ethnic___9))[[1]]
-  eth.10 <-N.cases -  summary(as.factor(data$ethnic___10))[[1]]
-  eth.NA <- N.cases - sum(eth.1, eth.2, eth.3, eth.4, eth.5, eth.6, eth.7, eth.8, eth.9, eth.10)
-  
   
   # Distribution estimates
   
@@ -87,7 +75,7 @@ d.e <- function(data, ...){
   obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
   obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
   obs.sd.adm.outcome <- round(x_sd, 2)
-  # cases.full.adm.outcome <- length(adm.outcome.func(patient.data)$obs)
+  cases.full.adm.outcome <- length(adm.outcome.func(patient.data)$obs)
   
   # Onset to admission
   
@@ -219,18 +207,6 @@ d.e <- function(data, ...){
               f.age.mean = f.age.mean,
               f.age.sd = f.age.sd,
               
-              eth.1 = eth.1,
-              eth.2 = eth.2,
-              eth.3 = eth.3,
-              eth.4 = eth.4,
-              eth.5 = eth.5,
-              eth.6 = eth.6,
-              eth.7 = eth.7,
-              eth.8 = eth.8,
-              eth.9 = eth.9,
-              eth.10 = eth.10,
-              eth.NA = eth.NA,
-              
               mean.adm.to.outcome =  mean.adm.to.outcome,
               adm.outcome.lower =  adm.outcome.lower,
               adm.outcome.upper = adm.outcome.upper,
@@ -247,7 +223,7 @@ d.e <- function(data, ...){
               obs.mean.adm.outcome.lower = obs.mean.adm.outcome.lower,
               obs.mean.adm.outcome.upper = obs.mean.adm.outcome.upper,
               obs.sd.adm.outcome  = obs.sd.adm.outcome,
-              # cases.full.adm.outcome = cases.full.adm.outcome, 
+              cases.full.adm.outcome = cases.full.adm.outcome, 
               
               obs.mean.onset.adm =  obs.mean.onset.adm,
               obs.mean.onset.adm.lower = obs.mean.onset.adm.lower,
