@@ -168,6 +168,7 @@ if(use.uk.data){
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
+    dplyr::mutate(site.name = redcap_data_access_group) %>%
     # filter(daily_dsstdat <= embargo.limit) %>%
     mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert)
 } else {
@@ -192,8 +193,7 @@ if(use.eot.data){
     left_join(site.list, by = "site.number") %>%
     dplyr::select(-site.number) %>%
     add_column(agedat = NA) %>%
-    dplyr::mutate(data.source = "EOT") %>%
-    filter(subjid != "TEST-SF")
+    dplyr::mutate(data.source = "EOT")
 }else{
   eot.data <- NULL
 }
@@ -257,8 +257,8 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
 
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
 
-patient.data <- demog.data %>% left_join(event.data) %>%
-  filter(dsstdat <= embargo.limit) # exclude all UK cases on or after embargo limit
+patient.data <- demog.data %>% left_join(event.data)  %>%
+  filter(!str_detect(subjid, "TEST"))
 
 #### Comorbitities, symptoms, and treatments ####
 
@@ -642,7 +642,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       # sometimes happens. ever = TRUE but dates unknown
       end.date <- NA
       
-    } else if(last.date == rows %>% slice(n()) %>% pull(consolidated.dssdat)){
+    } else if(last.date == rows %>% filter(!is.na(consolidated.dssdat)) %>% slice(n()) %>% pull(consolidated.dssdat)){
       # Patient was on at last report
       end.date <- NA
     } else {
@@ -735,13 +735,9 @@ patient.data <- patient.data %>%
   })) %>%
   dplyr::mutate(start.to.censored = pmap_dbl(list(admission.to.exit, start.date, data.source), function(x,y,z){
     if(is.na(x)){
-      if(z == "UK"){
-        # censored until the embargo
-        as.numeric(difftime(embargo.limit, y,  unit="days"))
-      } else {
-        # censored until today
-        as.numeric(difftime(ref.date, y,  unit="days"))
-      }
+
+      as.numeric(difftime(ref.date, y,  unit="days"))
+
     }
     else {
       NA
@@ -782,8 +778,10 @@ patient.data <- patient.data %>%
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
          start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
+unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name)
 
+patient.data <-  patient.data %>%
+  filter(dsstdat <= embargo.limit) # exclude all cases on or after embargo limit
 
-
-save(patient.data, admission.symptoms, comorbidities, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
+save(unembargoed.data, patient.data, admission.symptoms, comorbidities, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
 
