@@ -1380,6 +1380,48 @@ onset.adm.func <- function(data){
   
 }
 
+# Cumulative recruitment by outcome
+
+recruitment.dat.plot <- function(data, embargo.limit, ...) {
+  data$outcome.count <- 0
+  data$outcome.count[data$outcome != "censored"] <- 1
+  data$censored.count <- 0
+  data$censored.count[data$outcome == "censored"] <- 1
+  
+  from <- min(data$start.date, na.rm = TRUE)
+  to <- max(data$start.date, na.rm = TRUE)
+  
+  plt.d <- data.frame(d = from:to)
+  plt.d$date <- as.Date(plt.d$d, origin = "1970-01-01")
+  plt.d$outcome <- 0
+  plt.d$censored <- 0
+  
+  for (i in from:to) {
+    plt.d$outcome[plt.d$date == i] <- 
+      sum(data$outcome.count[data$start.date == i], na.rm = TRUE)
+    plt.d$censored[plt.d$date == i] <- 
+      sum(data$censored.count[data$start.date == i], na.rm = TRUE)    
+  }
+  plt.d$out.c <- cumsum(plt.d$outcome)
+  plt.d$cen.c <- cumsum(plt.d$censored)
+  
+  xmin <- as.Date("2020-02-01")
+  plt.d <- subset(plt.d, date >= xmin)
+  
+  p <- ggplot(data = plt.d, aes(x = date)) +
+    geom_line(aes(y = out.c, colour = "Outcome recorded")) +
+    geom_line(aes(y = cen.c, colour = "Follow-up ongoing")) +
+    geom_vline(xintercept = embargo.limit, linetype = "dashed") +
+    theme_bw() + 
+    theme(legend.title=element_blank(), legend.position="top") +
+    xlab("Admission date") +
+    xlim(xmin, to) +
+    ylab("Cumulative recruitment") 
+  
+  return(p)
+}
+
+
 
 ######### Survival plot ######
 

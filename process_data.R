@@ -788,7 +788,7 @@ patient.data <- patient.data %>%
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
          start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
-unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name)
+unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, outcome)
 
 patient.data <-  patient.data %>%
   filter(dsstdat <= embargo.limit) # exclude all cases on or after embargo limit
