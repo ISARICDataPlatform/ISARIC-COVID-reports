@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- T
+reprocess.data <- F
 
 # file locations
 
@@ -272,7 +272,7 @@ outcomes.by.country(patient.data)
 
 ``` {r recruitmentbyoutcome, echo=FALSE}
 
-recruitment.dat.plot(patient.data, embargo.limit)
+recruitment.dat.plot(unembargoed.data, today()-14)
 
 
 ```
