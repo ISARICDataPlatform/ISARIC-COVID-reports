@@ -4,10 +4,12 @@
 
 # flags for inclusion of the three data files
 
+embargo.length <- 14
+
 use.uk.data <- TRUE
 use.row.data <- TRUE
 use.eot.data <- TRUE
-embargo.limit <- ymd("2020-03-13")
+embargo.limit <- today() - embargo.length
 
 if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
