@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- F
+reprocess.data <- T
 
 # file locations
 
@@ -130,7 +130,7 @@ Of `r de$n.treat` patients with complete details of treatments received `r de$p.
 # Patient Characteristics
 
 
-**Figure 1**: Age and sex distribution of patients. Bar fills are outcome (death/discharge/ongoing care) at the time of report. The "ongoing care" category are made up of individuals with ongoing hospital treatment at the time of this report.
+**Figure 1**: Age and sex distribution of patients. Bar fills are outcome (death/discharge/ongoing care) at the time of report. 
 
 ```{r agepyramid, echo = FALSE}
 
@@ -191,14 +191,14 @@ outcomes.by.admission.date(patient.data)
 
 # Treatment
 
-**Figure 7**: Treatments used. This only includes  on all patients where this information was recorded.
+**Figure 7**: Treatments used. This only includes patients where this information was recorded.
 
 ```{r treatment1, echo=FALSE}
 treatment.use.plot(patient.data)$plt
 ```
 
 
-**Figure 8**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each symptoms.
+**Figure 8**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients with completed hospital stay and recorded treatment data. Filled and empty circles below the x-axis indicate the presence or absence of each symptoms.
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)
@@ -238,7 +238,7 @@ adm.outcome.func(patient.data)$plt
 
 
 
-**Figure 11**: Nonparametric probability for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 11**: Nonparametric probabilities of death (red curve) and recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -250,11 +250,11 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 12**: Number of sites per country
+**Figure 12**: Number of sites per country.
 
 ```{r recruitment1, echo=FALSE}
 
-sites.by.country(patient.data)
+sites.by.country(unembargoed.data)
 
 ```
 

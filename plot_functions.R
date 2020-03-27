@@ -54,7 +54,7 @@ age.pyramid <- function(data, ...){
       ymax = max(data2$count)*1.1/2,
       xmin = length(levels(data2$agegp5))+1.5,         
       xmax = length(levels(data2$agegp5))+1.5) +
-    theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt")) + theme(axis.text.x = element_text(angle = 45, hjust=1))
+    theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
   
 }
 
@@ -62,7 +62,7 @@ age.pyramid <- function(data, ...){
 
 sites.by.country <- function(data, ...){
   data2 <- data %>%
-    group_by(Country, redcap_data_access_group) %>%
+    group_by(Country, site.name) %>%
     dplyr::summarise(n.sites = 1) %>%
     dplyr::summarise(n.sites = sum(n.sites)) %>%
     filter(!is.na(Country))
@@ -98,15 +98,13 @@ outcomes.by.admission.date <- function(data, ...){
       ew <- epiweek(x)
       ifelse(nchar(as.character(ew))==1, glue("0{as.character(ew)}"), as.character(ew))
     })) %>%
-    mutate(year.epiweek = glue("{year(start.date)}-{two.digit.epiweek}")) %>%
     filter(!is.na(hostdat))
-  ggplot(data2) + geom_bar(aes(x = year.epiweek, fill = outcome), col = "black", width = 0.95) +
+  ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
-    xlab("Epidemiological week of admission/symptom onset") +
-    ylab("Cases") + 
-    theme(axis.text.x = element_text(angle = 45, hjust=1))
+    xlab("Epidemiological week of admission/symptom onset (2020)") +
+    ylab("Cases") 
 }
 
 # Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
@@ -913,7 +911,7 @@ treatment.upset <- function(data, ...) {
     geom_bar(aes(y=..count../sum(..count..)), fill = "chartreuse3", col = "black") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
-    ylab("Proportion of patients with \n completed hospital stay and \n recorded treatment data") +
+    ylab("Proportion of patients") +
     scale_x_upset() 
   
   return(p)
