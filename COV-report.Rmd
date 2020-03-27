@@ -266,6 +266,17 @@ outcomes.by.country(patient.data)
 
 ```
 
+# Recruitment
+
+**Figure 14**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included
+
+``` {r recruitmentbyoutcome, echo=FALSE}
+
+recruitment.dat.plot(patient.data, embargo.limit)
+
+
+```
+
 
 # Background
 
