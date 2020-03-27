@@ -8,7 +8,7 @@ use.uk.data <- TRUE
 use.row.data <- TRUE
 use.eot.data <- TRUE
 
-embargo.limit <- ymd("2020-03-22")
+embargo.limit <- ymd("2020-03-13")
 
 if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
