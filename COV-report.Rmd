@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- T
+reprocess.data <- F
 
 # file locations
 
@@ -80,17 +80,17 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
 
 # Summary
 
-The results in this report have been produced using data from the ISARIC COVID-19 database up to the date of this report. **`r de$N.sites`** sites across **`r de$N.countries`** countries contributed data to this report.
+The results in this report have been produced using data from the ISARIC COVID-19 database. For information, or to contribute to the collaboration, please contact [ncov@isaric.org](ncov@isaric.org)
 
-Data have been entered for **`r de$N.cases`** patients. 
+Up to the date of this report, data have been entered for **`r de$N.cases.full`** individuals from **`r de$N.sites.full`** sites across **`r de$N.countries.full`** countries.
 
 We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  
 
-Please note the caveats.  These are particularly relevant for our first global report as information is incomplete for the many patients who are still being treated. Please also note that we received more data for severely ill individuals than for people with relatively less severe illness.  Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected.
+Please note the caveats below, which are particularly relevant for our first global report as information is incomplete for the many patients who are still being treated. Note that we received more data for severely ill individuals than for people with relatively less severe illness. Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. At present, many of the included cases are from the United Kingdom.
 
-Please note that at present most of the included cases are from the United Kingdom. 
+The analysis detailed in this report only includes individuals for whom data collection commenced on or before 13 March  2020. By excluding patients enrolled after this date, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. 
 
-The cohort comprises `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
+The cohort comprises **`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
 
 The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
 
@@ -149,7 +149,7 @@ symptoms.upset(patient.data, 4)
 ```
 
 
-**Figure 3**:  Top: Frequency of comorbidities seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common comorbidities, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indiciate the presence or absence of each comorbidity. The "Any other" category contains all remaining comorbidities in the top plot, and any other comorbidities recorded as free text by clinical staff.
+**Figure 3**:  Top: Frequency of comorbidities seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common comorbidities, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining comorbidities in the top plot, and any other comorbidities recorded as free text by clinical staff.
 
 ```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
 comorbidity.prevalence(patient.data)$plt
@@ -238,7 +238,7 @@ adm.outcome.func(patient.data)$plt
 
 
 
-**Figure 11**: Nonparametric probabilites for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 11**: Nonparametric probability for death (red curve) and  recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -411,7 +411,7 @@ In the UK, up to 10th March 2020, people with positive swabs were admitted to ho
 **Table 3:** Duration of stay
 
 
-| **Time(in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean** (95% CI) | **Notes** |
+| **Time (in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean** (95% CI) | **Notes** |
 |------------------------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------|-------------------------------------------------------------------------------------------|---------------------------------------------|
 | Length of hospital stay              | `r de$obs.mean.adm.outcome` (`r de$obs.mean.adm.outcome.lower`, `r de$obs.mean.adm.outcome.upper`) | `r de$obs.sd.adm.outcome`            | `r de$mean.adm.to.outcome` (`r de$adm.outcome.lower`, `r de$adm.outcome.upper`)           |                                             |
 |Symptom onset to admission | `r  de$obs.mean.onset.adm` (`r de$obs.mean.onset.adm.lower`, `r de$obs.mean.onset.adm.upper`)      | `r de$obs.sd.onset.adm`              | `r de$mean.onset.to.adm` (`r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) |                                             |
