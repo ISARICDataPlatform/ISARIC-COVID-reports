@@ -60,7 +60,7 @@ d.e <- function(data, ...){
   # sd.onset.to.adm.upper <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$upper.v), 1)
   # 
   
-  onset.adm.fn.1
+  onset.adm.fn.1 <- onset.adm.func(data)
   gamma.onset.adm.fit <- fit.summary.gamma(onset.adm.fn.1$fit)
   
   
