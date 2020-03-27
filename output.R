@@ -87,7 +87,7 @@ d.e <- function(data, ...){
   obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
   obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
   obs.sd.adm.outcome <- round(x_sd, 2)
-  cases.full.adm.outcome <- length(adm.outcome.func(patient.data)$obs)
+  # cases.full.adm.outcome <- length(adm.outcome.func(patient.data)$obs)
   
   # Onset to admission
   
@@ -247,7 +247,7 @@ d.e <- function(data, ...){
               obs.mean.adm.outcome.lower = obs.mean.adm.outcome.lower,
               obs.mean.adm.outcome.upper = obs.mean.adm.outcome.upper,
               obs.sd.adm.outcome  = obs.sd.adm.outcome,
-              cases.full.adm.outcome = cases.full.adm.outcome, 
+              # cases.full.adm.outcome = cases.full.adm.outcome, 
               
               obs.mean.onset.adm =  obs.mean.onset.adm,
               obs.mean.onset.adm.lower = obs.mean.onset.adm.lower,
@@ -285,7 +285,7 @@ d.e <- function(data, ...){
               
               s.dat = s.dat,
               c.dat = c.dat,
-              t.dat = t.dat,
+              t.dat = t.dat
               
               #surv.sum = surv.sum
   ))
