@@ -7,7 +7,6 @@
 use.uk.data <- TRUE
 use.row.data <- TRUE
 use.eot.data <- TRUE
-
 embargo.limit <- ymd("2020-03-13")
 
 if(!use.uk.data & !use.row.data & !use.eot.data){
@@ -162,7 +161,7 @@ if(use.uk.data){
   }
   
   
-  uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 10000) %>%
+  uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 20000) %>%
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
@@ -176,7 +175,12 @@ if(use.uk.data){
 }
 
 if(use.eot.data){
-  eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 10000)  %>% 
+  eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 10000) %>%
+    dplyr::mutate_at(vars(ends_with("dat")), ymd) %>%              # contains() raises flags
+    dplyr::mutate(hostdat_transfer = ymd(hostdat_transfer),
+                  erendat_2 = ymd(erendat_2),
+                  dsstdtc = ymd(dsstdtc),
+                  date = ymd(date)) %>% 
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     dplyr::rename(chrincard = chroniccard_mhyn, 
                   modliv = modliver_mhyn, 
