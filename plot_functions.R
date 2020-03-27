@@ -1409,14 +1409,14 @@ recruitment.dat.plot <- function(data, embargo.limit, ...) {
   plt.d <- subset(plt.d, date >= xmin)
   
   p <- ggplot(data = plt.d, aes(x = date)) +
-    geom_line(aes(y = out.c, colour = "Outcome recorded")) +
-    geom_line(aes(y = cen.c, colour = "Follow-up ongoing")) +
+    geom_line(aes(y = out.c, colour = "Outcome recorded"), size = 1.5) +
+    geom_line(aes(y = cen.c, colour = "Follow-up ongoing"), size = 1.5) +
     geom_vline(xintercept = embargo.limit, linetype = "dashed") +
     theme_bw() + 
     theme(legend.title=element_blank(), legend.position="top") +
     xlab("Admission date") +
     xlim(xmin, to) +
-    ylab("Cumulative recruitment") 
+    ylab("Cumulative recruitment")
   
   return(p)
 }
