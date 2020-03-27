@@ -192,6 +192,10 @@ d.e <- function(data, ...){
   
   #pval <- surv.plot.func(patient.data)$pval
   
+  # Sum
+  
+  surv.sum <- sum(table(surv.plot.func(data)$df$sex, surv.plot.func(data)$df$event))
+  
   
   return(list(N.cases = N.cases,
               N.var = N.var,
@@ -278,7 +282,9 @@ d.e <- function(data, ...){
               
               s.dat = s.dat,
               c.dat = c.dat,
-              t.dat = t.dat
+              t.dat = t.dat,
+              
+              surv.sum = surv.sum
   ))
   
   
