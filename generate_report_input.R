@@ -4,14 +4,15 @@
 ############################################################################
 
 # Main function d.e (dynamic.estimates) calculates estimates and confidence intervals, to be incorporated into report. #
-d.e <- function(data, ...){
+d.e <- function(data, datafull, ...){
   
   # Summaries 
   
-  N.cases <- nrow(data)      # total
+  N.cases <- nrow(data)      # total embargoed
+  N.cases.full <- nrow(datafull)
   N.var <- ncol(data)  # number of variables
-  N.sites <- length(unique(data$site.name)) # number of sites 
-  N.countries <- length(unique(data$Country)) # number of countries
+  N.sites.full <- length(unique(datafull$site.name)) # number of sites 
+  N.countries.full <- length(unique(datafull$Country)) # number of countries
   median.age <- median(data$age_estimateyears, na.rm = T) # median age (observed)
   mean.age <-  mean(data$age_estimateyears, na.rm = T)  # mean age
   sd.age <- sd(data$age_estimateyears, na.rm = T)
@@ -194,9 +195,10 @@ d.e <- function(data, ...){
   
   
   return(list(N.cases = N.cases,
+              N.cases.full = N.cases.full
               N.var = N.var,
-              N.sites = N.sites,
-              N.countries = N.countries,
+              N.sites.full = N.sites.full,
+              N.countries.full = N.countries.full,
               median.age = median.age,
               min.age = min.age,
               max.age = max.age,
@@ -281,6 +283,6 @@ d.e <- function(data, ...){
   
 }
 print("HHHSHGDGHSHRHRS")
-de <- d.e(patient.data)
+de <- d.e(patient.data, unembargoed.data)
 
 save(de, file = glue("{code.path}/report_input_data_{today()}.rda"))
