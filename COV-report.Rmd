@@ -97,7 +97,7 @@ age.pyramid(patient.data)
 
 
 ```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-symptom.prevalence(patient.data)$plt
+symptom.prevalence.plot(patient.data)
 symptoms.upset(patient.data, 4)
 
 
@@ -107,7 +107,7 @@ symptoms.upset(patient.data, 4)
 **Figure 3**:  Top: Frequency of comorbidities seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common comorbidities, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining comorbidities in the top plot, and any other comorbidities recorded as free text by clinical staff.
 
 ```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-comorbidity.prevalence(patient.data)$plt
+comorbidity.prevalence.plot(patient.data)
 comorbidities.upset(patient.data, 4)
 
 ```
@@ -173,7 +173,7 @@ treatment.upset(patient.data)
  
 
 
-**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates account for unobserved outcomes.], accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
+**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
 ```{r onset.admission, out.width = '80%'}
 

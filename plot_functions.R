@@ -330,16 +330,11 @@ symptoms.upset <- function(data, max.symptoms, ...){
 
 # Prevalence of symptoms
 
-symptom.prevalence <- function(data, ...){
-  
+symptom.prev.calc <- function(data){
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field)) 
   
   nconds <- ncol(data2) - 1
-  
-  
-  combined.labeller <- admission.symptoms
-  
   
   data3 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
@@ -359,7 +354,16 @@ symptom.prevalence <- function(data, ...){
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown")) %>%
     dplyr::left_join(combined.labeller, by = c("Condition" = "field"))
   
+  return(data3)
   
+}
+
+
+symptom.prevalence.plot <- function(data, ...){
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(admission.symptoms$field)) 
+  
+  nconds <- ncol(data2) - 1
   
   data2 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
@@ -387,7 +391,6 @@ symptom.prevalence <- function(data, ...){
     dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
     filter(label != "Other")
   
-  
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
     theme_bw() + 
@@ -396,14 +399,13 @@ symptom.prevalence <- function(data, ...){
     scale_fill_manual(values = c("deepskyblue1", "deepskyblue4"), name = "Symptom\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
-  return(list(plt = plt, data3 = data3))
-  
-  
+  plt
+
 }
 
 # Prevalence of comorbidities
 
-comorbidity.prevalence <- function(data, ...){
+comorb.prev.calc <- function(data){
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(comorbidities$field)) 
@@ -426,11 +428,19 @@ comorbidity.prevalence <- function(data, ...){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
+
+  return(data3)
   
+}
+
+
+comorbidity.prevalence.plot <- function(data, ...){
   
-  combined.labeller <- bind_rows(comorbidities %>% add_column(type = "Comorbidities"), 
-                                 admission.symptoms %>% add_column(type = "Symptoms at\nadmission"))
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(comorbidities$field)) 
   
+  nconds <- ncol(data2) - 1
+
   data2 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
     group_by(Condition) %>%
@@ -466,14 +476,14 @@ comorbidity.prevalence <- function(data, ...){
     scale_fill_manual(values = c("indianred1", "indianred4"), name = "Comorbidity\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
-  return(list(plt = plt, data3 = data3 ))
+  plt
   
 }
 
 
 # Raw proportions of patients undergoing each treatment
 
-treatment.use.plot <- function(data, ...){
+treatment.use.calc <- function(data){
   
   treatment.columns <- map(1:nrow(data), function(i){
     data$events[i][[1]] %>% 
@@ -490,12 +500,9 @@ treatment.use.plot <- function(data, ...){
     dplyr::select(subjid, one_of(treatments$field))
   
   ntr <- ncol(data2) - 1
-  
-  nconds <- ncol(data2)-1
-  
-  
+
   data3 <- data2 %>%
-    pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
+    pivot_longer(2:(ntr + 1), names_to = "Condition", values_to = "Present") %>%
     group_by(Condition) %>%
     dplyr::mutate(Present = map_chr(Present, function(x){
       if(is.na(x)){
@@ -510,9 +517,27 @@ treatment.use.plot <- function(data, ...){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
+
+  return(data3)
+}
+
+treatment.use.plot <- function(data, ...){
   
+  treatment.columns <- map(1:nrow(data), function(i){
+    data$events[i][[1]] %>% 
+      filter(startsWith(redcap_event_name, "dischargeoutcome")) %>%
+      dplyr::select( one_of(treatments$field)) %>%
+      add_column(subjid = data$subjid[i]) %>%
+      slice(1)
+  }) %>% bind_rows()
   
+  data2 <- data %>% 
+    dplyr::select(-one_of(treatments$field)) %>%
+    left_join(treatment.columns, by="subjid") %>%
+    dplyr::select(subjid, one_of(treatments$field))
   
+  ntr <- ncol(data2) - 1
+
   data2 <- data2 %>%
     pivot_longer(2:(ntr + 1), names_to = "Treatment", values_to = "Present") %>%
     group_by(Treatment) %>%
@@ -546,9 +571,7 @@ treatment.use.plot <- function(data, ...){
     scale_fill_manual(values = c("chartreuse2", "chartreuse4"), name = "Treatment", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
-  return(list(plt = plt, data3 = data3))
-  
-  
+  plt
 }
 
 ## "modified KM plot" ##
@@ -834,6 +857,7 @@ violin.age.func <- function(data, ...){
       axis.title.y = element_text( size=12)
     ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
     scale_fill_discrete(drop = F) +
+    scale_x_discrete(drop = F) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
   
@@ -1343,8 +1367,9 @@ adm.outcome.func <- function(data){
   
 }
 
-
-
+adm.outcome.plot <- function(data, ...){
+  adm.outcome.func(data)$plt
+}
 
 ########## Onset to admission #####
 
@@ -1360,7 +1385,6 @@ onset.adm.func <- function(data){
   
   # Plot 
   
-  library(ggplot2)
   t <- data.frame(x=admit.discharge)
   plt <- ggplot(data = t) + 
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
@@ -1378,6 +1402,11 @@ onset.adm.func <- function(data){
   
   
 }
+
+onset.adm.plot <- function(data, ...){
+  onset.adm.func(data)$plt
+}
+
 
 # Cumulative recruitment by outcome
 

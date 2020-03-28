@@ -22,8 +22,7 @@ confidentiality.check <- function(data, fn, min.rows = 5, ...){
 server <- function(input, output) {
   
   output$agePyramid <- {
-    filtered.data <- reactive({
-      print(input$agegp5)
+    filtered.data.ap <- reactive({
       fd <- patient.data %>% 
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
@@ -31,23 +30,11 @@ server <- function(input, output) {
         filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
         filter(!is.na(sex))
     })
-    renderPlot(confidentiality.check(filtered.data(), age.pyramid), height = 300)
-  }
-
-  output$comorbiditySymptomPrevalence <- {
-    filtered.data <- reactive({
-      fd <- patient.data %>% 
-        filter(Country %in% input$Country) %>%
-        filter(outcome %in% input$outcome) %>%
-        filter(sex %in% input$sex) %>%
-        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
-        filter(symptoms.recorded & comorbidities.recorded)
-    })
-    renderPlot(confidentiality.check(filtered.data(), comorbidity.symptom.prevalence), height = 300)
+    renderPlot(confidentiality.check(filtered.data.ap(), age.pyramid), height = 300)
   }
   
-  output$comorbiditiesUpset <- {
-    filtered.data <- reactive({
+  output$comorbidityPrevalence <- {
+    filtered.data.cp <- reactive({
       fd <- patient.data %>% 
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
@@ -55,11 +42,36 @@ server <- function(input, output) {
         filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
         filter(comorbidities.recorded)
     })
-    renderPlot(confidentiality.check(filtered.data(), comorbidities.upset, max.comorbidities = 4), height = 300)
+    renderPlot(confidentiality.check(filtered.data.cp(), comorbidity.prevalence.plot), height = 300)
+  }
+  
+  output$symptomPrevalence <- {
+    filtered.data.sp <- reactive({
+      fd <- patient.data %>% 
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(symptoms.recorded)
+    })
+    renderPlot(confidentiality.check(filtered.data.sp(), symptom.prevalence.plot), height = 300)
+  }
+  
+  
+  output$comorbiditiesUpset <- {
+    filtered.data.cu <- reactive({
+      fd <- patient.data %>% 
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(comorbidities.recorded)
+    })
+    renderPlot(confidentiality.check(filtered.data.cu(), comorbidities.upset, max.comorbidities = 4), height = 300)
   }
   
   output$symptomsUpset <- {
-    filtered.data <- reactive({
+    filtered.data.su <- reactive({
       fd <- patient.data %>% 
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
@@ -67,11 +79,11 @@ server <- function(input, output) {
         filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
         filter(symptoms.recorded & comorbidities.recorded)
     })
-    renderPlot(confidentiality.check(filtered.data(), symptoms.upset, max.symptoms = 4), height = 300)
+    renderPlot(confidentiality.check(filtered.data.su(), symptoms.upset, max.symptoms = 4), height = 300)
   }
   
   output$outcomesByAdmissionDate <- {
-    filtered.data <- reactive({
+    filtered.data.obad <- reactive({
       fd <- patient.data %>% 
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
@@ -79,12 +91,12 @@ server <- function(input, output) {
         filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
         filter(!is.na(hostdat))
     })
-    renderPlot(confidentiality.check(filtered.data(), outcomes.by.admission.date), height = 300)
+    renderPlot(confidentiality.check(filtered.data.obad(), outcomes.by.admission.date), height = 300)
   }
   
   output$violinAgeFunc <- 
     {
-      filtered.data <- reactive({
+      filtered.data.vaf <- reactive({
         fd <- patient.data %>% 
           filter(Country %in% input$Country) %>%
           filter(outcome %in% input$outcome) %>%
@@ -92,25 +104,24 @@ server <- function(input, output) {
           filter(!is.na(consolidated.age)) %>%
           filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
       })
-      renderPlot(confidentiality.check(filtered.data(), violin.age.func), height = 300)
+      renderPlot(confidentiality.check(filtered.data.vaf(), violin.age.func), height = 300)
     }
   
   output$violinSexFunc <- 
     {
-      filtered.data <- reactive({
+      filtered.data.vsf <- reactive({
         fd <- patient.data %>% 
           filter(Country %in% input$Country) %>%
           filter(outcome %in% input$outcome) %>%
           filter(sex %in% input$sex) %>%
-          filter(!is.na(sex))
+          filter(!is.na(sex)) %>%
+          filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
       })
-      renderPlot(confidentiality.check(filtered.data(), violin.sex.func), height = 300)
+      renderPlot(confidentiality.check(filtered.data.vsf(), violin.sex.func), height = 300)
     }
   
-  
-  
   output$statusByTimeAfterAdmission <- {
-    filtered.data <- reactive({
+    filtered.data.sbtaa <- reactive({
       fd <- patient.data %>% 
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
@@ -118,13 +129,96 @@ server <- function(input, output) {
         filter(!is.na(consolidated.age)) %>%
         filter(!is.na(hostdat))
     })
-    renderPlot(confidentiality.check(filtered.data(), status.by.time.after.admission, height = 300))
-    
+    renderPlot(confidentiality.check(filtered.data.sbtaa(), status.by.time.after.admission, height = 300))
   }
   
-  # output$tree <- renderTree({ 
-  #   list(  'I lorem impsum'= list( 
-  #     'I.1 lorem impsum'   =  structure(list('I.1.1 lorem impsum'='1', 'I.1.2 lorem impsum'='2'),stselected=TRUE),  
-  #     'I.2 lorem impsum'   =  structure(list('I.2.1 lorem impsum'='3'), stselected=TRUE))) 
-  # })
+  output$treatmentPlot <- {
+    filtered.data.tp <- reactive({
+      fd <- patient.data %>%
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(treatments.recorded)
+    })
+    renderPlot(confidentiality.check(filtered.data.tp(), treatment.use.plot, height = 300))
+  }
+
+
+  output$treatmentUpset <- {
+    filtered.data.tu <- reactive({
+      fd <- patient.data %>%
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(treatments.recorded)
+    })
+    renderPlot(confidentiality.check(filtered.data.tu(), treatment.upset, height = 300))
+  }
+  
+  
+  output$onsetAdmPlot <- {
+    filtered.data.oap <- reactive({
+      fd <- patient.data %>%
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+    })
+    renderPlot(confidentiality.check(filtered.data.oap(), onset.adm.plot, height = 300))
+  }
+  
+  output$admOutcomePlot <- {
+    filtered.data.aop <- reactive({
+      fd <- patient.data %>%
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+    })
+    renderPlot(confidentiality.check(filtered.data.aop(), adm.outcome.plot, height = 300))
+  }
+  
+  output$sitesByCountry <- {
+    filtered.data.sbc <- reactive({
+      fd <- patient.data %>%
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+    })
+    renderPlot(confidentiality.check(filtered.data.sbc(), sites.by.country, height = 300))
+  }
+  
+  output$outcomesByCountry <- {
+    filtered.data.obc <- reactive({
+      fd <- patient.data %>%
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+    })
+    renderPlot(confidentiality.check(filtered.data.obc(), outcomes.by.country, height = 300))
+  }
+  
+  output$recruitmentDatPlot <- {
+    filtered.data.rdp <- reactive({
+      fd <- patient.data %>%
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+    })
+    renderPlot(confidentiality.check(filtered.data.rdp(), outcomesByCountry, height = 300))
+  }
+  
+  
+  
+
+# output$tree <- renderTree({ 
+#   list(  'I lorem impsum'= list( 
+#     'I.1 lorem impsum'   =  structure(list('I.1.1 lorem impsum'='1', 'I.1.2 lorem impsum'='2'),stselected=TRUE),  
+#     'I.2 lorem impsum'   =  structure(list('I.2.1 lorem impsum'='3'), stselected=TRUE))) 
+# })
 }

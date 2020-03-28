@@ -473,7 +473,10 @@ patient.data <- patient.data %>%
   # check if symptoms, comorbidities and treatments were actually recorded
   dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
   dplyr::mutate(comorbidities.recorded = pmap_lgl(list(!!!rlang::parse_exprs(comorbidities$field)), ~any(!is.na(c(...))))) %>%
-  dplyr::mutate(treatments.recorded = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...))))) %>%
+  dplyr::mutate(treatments.recorded = map_lgl(events, function(x){
+    temp <- x %>% mutate(tr = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...)))))
+    any(temp$tr)
+  })) %>%
   # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
   dplyr::mutate(exit.date = map_chr(events, function(x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsstdtc)) 
