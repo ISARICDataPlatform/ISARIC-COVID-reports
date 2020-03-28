@@ -3,9 +3,6 @@ title: "Summary"
 output: html_document
 ---
 
-
-# Summary
-
 The results in this report have been produced using data from the ISARIC COVID-19 database. For information, or to contribute to the collaboration, please contact [ncov@isaric.org](ncov@isaric.org)
 
 Up to the date of this report, data have been entered for **`r de$N.cases.full`** individuals from **`r de$N.sites.full`** sites across **`r de$N.countries.full`** countries.

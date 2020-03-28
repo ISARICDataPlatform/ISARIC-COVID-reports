@@ -7,12 +7,7 @@
 #    http://shiny.rstudio.com/
 #
 
-library(shinydashboard)
-library(shinyWidgets)
-library(shinyTree)
-library(leaflet)
 
-countries.flags.sites <- read_csv("current_countries.csv")
 
 
 dbHeader <- dashboardHeader(title = "COVID-19 Analysis Report",
@@ -77,12 +72,12 @@ dashboardPage( skin = "black",
                    pickerInput(
                      inputId = "Country",
                      label = "Country", 
-                     choices = countries.flags.sites$Country,
-                     selected = countries.flags.sites$Country,
+                     choices = unique(countries.and.sites$Country),
+                     selected = unique(countries.and.sites$Country),
                      options = list(
                        `actions-box` = TRUE), 
                      choicesOpt = list(
-                       subtext = glue("{countries.flags.sites$site.count} sites")
+                       subtext = glue("{unique(countries.and.sites$n.sites)} sites")
                      ),
                      multiple = TRUE
                    ),
@@ -95,20 +90,14 @@ dashboardPage( skin = "black",
                  hr(),
                  tabItems(
                    tabItem(tabName = "Summary",
+                           h1("ISARIC COVID-19 Report Dashboard"),
                            fluidRow(
                              # @todo source this from the same origin as the text in the Rmd
-                             box(width = 12, title  = "ISARIC COVID-19 Report Dashboard", solidHeader = T,
-                                 "The results in this report have been produced using data from the International Severe Acute Respiratory and Emerging Infection Consortium (ISARIC) COVID-19 
-                                 database up to 19 March 2020. These data were contributed by 22 sites across 14 countries.",
-                                 br(),br(),
-                                 "Up to 19 March 2020, data have been entered for 91 patients. The cohort is made up of 43 males and 37 females - sex is unreported for 11 cases. The median age 
-                                 (calculated based on reported ages) is 50.5 years. Follow-up is ongoing for 52 patients.",
-                                 br(),br(),
-                                 "Among this cohort, there was no significant difference in the duration from admission to outcome (either death or recovery) for males and females (p=0.68). 
-                                 The expected mean for the time from admission to outcome (either death or recovery) is 24.5 days (96% CI: 22.9, 27.1), accounting for censorship, i.e. unobserved outcomes. 
-                                 The number of days from (first) symptom onset to hospital admission has an expected mean of 7.1 (6.8, 7.7) and a variance of 38.5 (36.9, 49.4). Of 41 patients with 
-                                 completed details of treatments received 41% of patients did not receive any antimicrobial treatments or steroids. 
-                                 33% received an antibiotic and 18% received antivirals.")
+                             box(width = 12,
+
+                                  includeMarkdown("markdown/summary.md")
+
+                                 )
                            )),
                    tabItem(tabName = "patients",
                            fluidRow(

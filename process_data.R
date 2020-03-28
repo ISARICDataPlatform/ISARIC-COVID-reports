@@ -790,8 +790,15 @@ patient.data <- patient.data %>%
 
 unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, outcome)
 
+countries.and.sites <-  unembargoed.data %>%
+  group_by(Country, site.name) %>%
+  dplyr::summarise(n.sites = 1) %>%
+  dplyr::summarise(n.sites = sum(n.sites)) %>%
+  filter(!is.na(Country))
+
+
 patient.data <-  patient.data %>%
   filter(dsstdat <= embargo.limit) # exclude all cases on or after embargo limit
 
-save(unembargoed.data, patient.data, admission.symptoms, comorbidities, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
+save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
 

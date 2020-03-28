@@ -77,6 +77,8 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
 
 # COVID-19 Report: 27 March 2020 {-}
 
+# Summary
+
 ```{r child = 'markdown/summary.Rmd'}
 ```
 
@@ -227,23 +229,34 @@ outcomes.by.country(patient.data)
 
 recruitment.dat.plot(unembargoed.data, today()-14)
 
-
 ```
+
+# Background
 
 ```{r child = 'markdown/background.Rmd'}
 ```
 
+# Methods
+
 ```{r child = 'markdown/methods.Rmd'}
 ```
+
+# Caveats
 
 ```{r child = 'markdown/caveats.Rmd'}
 ```
 
+# Summary Tables
+
 ```{r child = 'markdown/summarytables.Rmd'}
 ```
 
+# ISARIC Team Members
+
 ```{r child = 'markdown/teammembers.Rmd'}
 ```
+
+# References
 
 ```{r child = 'markdown/references.Rmd'}
 ```

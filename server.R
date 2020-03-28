@@ -7,22 +7,6 @@
 #    http://shiny.rstudio.com/
 #
 
-library(tidyverse)
-library(glue)
-
-# file locations
-
-# paths <- read_csv("paths.csv", col_names = F)
-# 
-# code.path <- paths[[which(paths$X1 == "code.path"), 2]]
-# data.path <- paths[[which(paths$X1 == "data.path"), 2]]
-# data.dict.file <- paths[[which(paths$X1 == "data.dict.file"), 2]]
-# site.list <- paths[[which(paths$X1 == "site.list"), 2]]
-# uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
-# row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
-
-
-source(glue("{code.path}/shared.R"))
 privacy.text <- "Apologies, we cannot display graphs of data from\nless than five individuals for reasons of data privacy."
 privacy.minimum <- 5
 

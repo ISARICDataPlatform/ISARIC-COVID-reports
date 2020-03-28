@@ -3,8 +3,6 @@ title: "Background"
 output: html_document
 ---
 
-# Background
-
 In response to the emergence of novel coronavirus (COVID-19), ISARIC launched a portfolio of resources to accelerate outbreak research and response. All data collection tools are designed to address the most critical public health questions, have undergone extensive review by international clinical experts, and are free for all to use. Resources are available on the [ISARIC website](https://isaric.tghn.org/).
 
 The [ISARIC-WHO COVID-19 Case Record Form (CRF)](https://media.tghn.org/medialibrary/2020/03/ISARIC_COVID-19_CRF_V1.3_24Feb2020.pdf) enables the collection of standardised clinical data to inform patient management and the public health response. These forms should be used to collect data on suspected or confirmed cases of COVID-19. The CRF is available in multiple languages and is now in use across dozens of countries and research consortia, who are contributing data to these reports.

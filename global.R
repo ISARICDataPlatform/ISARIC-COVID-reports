@@ -17,8 +17,12 @@ library(boot)
 library(survival)
 library(survminer)
 library(broom)
+library(shinydashboard)
+library(shinyWidgets)
+library(leaflet)
+library(knitr)
 
-reprocess.data <- T 
+reprocess.data <- F 
 
 # file locations
 
@@ -46,6 +50,15 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
   load(glue("{code.path}/report_input_data_{today()}.rda"))
 } else {
   source(glue("{code.path}/generate_report_input.R"))
+}
+
+if(reprocess.data){
+  setwd("markdown")
+  
+  rmdfiles <- list.files(pattern = ".Rmd", full.names = T)
+  sapply(rmdfiles, knit, quiet = T)
+  
+  setwd("..")
 }
 
 

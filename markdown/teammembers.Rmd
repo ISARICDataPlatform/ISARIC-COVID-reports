@@ -3,8 +3,6 @@ title: "ISARIC Team Members"
 output: html_document
 ---
 
-# ISARIC Team Members
-
 *	Kenneth Bailie
 * Gail Carson
 * Emmanuelle A. Dankwa
