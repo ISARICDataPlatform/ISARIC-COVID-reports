@@ -287,7 +287,7 @@ d.e <- function(data, datafull, ...){
   
   
 }
-print("HHHSHGDGHSHRHRS")
+
 de <- d.e(patient.data, unembargoed.data)
 
 save(de, file = glue("{code.path}/report_input_data_{today()}.rda"))

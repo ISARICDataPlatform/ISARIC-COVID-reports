@@ -1,0 +1,53 @@
+---
+title: "Summary"
+output: html_document
+---
+
+
+# Summary
+
+The results in this report have been produced using data from the ISARIC COVID-19 database. For information, or to contribute to the collaboration, please contact [ncov@isaric.org](ncov@isaric.org)
+
+Up to the date of this report, data have been entered for **`r de$N.cases.full`** individuals from **`r de$N.sites.full`** sites across **`r de$N.countries.full`** countries.
+
+We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  
+
+Please note the caveats below, which are particularly relevant for our first global report as information is incomplete for the many patients who are still being treated. Note that we received more data for severely ill individuals than for people with relatively less severe illness. Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. Many of the included cases are from the United Kingdom.
+
+The analysis detailed in this report only includes individuals for whom data collection commenced on or before `r de$embargo.limit`. We have applied a 14-day rule to focus analysis on individuals who are more likely to have a recorded outcome. By excluding patients enrolled during the last 14 days, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. However, this limits our analysis to this restricted cohort despite the much larger volumes of data held in the database.  
+
+The cohort comprises **`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
+
+The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
+
+Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. 
+
+
+<!-- Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr*100`% (95% CI: `r de$hfr.lower*100`%, `r de$hfr.upper*100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed. -->
+
+The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. These estimates are based on all cases which have complete records on length of hospital stay (N = `r de$cases.full.adm.outcome`).
+
+The observed mean  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`).
+
+The symptoms on admission represent the policy for hospital admission and containment at that time plus, whatever the case definition was. As time passes for most countries these will change. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
+
+
+`r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted into intensive care unit (ICU). The observed mean duration (in days) from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` (SD: `r round(sd(de$a.icu, na.rm=T), 1)`). The mean and SD have been estimated from  records on cases with complete date records on hospital admission and ICU entry (N = `r length(de$a.icu)`).
+
+
+The duration of stay in the ICU has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  The estimates for duration of ICU stay  are based on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`).
+
+
+`r sum(patient.data$NIMV.ever == 'TRUE', na.rm = T)` patients received non-invasive mechanical ventilation (NIV). The mean duration from admission to receiving NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days). The mean and SD have been estimated from  records on cases with complete records on dates of hospital admission and NIV onset (N = `r length(de$a.nimv)`).
+
+
+The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days).  The estimates for duration of NIV treatment  are based on only those cases with have complete NIV duration records (N = `r length(de$d.nimv)`).
+
+
+`r sum(patient.data$IMV.ever == 'TRUE', na.rm = T)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days). The mean and SD have been estimated from  records on cases with complete records on dates of hospital admission and IMV onset (N = `r length(de$a.imv)`).
+
+
+The mean and SD for the duration of IMV - estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.
+
+Of `r de$n.treat` patients with complete details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. These treatment categories are not mutually exclusive since some patients received multiple treatments. `r de$p.o2`% of patients received some degree of oxygen supplementation.  Of these, `r de$p.NIV`% received non-invasive ventilation and `r de$p.In.Ven`% received invasive mechanical ventilation.
+
