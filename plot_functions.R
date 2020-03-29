@@ -352,7 +352,7 @@ symptom.prev.calc <- function(data){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown")) %>%
-    dplyr::left_join(combined.labeller, by = c("Condition" = "field"))
+    dplyr::left_join(admission.symptoms, by = c("Condition" = "field"))
   
   return(data3)
   

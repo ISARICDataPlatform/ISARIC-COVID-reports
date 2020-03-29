@@ -22,7 +22,7 @@ library(shinyWidgets)
 library(leaflet)
 library(knitr)
 
-reprocess.data <- FALSE
+reprocess.data <- TRUE
 
 # file locations
 
