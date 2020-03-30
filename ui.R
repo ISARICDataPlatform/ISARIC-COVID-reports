@@ -158,6 +158,11 @@ dashboardPage( skin = "black",
                              box(plotOutput("admOutcomePlot", height = "300px"),
                                  "The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean. Expected estimates were derived by fitting a Gamma distribution to the observed data. Expected estimates, accounting for unobserved outcomes, are provided under 'Summary Tables'",
                                  width = 6, height = 425, solidHeader = T, title = 'Distribution of time from admission to an outcome (death or discharge).')
+                           ),
+                           fluidRow(
+                             box(plotOutput("modifiedKMPlot", height = "300px"),
+                                 "Times are measured from admission for patients admitted with COVID-19, and from onset for diagnoses in existing hospital patients. Deaths are in red and recoveries in green. The black line indicates the case fatality ratio. The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani <i>et al.</i> (2005).",
+                                 width = 6, height = 425, solidHeader = T, title = 'Nonparametric probabilities of death and recovery over time since hospital admission or symptom onset')
                            )
                    ),
                    tabItem(tabName = "ccomp",

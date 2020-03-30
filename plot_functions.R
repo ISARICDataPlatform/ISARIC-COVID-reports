@@ -619,47 +619,6 @@ modified.km.plot <- function(data, ...) {
 
 
 
-modified.km.plot.1 <- function(data, ...){
-  
-  total.patients <- nrow(data)
-  
-  data2 <- data %>%
-    filter(outcome != "censored" & !is.na(outcome.date)) %>%
-    dplyr::select(subjid, hostdat, outcome.date, outcome, admission.to.exit) 
-  
-  timeline <- map(0:max(data2$admission.to.exit, na.rm = T), function(x){
-    outcome.date <- data2 %>% filter(admission.to.exit <= x)
-    prop.dead <- nrow(outcome.date %>% filter(outcome == "death"))/total.patients
-    prop.discharged <- nrow(outcome.date %>% filter(outcome == "discharge"))/total.patients
-    list(day = x, prop.dead = prop.dead, prop.discharged = prop.discharged)
-  }) %>% bind_rows() %>%
-    dplyr::mutate(prop.not.discharged = 1-prop.discharged)
-  
-  
-  
-  final.dead <- timeline %>%  pull(prop.dead) %>% max()
-  final.discharged <- timeline %>% pull(prop.discharged) %>% max()
-  final.not.discharged <- timeline %>% pull(prop.not.discharged) %>% min()
-  
-  interpolation.line <- final.dead + (1-(final.discharged+final.dead))*(final.dead/(final.dead + final.discharged))
-  
-  timeline <- timeline %>%
-    add_column(interpolation = interpolation.line) %>%
-    select(-prop.discharged) %>%
-    pivot_longer(2:4, names_to = "stat", values_to = "value") %>%
-    dplyr::mutate(stat = factor(stat, levels = c("prop.dead", "prop.not.discharged", "interpolation")))
-  
-  ggplot(timeline) + 
-    geom_line(aes(x= day, y=value, col = stat, linetype = stat), size =0.75) +
-    theme_bw() +
-    scale_colour_manual(values = c("#e41a1c", "#377eb8", "black"), name = "Statistic", labels = c("Death", "Discharge", "Interpolated\nfatality risk")) +
-    scale_linetype_manual(values = c("solid", "solid", "dashed"),  guide = F) +
-    xlab("Days after admission") +
-    ylab("Cumulative probability")
-  
-}
-
-
 
 
 hospital.fatality.ratio <- function(data){

@@ -183,6 +183,19 @@ server <- function(input, output) {
     renderPlot(confidentiality.check(filtered.data.aop(), adm.outcome.plot, height = 300))
   }
   
+  output$modifiedKMPlot <- {
+    filtered.data.aop <- reactive({
+      fd <- patient.data %>%
+        filter(Country %in% input$Country) %>%
+        filter(outcome %in% input$outcome) %>%
+        filter(sex %in% input$sex) %>%
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(!is.na(start.to.exit) | !is.na(start.to.censored))
+    })
+    renderPlot(confidentiality.check(filtered.data.aop(), modified.km.plot, height = 300))
+  }
+  
+  
   output$sitesByCountry <- {
     filtered.data.sbc <- reactive({
       fd <- patient.data %>%
@@ -215,7 +228,7 @@ server <- function(input, output) {
         filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
         filter(!is.na(start.date))
     })
-    renderPlot(confidentiality.check(filtered.data.rdp(), recruitment.dat.plot, height = 300))
+    renderPlot(confidentiality.check(filtered.data.rdp(), recruitment.dat.plot, embargo.limit = embargo.limit, height = 300))
   }
   
   
