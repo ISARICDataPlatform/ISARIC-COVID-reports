@@ -729,25 +729,18 @@ patient.data <- patient.data %>%
   dplyr::mutate(admission.to.exit = as.numeric(difftime(exit.date, admission.date,  unit="days")),
                 onset.to.admission = as.numeric(difftime(admission.date, onset.date, unit="days")),
                 start.to.exit = as.numeric(difftime(exit.date, start.date,  unit="days"))) %>%
-  dplyr::mutate(admission.to.censored = pmap_dbl(list(admission.to.exit, admission.date, data.source), function(x,y,z){
+  dplyr::mutate(admission.to.censored = map2_dbl(admission.to.exit, admission.date, function(x,y){
     if(is.na(x)){
-      if(z == "UK"){
-        # censored until the embargo
-        as.numeric(difftime(embargo.limit, y,  unit="days"))
-      } else {
-        # censored until today
-        as.numeric(difftime(ref.date, y,  unit="days"))
-      }
+     # censored until today
+      as.numeric(difftime(ref.date, y,  unit="days"))
     }
     else {
       NA
     }
   })) %>%
-  dplyr::mutate(start.to.censored = pmap_dbl(list(admission.to.exit, start.date, data.source), function(x,y,z){
+  dplyr::mutate(start.to.censored = map2_dbl(admission.to.exit, start.date, function(x,y){
     if(is.na(x)){
-
       as.numeric(difftime(ref.date, y,  unit="days"))
-
     }
     else {
       NA
