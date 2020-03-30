@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- FALSE
+reprocess.data <- F
 
 # file locations
 

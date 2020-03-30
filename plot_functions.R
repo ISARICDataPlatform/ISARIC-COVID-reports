@@ -813,9 +813,9 @@ violin.sex.func <- function(data, ...){
   # by sex
   
   x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
-    geom_violin(trim=FALSE)+ 
+    geom_violin(trim=TRUE)+ 
     geom_boxplot(width=0.1, fill="white")  +
-    scale_fill_discrete(drop = F) +
+    scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
     labs(title=" ", x="Sex", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -849,15 +849,16 @@ violin.age.func <- function(data, ...){
   vdx <- vdx %>% filter(!is.na(Age))
   
   vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
-    geom_violin(trim=FALSE)+ geom_boxplot(width=0.05, fill="white")  +
+    geom_violin(trim=F)+ geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
       axis.title.y = element_text( size=12)
     ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
-    scale_fill_discrete(drop = F) +
+    scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
     scale_x_discrete(drop = F) +
+    ylim(c(0,40)) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
   
