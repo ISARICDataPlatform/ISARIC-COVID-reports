@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- F
+reprocess.data <- T
 
 # file locations
 
@@ -149,7 +149,7 @@ outcomes.by.admission.date(patient.data)
 **Figure 7**: Treatments used. This only includes patients where this information was recorded.
 
 ```{r treatment1, echo=FALSE}
-treatment.use.plot(patient.data)$plt
+treatment.use.plot(patient.data)
 ```
 
 
@@ -177,7 +177,7 @@ treatment.upset(patient.data)
 
 ```{r onset.admission, out.width = '80%'}
 
-onset.adm.func(patient.data)$plt
+onset.adm.func(patient.data)
 
 ```
 
@@ -187,13 +187,13 @@ onset.adm.func(patient.data)$plt
 
 ```{r  adm.outcome, out.width = '80%'}
 
-adm.outcome.func(patient.data)$plt
+adm.outcome.func(patient.data)
 
 ```
 
 
 
-**Figure 11**: Nonparametric probabilities of death (red curve) and recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 11**: Nonparametric probabilities of death (red curve) and recovery (green curve) over time. The black line indicates the case fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
