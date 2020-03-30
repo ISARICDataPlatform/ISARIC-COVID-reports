@@ -1329,10 +1329,10 @@ casefat2 <-  function(data, conf=0.95){
 
 adm.outcome.func <- function(data){
   
-  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
   
   data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
+    mutate(length.of.stay = map2_dbl(start.to.exit, start.to.censored, function(x,y){
       max(x, y, na.rm = T)
     }))
   

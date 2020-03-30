@@ -28,7 +28,8 @@ server <- function(input, output) {
         filter(outcome %in% input$outcome) %>%
         filter(sex %in% input$sex) %>%
         filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
-        filter(!is.na(sex))
+        filter(!is.na(sex)) %>%
+        filter(!is.na(consolidated.age))
     })
     renderPlot(confidentiality.check(filtered.data.ap(), age.pyramid), height = 300)
   }
@@ -164,7 +165,8 @@ server <- function(input, output) {
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
         filter(sex %in% input$sex) %>%
-        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(!is.na(onset.to.admission))
     })
     renderPlot(confidentiality.check(filtered.data.oap(), onset.adm.plot, height = 300))
   }
@@ -175,7 +177,8 @@ server <- function(input, output) {
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
         filter(sex %in% input$sex) %>%
-        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(!is.na(start.to.exit) | !is.na(start.to.censored))
     })
     renderPlot(confidentiality.check(filtered.data.aop(), adm.outcome.plot, height = 300))
   }
@@ -197,7 +200,8 @@ server <- function(input, output) {
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
         filter(sex %in% input$sex) %>%
-        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(!is.na(Country))
     })
     renderPlot(confidentiality.check(filtered.data.obc(), outcomes.by.country, height = 300))
   }
@@ -208,9 +212,10 @@ server <- function(input, output) {
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
         filter(sex %in% input$sex) %>%
-        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
+        filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2]) %>%
+        filter(!is.na(start.date))
     })
-    renderPlot(confidentiality.check(filtered.data.rdp(), outcomesByCountry, height = 300))
+    renderPlot(confidentiality.check(filtered.data.rdp(), recruitment.dat.plot, height = 300))
   }
   
   
