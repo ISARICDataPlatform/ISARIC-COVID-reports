@@ -1,26 +1,8 @@
 ---
-title: "COVID-19 Analysis Report"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-output:
-  html_document:
-    keep_md: yes
-    df_print: paged
-    number_sections: yes
-    toc: yes
-    toc_depth: 2
-    toc_float:
-      collapsed: no
-  pdf_document:
-    toc: yes
-    toc_depth: '2'
+title: "References"
+output: html_document
 ---
 
-# References
+1.	A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griffin, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).  Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, *American Journal of Epidemiology*, 162(5), 479 - 486. [doi:10.1093/aje/kwi230](https://doi.org/10.1093/aje/kwi230).
 
-1.	Worby, C., Kenyon, C., Lynfield, R. et al. Examining the role of different age groups and of vaccination during the 2012 Minnesota pertussis outbreak. Sci Rep 5, 13182 (2015). https://doi.org/10.1038/srep13182 
-	 
-
-
-
-
-
+2.	R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria.

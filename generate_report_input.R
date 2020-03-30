@@ -173,15 +173,15 @@ d.e <- function(data, datafull, ...){
   
   # Symptoms 
   
-  s.dat <- symptom.prevalence(data)$data3
+  s.dat <- symptom.prev.calc(data)
   
   # Comorbidities
   
-  c.dat <- comorbidity.prevalence(data)$data3
+  c.dat <- comorb.prev.calc(data)
   
   # Treatments
   
-  t.dat <- treatment.use.plot(data)$data3
+  t.dat <- treatment.use.calc(data)
   
   # Cough
   
@@ -287,7 +287,7 @@ d.e <- function(data, datafull, ...){
   
   
 }
-print("HHHSHGDGHSHRHRS")
+
 de <- d.e(patient.data, unembargoed.data)
 
 save(de, file = glue("{code.path}/report_input_data_{today()}.rda"))

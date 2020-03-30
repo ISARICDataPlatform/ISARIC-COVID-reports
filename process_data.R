@@ -458,7 +458,7 @@ treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
   out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
   
-  if(length(out) > 1){
+  if(length(out) > 1 & sanity.check){
     stop("Too many entries")
   } else if(length(out) == 0){
     NA
@@ -473,7 +473,10 @@ patient.data <- patient.data %>%
   # check if symptoms, comorbidities and treatments were actually recorded
   dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
   dplyr::mutate(comorbidities.recorded = pmap_lgl(list(!!!rlang::parse_exprs(comorbidities$field)), ~any(!is.na(c(...))))) %>%
-  dplyr::mutate(treatments.recorded = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...))))) %>%
+  dplyr::mutate(treatments.recorded = map_lgl(events, function(x){
+    temp <- x %>% mutate(tr = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...)))))
+    any(temp$tr)
+  })) %>%
   # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
   dplyr::mutate(exit.date = map_chr(events, function(x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsstdtc)) 
@@ -608,7 +611,7 @@ patient.data <- patient.data %>%
   dplyr::mutate(antiviral.freetext = map_chr(events, function(x) extract.named.column.from.events(x, "antiviral_cmtype", TRUE) )) %>%
   dplyr::mutate(antibiotic.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antibiotic_cmyn", TRUE) )) %>%
   dplyr::mutate(antifungal.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antifung_cmyn", TRUE) )) %>%
-  dplyr::mutate(steroid.any = map_dbl(events, function(x) extract.named.column.from.events(x, "corticost_cmyn", TRUE) )) 
+  dplyr::mutate(steroid.any = map_dbl(events, function(x) extract.named.column.from.events(x, "corticost_cmyn", TRUE) ))
 
 compareNA <- function(v1,v2) {
   same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
@@ -783,8 +786,15 @@ patient.data <- patient.data %>%
 
 unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, outcome)
 
+countries.and.sites <-  unembargoed.data %>%
+  group_by(Country, site.name) %>%
+  dplyr::summarise(n.sites = 1) %>%
+  dplyr::summarise(n.sites = sum(n.sites)) %>%
+  filter(!is.na(Country))
+
+
 patient.data <-  patient.data %>%
   filter(dsstdat <= embargo.limit) # exclude all cases on or after embargo limit
 
-save(unembargoed.data, patient.data, admission.symptoms, comorbidities, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
+save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
 

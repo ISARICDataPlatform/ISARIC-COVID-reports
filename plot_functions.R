@@ -330,16 +330,11 @@ symptoms.upset <- function(data, max.symptoms, ...){
 
 # Prevalence of symptoms
 
-symptom.prevalence <- function(data, ...){
-  
+symptom.prev.calc <- function(data){
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field)) 
   
   nconds <- ncol(data2) - 1
-  
-  
-  combined.labeller <- admission.symptoms
-  
   
   data3 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
@@ -357,9 +352,18 @@ symptom.prevalence <- function(data, ...){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown")) %>%
-    dplyr::left_join(combined.labeller, by = c("Condition" = "field"))
+    dplyr::left_join(admission.symptoms, by = c("Condition" = "field"))
   
+  return(data3)
   
+}
+
+
+symptom.prevalence.plot <- function(data, ...){
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(admission.symptoms$field)) 
+  
+  nconds <- ncol(data2) - 1
   
   data2 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
@@ -387,7 +391,6 @@ symptom.prevalence <- function(data, ...){
     dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
     filter(label != "Other")
   
-  
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
     theme_bw() + 
@@ -396,14 +399,13 @@ symptom.prevalence <- function(data, ...){
     scale_fill_manual(values = c("deepskyblue1", "deepskyblue4"), name = "Symptom\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
-  return(list(plt = plt, data3 = data3))
-  
-  
+  plt
+
 }
 
 # Prevalence of comorbidities
 
-comorbidity.prevalence <- function(data, ...){
+comorb.prev.calc <- function(data){
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(comorbidities$field)) 
@@ -426,11 +428,19 @@ comorbidity.prevalence <- function(data, ...){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
+
+  return(data3)
   
+}
+
+
+comorbidity.prevalence.plot <- function(data, ...){
   
-  combined.labeller <- bind_rows(comorbidities %>% add_column(type = "Comorbidities"), 
-                                 admission.symptoms %>% add_column(type = "Symptoms at\nadmission"))
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(comorbidities$field)) 
   
+  nconds <- ncol(data2) - 1
+
   data2 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
     group_by(Condition) %>%
@@ -466,14 +476,14 @@ comorbidity.prevalence <- function(data, ...){
     scale_fill_manual(values = c("indianred1", "indianred4"), name = "Comorbidity\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
-  return(list(plt = plt, data3 = data3 ))
+  plt
   
 }
 
 
 # Raw proportions of patients undergoing each treatment
 
-treatment.use.plot <- function(data, ...){
+treatment.use.calc <- function(data){
   
   treatment.columns <- map(1:nrow(data), function(i){
     data$events[i][[1]] %>% 
@@ -490,12 +500,9 @@ treatment.use.plot <- function(data, ...){
     dplyr::select(subjid, one_of(treatments$field))
   
   ntr <- ncol(data2) - 1
-  
-  nconds <- ncol(data2)-1
-  
-  
+
   data3 <- data2 %>%
-    pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
+    pivot_longer(2:(ntr + 1), names_to = "Condition", values_to = "Present") %>%
     group_by(Condition) %>%
     dplyr::mutate(Present = map_chr(Present, function(x){
       if(is.na(x)){
@@ -510,9 +517,27 @@ treatment.use.plot <- function(data, ...){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
+
+  return(data3)
+}
+
+treatment.use.plot <- function(data, ...){
   
+  treatment.columns <- map(1:nrow(data), function(i){
+    data$events[i][[1]] %>% 
+      filter(startsWith(redcap_event_name, "dischargeoutcome")) %>%
+      dplyr::select( one_of(treatments$field)) %>%
+      add_column(subjid = data$subjid[i]) %>%
+      slice(1)
+  }) %>% bind_rows()
   
+  data2 <- data %>% 
+    dplyr::select(-one_of(treatments$field)) %>%
+    left_join(treatment.columns, by="subjid") %>%
+    dplyr::select(subjid, one_of(treatments$field))
   
+  ntr <- ncol(data2) - 1
+
   data2 <- data2 %>%
     pivot_longer(2:(ntr + 1), names_to = "Treatment", values_to = "Present") %>%
     group_by(Treatment) %>%
@@ -546,9 +571,7 @@ treatment.use.plot <- function(data, ...){
     scale_fill_manual(values = c("chartreuse2", "chartreuse4"), name = "Treatment", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
-  return(list(plt = plt, data3 = data3))
-  
-  
+  plt
 }
 
 ## "modified KM plot" ##
@@ -594,47 +617,6 @@ modified.km.plot <- function(data, ...) {
   
 }
 
-
-
-modified.km.plot.1 <- function(data, ...){
-  
-  total.patients <- nrow(data)
-  
-  data2 <- data %>%
-    filter(outcome != "censored" & !is.na(outcome.date)) %>%
-    dplyr::select(subjid, hostdat, outcome.date, outcome, admission.to.exit) 
-  
-  timeline <- map(0:max(data2$admission.to.exit, na.rm = T), function(x){
-    outcome.date <- data2 %>% filter(admission.to.exit <= x)
-    prop.dead <- nrow(outcome.date %>% filter(outcome == "death"))/total.patients
-    prop.discharged <- nrow(outcome.date %>% filter(outcome == "discharge"))/total.patients
-    list(day = x, prop.dead = prop.dead, prop.discharged = prop.discharged)
-  }) %>% bind_rows() %>%
-    dplyr::mutate(prop.not.discharged = 1-prop.discharged)
-  
-  
-  
-  final.dead <- timeline %>%  pull(prop.dead) %>% max()
-  final.discharged <- timeline %>% pull(prop.discharged) %>% max()
-  final.not.discharged <- timeline %>% pull(prop.not.discharged) %>% min()
-  
-  interpolation.line <- final.dead + (1-(final.discharged+final.dead))*(final.dead/(final.dead + final.discharged))
-  
-  timeline <- timeline %>%
-    add_column(interpolation = interpolation.line) %>%
-    select(-prop.discharged) %>%
-    pivot_longer(2:4, names_to = "stat", values_to = "value") %>%
-    dplyr::mutate(stat = factor(stat, levels = c("prop.dead", "prop.not.discharged", "interpolation")))
-  
-  ggplot(timeline) + 
-    geom_line(aes(x= day, y=value, col = stat, linetype = stat), size =0.75) +
-    theme_bw() +
-    scale_colour_manual(values = c("#e41a1c", "#377eb8", "black"), name = "Statistic", labels = c("Death", "Discharge", "Interpolated\nfatality risk")) +
-    scale_linetype_manual(values = c("solid", "solid", "dashed"),  guide = F) +
-    xlab("Days after admission") +
-    ylab("Cumulative probability")
-  
-}
 
 
 
@@ -790,9 +772,9 @@ violin.sex.func <- function(data, ...){
   # by sex
   
   x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
-    geom_violin(trim=FALSE)+ 
+    geom_violin(trim=TRUE)+ 
     geom_boxplot(width=0.1, fill="white")  +
-    scale_fill_discrete(drop = F) +
+    scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
     labs(title=" ", x="Sex", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -826,14 +808,16 @@ violin.age.func <- function(data, ...){
   vdx <- vdx %>% filter(!is.na(Age))
   
   vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
-    geom_violin(trim=FALSE)+ geom_boxplot(width=0.05, fill="white")  +
+    geom_violin(trim=F)+ geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") + 
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
       axis.title.y = element_text( size=12)
     ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
-    scale_fill_discrete(drop = F) +
+    scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
+    scale_x_discrete(drop = F) +
+    ylim(c(0,40)) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
   
@@ -1305,10 +1289,10 @@ casefat2 <-  function(data, conf=0.95){
 
 adm.outcome.func <- function(data){
   
-  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
   
   data2 <- data2 %>% 
-    mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
+    mutate(length.of.stay = map2_dbl(start.to.exit, start.to.censored, function(x,y){
       max(x, y, na.rm = T)
     }))
   
@@ -1343,8 +1327,9 @@ adm.outcome.func <- function(data){
   
 }
 
-
-
+adm.outcome.plot <- function(data, ...){
+  adm.outcome.func(data)$plt
+}
 
 ########## Onset to admission #####
 
@@ -1360,7 +1345,6 @@ onset.adm.func <- function(data){
   
   # Plot 
   
-  library(ggplot2)
   t <- data.frame(x=admit.discharge)
   plt <- ggplot(data = t) + 
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
@@ -1378,6 +1362,11 @@ onset.adm.func <- function(data){
   
   
 }
+
+onset.adm.plot <- function(data, ...){
+  onset.adm.func(data)$plt
+}
+
 
 # Cumulative recruitment by outcome
 

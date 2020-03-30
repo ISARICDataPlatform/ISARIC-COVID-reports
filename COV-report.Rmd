@@ -16,6 +16,7 @@ output:
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
+library(plyr)
 library(tidyverse)
 library(glue)
 library(viridis)
@@ -26,7 +27,6 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(magrittr)
 library(binom)
-library(plyr)
 library(fitdistrplus)
 library(lubridate)
 library(grid)
@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- FALSE
+reprocess.data <- F
 
 # file locations
 
@@ -77,55 +77,10 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
 
 # COVID-19 Report: 27 March 2020 {-}
 
-
 # Summary
 
-The results in this report have been produced using data from the ISARIC COVID-19 database. For information, or to contribute to the collaboration, please contact [ncov@isaric.org](ncov@isaric.org)
-
-Up to the date of this report, data have been entered for **`r de$N.cases.full`** individuals from **`r de$N.sites.full`** sites across **`r de$N.countries.full`** countries.
-
-We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  
-
-Please note the caveats below, which are particularly relevant for our first global report as information is incomplete for the many patients who are still being treated. Note that we received more data for severely ill individuals than for people with relatively less severe illness. Outcomes from our data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. Many of the included cases are from the United Kingdom.
-
-The analysis detailed in this report only includes individuals for whom data collection commenced on or before `r de$embargo.limit`. We have applied a 14-day rule to focus analysis on individuals who are more likely to have a recorded outcome. By excluding patients enrolled during the last 14 days, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. However, this limits our analysis to this restricted cohort despite the much larger volumes of data held in the database.  
-
-The cohort comprises **`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females - sex is unreported for `r de$N.sex.unknown` cases. 
-
-The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
-
-Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. 
-
-
-<!-- Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr*100`% (95% CI: `r de$hfr.lower*100`%, `r de$hfr.upper*100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed. -->
-
-The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. These estimates are based on all cases which have complete records on length of hospital stay (N = `r de$cases.full.adm.outcome`).
-
-The observed mean  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`).
-
-The symptoms on admission represent the policy for hospital admission and containment at that time plus, whatever the case definition was. As time passes for most countries these will change. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
-
-
-`r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted into intensive care unit (ICU). The observed mean duration (in days) from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` (SD: `r round(sd(de$a.icu, na.rm=T), 1)`). The mean and SD have been estimated from  records on cases with complete date records on hospital admission and ICU entry (N = `r length(de$a.icu)`).
-
-
-The duration of stay in the ICU has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days).  The estimates for duration of ICU stay  are based on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`).
-
-
-`r sum(patient.data$NIMV.ever == 'TRUE', na.rm = T)` patients received non-invasive mechanical ventilation (NIV). The mean duration from admission to receiving NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days). The mean and SD have been estimated from  records on cases with complete records on dates of hospital admission and NIV onset (N = `r length(de$a.nimv)`).
-
-
-The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days).  The estimates for duration of NIV treatment  are based on only those cases with have complete NIV duration records (N = `r length(de$d.nimv)`).
-
-
-`r sum(patient.data$IMV.ever == 'TRUE', na.rm = T)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days). The mean and SD have been estimated from  records on cases with complete records on dates of hospital admission and IMV onset (N = `r length(de$a.imv)`).
-
-
-The mean and SD for the duration of IMV - estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays - is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.
-
-Of `r de$n.treat` patients with complete details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. These treatment categories are not mutually exclusive since some patients received multiple treatments. `r de$p.o2`% of patients received some degree of oxygen supplementation.  Of these, `r de$p.NIV`% received non-invasive ventilation and `r de$p.In.Ven`% received invasive mechanical ventilation.
-
-
+```{r child = 'markdown/summary.Rmd'}
+```
 
 # Patient Characteristics
 
@@ -142,7 +97,7 @@ age.pyramid(patient.data)
 
 
 ```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-symptom.prevalence(patient.data)$plt
+symptom.prevalence.plot(patient.data)
 symptoms.upset(patient.data, 4)
 
 
@@ -152,7 +107,7 @@ symptoms.upset(patient.data, 4)
 **Figure 3**:  Top: Frequency of comorbidities seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common comorbidities, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining comorbidities in the top plot, and any other comorbidities recorded as free text by clinical staff.
 
 ```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-comorbidity.prevalence(patient.data)$plt
+comorbidity.prevalence.plot(patient.data)
 comorbidities.upset(patient.data, 4)
 
 ```
@@ -194,7 +149,7 @@ outcomes.by.admission.date(patient.data)
 **Figure 7**: Treatments used. This only includes patients where this information was recorded.
 
 ```{r treatment1, echo=FALSE}
-treatment.use.plot(patient.data)$plt
+treatment.use.plot(patient.data)
 ```
 
 
@@ -218,11 +173,11 @@ treatment.upset(patient.data)
  
 
 
-**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates^[Expected estimates were derived by fitting a Gamma distribution to the observed data. Unlike the observed estimates, the estimates account for unobserved outcomes.], accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
+**Figure 9**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
 ```{r onset.admission, out.width = '80%'}
 
-onset.adm.func(patient.data)$plt
+onset.adm.plot(patient.data)
 
 ```
 
@@ -232,13 +187,13 @@ onset.adm.func(patient.data)$plt
 
 ```{r  adm.outcome, out.width = '80%'}
 
-adm.outcome.func(patient.data)$plt
+adm.outcome.plot(patient.data)
 
 ```
 
 
 
-**Figure 11**: Nonparametric probabilities of death (red curve) and recovery (blue curve) over time. The black line indicates the case  fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 11**: Nonparametric probabilities of death (red curve) and recovery (green curve) over time. The black line indicates the case fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -274,195 +229,34 @@ outcomes.by.country(patient.data)
 
 recruitment.dat.plot(unembargoed.data, today()-14)
 
-
 ```
-
 
 # Background
 
-In response to the emergence of novel coronavirus (COVID-19), ISARIC launched a portfolio of resources to accelerate outbreak research and response. All data collection tools are designed to address the most critical public health questions, have undergone extensive review by international clinical experts, and are free for all to use. Resources are available on the [ISARIC website](https://isaric.tghn.org/).
-
-The [ISARIC-WHO COVID-19 Case Record Form (CRF)](https://media.tghn.org/medialibrary/2020/03/ISARIC_COVID-19_CRF_V1.3_24Feb2020.pdf) enables the collection of standardised clinical data to inform patient management and the public health response. These forms should be used to collect data on suspected or confirmed cases of COVID-19. The CRF is available in multiple languages and is now in use across dozens of countries and research consortia, who are contributing data to these reports.
-
-To support the rapid implementation of standardised data collection and reporting, ISARIC hosts a data platform that includes an electronic data capture system, a secure repository and an analytic framework. Data are entered to a web-based REDCap data management system, securely stored, and used to inform regular reports as above. Data contributors are invited to input on the methods and contents of the reports, and are provided with the R code to execute analysis on their own data in the platform. For more information, visit the ISARIC website.
-
-Following the launch of this these open resources, ISARIC received a massive response from the health and research communities. ISARIC supports researchers to retain control of the data and samples they collect. All decisions regarding data use are made by the institutions that enter the data. We keep our contributors informed of any plans and welcome their input to ensure that we are generating the best science and promoting the interests of your patients, your institutions and your public health authorities. Feedback and suggestions are welcome at [ncov@isaric.org](ncov@isaric.org).
-
-
+```{r child = 'markdown/background.Rmd'}
+```
 
 # Methods
 
-Patient details were submitted electronically by participating sites to the ISARIC database.  Relevant background and presenting symptoms were recorded on the day of study recruitment.  Daily follow-up was then completed until recovery or death.  A final form was completed with details of treatments received and outcomes. All categories that represent fewer than five individuals have been suppressed to avoid the potential for identification of participants. 
-
-Graphs have been used to represent the age distribution of patience by sex and status (dead, recovered & still in hospital), the prevalence of individual symptoms  - and combinations of them - on admission, the prevalence of individual comorbidities  - and combinations of them - on admission, the length of hospital stay by sex and age group and the distribution of patient statuses by time since admission. In addition, the number of cases recruited by country and site, as well as the case count by status, has been represented.
-
-Using a non-parametric Kaplan-Meier-based method (Ghani *et al.*, 2005), the case- fatality ratio (CFR) was estimated, as well as probabilities for death and recovery. This method estimates the CFR with the formula $a/(a+b)$, where $a$ and $b$ are the values of the cumulative incidence function for deaths and recoveries respectively, estimated at the last observed time point. In a competing risk context (i.e. where there are multiple endpoints),  the cumulative incidence function for an endpoint is equal to the product of the hazard function for that endpoint and the survival function assuming a composite endpoint. It is worth noting that this method assumes that future deaths and recoveries will occur with the same relative probabilities as have been observed so far. Binomial confidence intervals for the CFR were obtained by a normal approximation (See Ghani *et al.*, (2005)).
-
-A survival analysis was performed to test whether significant differences exist in the length of hospital stay by sex.
-
-<!-- Another CFR estimation method, which uses observed outcomes only, was employed in this analysis. For this method, the CFR is calculated as the ratio of deaths to the sum of deaths and recoveries until the reference point (Wu *et al.*, 2020). Over time, the uncertainty around the estimate decreases due to an increase in completed outcomes. Exact binomial confidence intervals are plotted along with the risk estimate at each time point.  -->
-
-To obtain estimates for the distributions of time from symptom onset to hospital admission and the time from admission to outcome (death or recovery), Gamma distributions were fitted to the observed data, accounting for unobserved outcomes. Parameters were estimated by a maximum likelihood procedure and confidence intervals for the means and variances were obtained by bootstrap. 
-
-<!-- For cases still in hospital, i.e. cases which do not yet have an outcome by the date of this report, the  likelihood function for the estimation of the time from admission to any outcome was constructed to allow for right censoring. -->
-
-All analysis were performed using the R statistical software (R Core Team, 2019).
-
-
+```{r child = 'markdown/methods.Rmd'}
+```
 
 # Caveats
 
-Patient data are collected and uploaded from start of admission, however a complete patient data set is not available until the episode of care is complete. This causes a predictable lag in available data influenced by the duration of admission which is greatest for the sickest patients, and accentuated during the up-phase of the outbreak.
-
+```{r child = 'markdown/caveats.Rmd'}
+```
 
 # Summary Tables
 
-
-**Table 1:** Patient Characteristics
-
-| Description                  | Value                                      |
-|------------------------------|--------------------------------------------|
-| Size of cohort               | `r de$N.cases`                            |
-|                              |                                            |
-| **By sex**                      |                                            |
-| Male                         | `r de$N.males`                            |
-| Female                       | `r de$N.females`                          |
-| Unknown                      | `r de$N.sex.unknown`                     |
-|                              |                                            |
-| **By Status**                   |                                            |
-| Dead                         | `r de$N.deaths` |
-| Recovered (discharged alive) | `r de$N.recoveries`                          |
-| Still in hospital            | `r de$N.censored`                            |
-|                              |                                            |
-| **By age group**                 |                                            |
-| `r levels(patient.data$agegp10)[1]` | `r summary(patient.data$agegp10)[[1]]`          |
-| `r levels(patient.data$agegp10)[2]` | `r summary(patient.data$agegp10)[[2]]`             |
-| `r levels(patient.data$agegp10)[3]` | `r summary(patient.data$agegp10)[[3]]`             |
-| `r levels(patient.data$agegp10)[4]` | `r summary(patient.data$agegp10)[[4]]`             |
-| `r levels(patient.data$agegp10)[5]` | `r summary(patient.data$agegp10)[[5]]`             |
-| `r levels(patient.data$agegp10)[6]` | `r summary(patient.data$agegp10)[[6]]`             |
-| `r levels(patient.data$agegp10)[7]` | `r summary(patient.data$agegp10)[[7]]`             |
-| `r levels(patient.data$agegp10)[8]` | `r summary(patient.data$agegp10)[[8]]`             |
-|                              |                                                      |
-| Unknown                      | `r summary(patient.data$agegp10)[[9]]`             |
-|                              |                                            |
-
-<br /><br /><br />
-
-
-**Table 2:** Prevalence of Symptoms, Comorbidities and Treatments
-
-| **Symptoms**                      | **Present**                        | **Absent**                        | **Unknown**                        |
-|-------------------------------|--------------------------------|-------------------------------|--------------------------------|
-| Abdominal pain                | `r de$s.dat$present[1]`        | `r de$s.dat$absent[1]`        | `r de$s.dat$unknown[1]`        |
-| Bleeding                      | `r de$s.dat$present[2]`        | `r de$s.dat$absent[2]`        | `r de$s.dat$unknown[2]`        |
-| Chest pain                    | `r de$s.dat$present[3]`        | `r de$s.dat$absent[3]`        | `r de$s.dat$unknown[3]`        |
-| Confusion                     | `r de$s.dat$present[4]`        | `r de$s.dat$absent[4]`        | `r de$s.dat$unknown[4]`        |
-| Conjuctivitis                 | `r de$s.dat$present[5]`        | `r de$s.dat$absent[5]`        | `r de$s.dat$unknown[5]`        |
-| Cough                         | `r de$cough_pre` | `r de$cough_abs` | `r de$cough_unk` |
-| Diarrhoea                     | `r de$s.dat$present[9]`        | `r de$s.dat$absent[9]`        | `r de$s.dat$unknown[9]`        |
-| Ear pain                      | `r de$s.dat$present[10]`       | `r de$s.dat$absent[10]`       | `r de$s.dat$unknown[10]`       |
-| Fatigue                       | `r de$s.dat$present[11]`       | `r de$s.dat$absent[11]`       | `r de$s.dat$unknown[11]`       |
-| Fever                         | `r de$s.dat$present[12]`       | `r de$s.dat$absent[12]`       | `r de$s.dat$unknown[12]`       |
-| Headache                      | `r de$s.dat$present[13]`       | `r de$s.dat$absent[13]`       | `r de$s.dat$unknown[13]`       |
-| Joint pain                    | `r de$s.dat$present[14]`       | `r de$s.dat$absent[14]`       | `r de$s.dat$unknown[14]`       |
-| Lymph                         | `r de$s.dat$present[15]`       | `r de$s.dat$absent[15]`       | `r de$s.dat$unknown[15]`       |
-| Myalgia                       | `r de$s.dat$present[16]`       | `r de$s.dat$absent[16]`       | `r de$s.dat$unknown[16]`       |
-| Rash                          | `r de$s.dat$present[17]`       | `r de$s.dat$absent[17]`       | `r de$s.dat$unknown[17]`       |
-| Runny nose                    | `r de$s.dat$present[18]`       | `r de$s.dat$absent[18]`       | `r de$s.dat$unknown[18]`       |
-| Seizures                      | `r de$s.dat$present[19]`       | `r de$s.dat$absent[19]`       | `r de$s.dat$unknown[19]`       |
-| Shortness of breath           | `r de$s.dat$present[20]`       | `r de$s.dat$absent[20]`       | `r de$s.dat$unknown[20]`       |
-|                               |                                |                               |                                |
-| **Comorbidities**                 |                                |                               |                                |
-| AIDS/HIV                      | `r de$c.dat$present[1]`        | `r de$c.dat$absent[1]`        | `r de$c.dat$unknown[1]`        |
-| Asthma                        | `r de$c.dat$present[2]`        | `r de$c.dat$absent[2]`        | `r de$c.dat$unknown[2]`        |
-| Chronic cardiac disease       | `r de$c.dat$present[3]`        | `r de$c.dat$absent[3]`        | `r de$c.dat$unknown[3]`        |
-| Chronic haematologic disease  | `r de$c.dat$present[4]`        | `r de$c.dat$absent[4]`        | `r de$c.dat$unknown[4]`        |
-| Chronic neurological disorder | `r de$c.dat$present[5]`        | `r de$c.dat$absent[5]`        | `r de$c.dat$unknown[5]`        |
-| Chronic pulmonary disease     | `r de$c.dat$present[6]`        | `r de$c.dat$absent[6]`        | `r de$c.dat$unknown[6]`        |
-| Dementia                      | `r de$c.dat$present[7]`        | `r de$c.dat$absent[7]`        | `r de$c.dat$unknown[7]`        |
-| Diabetes                      | `r de$c.dat$present[8]`        | `r de$c.dat$absent[8]`        | `r de$c.dat$unknown[8]`        |
-| Liver disease                 | `r de$c.dat$present[9]`        | `r de$c.dat$absent[9]`        | `r de$c.dat$unknown[9]`        |
-| Malignant neoplasm            | `r de$c.dat$present[10]`       | `r de$c.dat$absent[10]`       | `r de$c.dat$unknown[10]`       |
-| Malnutrition                  | `r de$c.dat$absent[11]`        | `r de$c.dat$absent[11]`       | `r de$c.dat$unknown[11]`       |
-| Obesity                       | `r de$c.dat$absent[12]`        | `r de$c.dat$absent[12]`       | `r de$c.dat$unknown[12]`       |
-| Chronic kidney disease        | `r de$c.dat$present[14]`       | `r de$c.dat$absent[14]`       | `r de$c.dat$unknown[14]`       |
-| Rheumatologic disorder        | `r de$c.dat$present[15]`       | `r de$c.dat$absent[15]`       | `r de$c.dat$unknown[15]`       |
-| Smoking                       | `r de$c.dat$present[16]`       | `r de$c.dat$absent[16]`       | `r de$c.dat$unknown[16]`       |
-| Other risk factors            | `r de$c.dat$present[13]`       | `r de$c.dat$absent[13]`       | `r de$c.dat$unknown[13]`       |
-|                               |                                |                               |                                |
-| **Treatment**                     |                                |                               |                                |
-| Antibiotic agent              | `r de$t.dat$present[1]`        | `r de$t.dat$absent[1]`        | `r de$t.dat$unknown[1]`        |
-| Antifungal agent              | `r de$t.dat$present[2]`        | `r de$t.dat$absent[2]`        | `r de$t.dat$unknown[2]`        |
-| Antiviral agent               | `r de$t.dat$present[3]`        | `r de$t.dat$absent[3]`        | `r de$t.dat$unknown[3]`        |
-| Corticosteroid agent          | `r de$t.dat$present[4]`        | `r de$t.dat$absent[4]`        | `r de$t.dat$unknown[4]`        |
-| Extracorporeal support        | `r de$t.dat$present[5]`        | `r de$t.dat$absent[5]`        | `r de$t.dat$unknown[5]`        |
-| Inhaled nitric oxide          | `r de$t.dat$present[6]`        | `r de$t.dat$absent[6]`        | `r de$t.dat$unknown[6]`        |
-| Inotropes / vasopressors      | `r de$t.dat$present[7]`        | `r de$t.dat$absent[7]`        | `r de$t.dat$unknown[7]`        |
-| Invasive ventilation          | `r sum(patient.data$IMV.ever=='TRUE', na.rm=T)`        | `r sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        | `r de$N.cases - sum(patient.data$IMV.ever=='TRUE', na.rm=T) - sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        |
-| Non-invasive ventilation      | `r sum(patient.data$NIMV.ever=='TRUE', na.rm=T)`          | `r sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`          | `r de$N.cases- sum(patient.data$NIMV.ever=='TRUE', na.rm=T) - sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`        |
-| Oxygen therapy                | `r sum(patient.data$O2.ever=='TRUE', na.rm=T)`       | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)`       | `r de$N.cases -  sum(patient.data$O2.ever=='TRUE', na.rm=T) - sum(patient.data$O2.ever=='FALSE', na.rm=T)`       |
-| Prone ventilation             | `r de$t.dat$present[12]`       | `r de$t.dat$absent[12]`       | `r de$t.dat$unknown[12]`       |
-| Renal replacement therapy     | `r de$t.dat$present[13]`       | `r de$t.dat$absent[13]`       | `r de$t.dat$unknown[13]`       |
-| Tracheostomy inserted         | `r de$t.dat$present[14]`       | `r de$t.dat$absent[14]`       | `r de$t.dat$unknown[14]`       |
-| Other                         | `r de$t.dat$present[10]`       | `r de$t.dat$absent[10]`       | `r de$t.dat$unknown[10]`       |
-| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)` | `r de$N.cases- sum(patient.data$O2.ever=='TRUE', na.rm=T)- sum(patient.data$O2.ever=='FALSE', na.rm=T)`|
-
-<br /><br /><br />
-
-
-**Table 3:** Duration of stay
-
-
-| **Time (in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean** (95% CI) | **Notes** |
-|------------------------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------|-------------------------------------------------------------------------------------------|---------------------------------------------|
-| Length of hospital stay              | `r de$obs.mean.adm.outcome` (`r de$obs.mean.adm.outcome.lower`, `r de$obs.mean.adm.outcome.upper`) | `r de$obs.sd.adm.outcome`            | `r de$mean.adm.to.outcome` (`r de$adm.outcome.lower`, `r de$adm.outcome.upper`)           |                                             |
-|Symptom onset to admission | `r  de$obs.mean.onset.adm` (`r de$obs.mean.onset.adm.lower`, `r de$obs.mean.onset.adm.upper`)      | `r de$obs.sd.onset.adm`              | `r de$mean.onset.to.adm` (`r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) |                                             |
-|                                                |                                                                                                    |                                      |                                                                                           |                                             |
-|Admission to ICU entry     | `r round(mean(de$a.icu, na.rm=T), 1)`                                                              | `r round(sd(de$a.icu, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.icu)` observations  |
-| Duration of ICU                     | `r round(mean(de$d.icu, na.rm=T), 1)`                                                              | `r round(sd(de$d.icu, na.rm=T), 1)`     |                                                                                           | Based on `r length(de$d.icu)` observations  |
-|                                                |                                                                                                    |                                      |                                                                                           |                                             |
-| Admission to IMV           | `r round(mean(de$a.imv, na.rm=T), 1)`                                                              | `r round(sd(de$a.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.imv)` observations  |
-| Duration of IMV                                | `r round(mean(de$d.imv, na.rm=T), 1)`                                                              | `r round(sd(de$d.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$d.imv)` observations  |
-|                                                |                                                                                                    |                                      |                                                                                           |                                             |
-| Admission to NIV          | `r round(mean(de$a.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$a.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$a.nimv)` observations |
-| Duration of NIV                               | `r round(mean(de$d.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$d.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$d.nimv)` observations |
-
-
+```{r child = 'markdown/summarytables.Rmd'}
+```
 
 # ISARIC Team Members
 
-*	Kenneth Bailie
-* Gail Carson
-* Emmanuelle A. Dankwa
-* Annemarie Docherty 
-* Christl A. Donnelly
-* Christophe Fraser
-* Matthew Hall
-*	Ewen Harrison
-* Karl Holden
-* Peter Horby
-* Kalynn Kennon
-* James Lee
-* Laura Merson
-* Sarah Moore
-* Piero Olliaro
-* Daniel Plotkin
-* Mark Pritchard
-*	Clark Russell
-* Calum Semple 
-*	Louise Sigfrid
-*	All those who contributed the data, which enabled this report.
+```{r child = 'markdown/teammembers.Rmd'}
+```
 
 # References
 
-1.	A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griffin, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).  Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, *American Journal of Epidemiology*, 162(5), 479 - 486. [doi:10.1093/aje/kwi230](https://doi.org/10.1093/aje/kwi230).
-
-2.	R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria.
-
-
-
-
-
-
-
+```{r child = 'markdown/references.Rmd'}
+```
