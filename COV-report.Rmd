@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- T
+reprocess.data <- F
 
 # file locations
 
@@ -177,7 +177,7 @@ treatment.upset(patient.data)
 
 ```{r onset.admission, out.width = '80%'}
 
-onset.adm.func(patient.data)
+onset.adm.plot(patient.data)
 
 ```
 
@@ -187,7 +187,7 @@ onset.adm.func(patient.data)
 
 ```{r  adm.outcome, out.width = '80%'}
 
-adm.outcome.func(patient.data)
+adm.outcome.plot(patient.data)
 
 ```
 
