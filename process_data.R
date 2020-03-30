@@ -458,7 +458,7 @@ treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
   out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
   
-  if(length(out) > 1){
+  if(length(out) > 1 & sanity.check){
     stop("Too many entries")
   } else if(length(out) == 0){
     NA
