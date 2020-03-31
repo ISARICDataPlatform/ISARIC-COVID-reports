@@ -743,9 +743,9 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
   dplyr::select(-ICU.cols)
-patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) = FALSE] <- 
+patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) == FALSE] <- 
   patient.data$ICU.admission.date
-patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) = FALSE] <- 
+patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <- 
   patient.data$ICU.discharge.date
 # Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
 patient.data$ICU.admission.date <- patient.data$ICU.start.date
