@@ -722,6 +722,23 @@ patient.data <- patient.data %>%
     any(x$O2.ever)
   }))
 
+patient.data <- patient.data %>% 
+  mutate(ICU.cols  = map(events, function(el){
+    process.event.dates(el, "icu_hoterm", "daily_hoterm")
+  })) %>%
+  mutate(ICU.cols = map(ICU.cols, function(x){
+    names(x) <- glue("ICU.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
+  dplyr::select(-ICU.cols)
+patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) = FALSE] <- 
+  patient.data$ICU.admission.date
+patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) = FALSE] <- 
+  patient.data$ICU.discharge.date
+  
+
+
 # @todo this script needs to be more aware of the date of the dataset
 
 ref.date = today()
