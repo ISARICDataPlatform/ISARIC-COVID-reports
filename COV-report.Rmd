@@ -75,7 +75,7 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
 
 <f style="font-family: times, serif; font-size:11pt; font-style:italic"> - A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases</f>
 
-# COVID-19 Report: 27 March 2020 {-}
+# COVID-19 Report:`r format(embargo.limit, "%d %B %Y")` {-}
 
 # Summary
 
