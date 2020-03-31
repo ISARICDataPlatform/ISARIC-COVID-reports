@@ -180,8 +180,18 @@ if(use.uk.data){
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
     dplyr::mutate(site.name = redcap_data_access_group) %>%
-    # filter(daily_dsstdat <= embargo.limit) %>%
-    mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert)
+    mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert) %>%
+    # 1 is SARS-2 in ROW data but MERS in UK, and vice versa.
+    mutate(corna_mbcaty = map_dbl(corna_mbcaty, function(x){
+      if(is.na(x)){
+        NA
+      } else {
+        switch(as.character(x),
+               "1" = 2,
+               "2" = 1,
+               x)
+      }
+    }))
 } else {
   uk.data <- NULL
 }
@@ -655,14 +665,17 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
     if(is.na(start.date)){
       # sometimes happens. ever = TRUE but dates unknown
       end.date <- NA
-      
+      first.after.date <- NA
     } else if(last.date == rows %>% filter(!is.na(consolidated.dssdat)) %>% slice(n()) %>% pull(consolidated.dssdat)){
       # Patient was on at last report
       end.date <- NA
+      first.after.date <- NA
     } else {
       # They were off at the next report
+      end.date <- last.date
+      
       next.report.row <- max(which(rows$consolidated.dssdat == last.date)) + 1
-      end.date <- rows$consolidated.dssdat[next.report.row]
+      first.after.date <- rows$consolidated.dssdat[next.report.row]
     }
     if(nrow(rows)<=2 | is.na(start.date)){
       multiple.periods <- F
@@ -673,7 +686,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
     }
   }
-  list(ever = ever, start.date = start.date, end.date = end.date, multiple.periods = multiple.periods)
+  list(ever = ever, start.date = start.date, end.date = end.date, first.after.date = after.date, multiple.periods = multiple.periods)
 }
 
 patient.data <- patient.data %>% 
@@ -719,6 +732,44 @@ patient.data <- patient.data %>%
     x$O2.ever[x$oxygen_cmoccur == 1] <- 1
     any(x$O2.ever)
   }))
+
+patient.data <- patient.data %>% 
+  mutate(ICU.cols  = map(events, function(el){
+    process.event.dates(el, "icu_hoterm", "daily_hoterm")
+  })) %>%
+  mutate(ICU.cols = map(ICU.cols, function(x){
+    names(x) <- glue("ICU.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
+  dplyr::select(-ICU.cols)
+patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) = FALSE] <- 
+  patient.data$ICU.admission.date
+patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) = FALSE] <- 
+  patient.data$ICU.discharge.date
+# Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
+patient.data$ICU.admission.date <- patient.data$ICU.start.date
+patient.data$ICU.discharge.date <- patient.data$ICU.end.date
+
+patient.data2 <- patient.data %>% 
+  mutate(RRT.cols  = map(events, function(el){
+    process.event.dates(el, "rrt_prtrt", "daily_rrt_cmtrt")
+  })) %>%
+  mutate(RRT.cols = map(RRT.cols, function(x){
+    names(x) <- glue("RRT.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$RRT.cols)) } %>%
+  dplyr::select(-RRT.cols) %>%
+  mutate(Inotrope.cols  = map(events, function(el){
+    process.event.dates(el, "inotrop_cmtrt", "daily_inotrope_cmyn")
+  })) %>%
+  mutate(Inotrope.cols = map(Inotrope.cols, function(x){
+    names(x) <- glue("Inotrope.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$Inotrope.cols)) } %>%
+  dplyr::select(-Inotrope.cols)  
 
 # @todo this script needs to be more aware of the date of the dataset
 

@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- F
+reprocess.data <- T
 
 # file locations
 
@@ -135,7 +135,7 @@ violin.age.func(patient.data)
 
 <!-- ``` -->
 
-**Figure 6**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset)
+**Figure 6**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset). The rightmost bar, marked with an asterisk, represents an incomplete week (due to the embargo date) rather than a genuine decline in cases.
 
 ```{r recruitment3, echo=FALSE}
 

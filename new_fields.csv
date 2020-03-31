@@ -70,3 +70,9 @@ admission.to.NIMV,Days from admission to NIMV start,admission.date - NIMV.start.
 start.to.ICU,Days from start to ICU start,start.date - ICU.start.date
 start.to.IMV,Days from start to IMV start,start.date - IMV.start.date
 start.to.NIMV,Days from start to NIMV start,start.date - NIMV.start.date
+ICU.ever,Ever on ICU,A 1 appears in extracorp_prtrt or daily_ecmo_prtrt in the events table
+ICU.start.date,ICU start date,"icu_hostdat if not NA, otherwise first daily_dsstdat for which a 1 appears in daily_hoterm"
+ICU.end.date,ICU end date,"icu_hoendat if not NA, otherwise day before the first daily_dsstdat for which a 2 appears after a 1 in daily_hoterm (NA if never)"
+ICU.multiple.periods,Multiple periods on ICU,Two separate runs of 1s in daily_hoterm
+RRT.ever,Ever on renal replacement therapy or dialysis,A 1 appears in rrt_prtrt or daily_rrt_cmtrt
+Inotrope.ever,Ever on inotropes or vasopressors,A 1 appears in inotrop_cmtrt or daily_inotrope_cmyn
