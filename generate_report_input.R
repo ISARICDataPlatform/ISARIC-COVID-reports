@@ -19,9 +19,7 @@ d.e <- function(data, datafull, ...){
   
   min.age <- ceiling(min(data$age_estimateyears, na.rm=T)) # minimum age
   max.age <- ceiling(max(data$age_estimateyears, na.rm=T)) # maximum age
-  
-  embargo.length <- 14
-  embargo.limit <- format(today() - embargo.length, "%d %B %Y")
+
   
   
   # ages by sex
@@ -214,7 +212,7 @@ d.e <- function(data, datafull, ...){
               N.recoveries = N.recoveries,
               N.outcomes = N.outcomes,
               N.healthworkers = N.healthworkers,
-              embargo.limit = embargo.limit,
+     
               
               m.age.mean =  m.age.mean,
               m.age.sd  =   m.age.sd,
