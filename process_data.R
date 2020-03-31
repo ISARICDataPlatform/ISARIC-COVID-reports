@@ -750,6 +750,16 @@ patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) = FALSE] <-
 patient.data$ICU.admission.date <- patient.data$ICU.start.date
 patient.data$ICU.discharge.date <- patient.data$ICU.end.date
 
+patient.data2 <- patient.data %>% 
+  mutate(RRT.cols  = map(events, function(el){
+    process.event.dates(el, "rrt_prtrt", "daily_rrt_cmtrt")
+  })) %>%
+  mutate(RRT.cols = map(RRT.cols, function(x){
+    names(x) <- glue("RRT.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$RRT.cols)) } %>%
+  dplyr::select(-RRT.cols)
 
 # @todo this script needs to be more aware of the date of the dataset
 
