@@ -182,7 +182,14 @@ if(use.uk.data){
     mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert) %>%
     # 1 is SARS-2 in ROW data but MERS in UK, and vice versa.
     mutate(corna_mbcaty = map_dbl(corna_mbcaty, function(x){
-      
+      if(is.na(x)){
+        NA
+      } else {
+        switch(as.character(x),
+               "1" = 2,
+               "2" = 1,
+               x)
+      }
     }))
 } else {
   uk.data <- NULL
@@ -657,14 +664,17 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
     if(is.na(start.date)){
       # sometimes happens. ever = TRUE but dates unknown
       end.date <- NA
-      
+      first.after.date <- NA
     } else if(last.date == rows %>% filter(!is.na(consolidated.dssdat)) %>% slice(n()) %>% pull(consolidated.dssdat)){
       # Patient was on at last report
       end.date <- NA
+      first.after.date <- NA
     } else {
       # They were off at the next report
+      end.date <- last.date
+      
       next.report.row <- max(which(rows$consolidated.dssdat == last.date)) + 1
-      end.date <- rows$consolidated.dssdat[next.report.row]
+      first.after.date <- rows$consolidated.dssdat[next.report.row]
     }
     if(nrow(rows)<=2 | is.na(start.date)){
       multiple.periods <- F
@@ -675,7 +685,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
     }
   }
-  list(ever = ever, start.date = start.date, end.date = end.date, multiple.periods = multiple.periods)
+  list(ever = ever, start.date = start.date, end.date = end.date, first.after.date = after.date, multiple.periods = multiple.periods)
 }
 
 patient.data <- patient.data %>% 
