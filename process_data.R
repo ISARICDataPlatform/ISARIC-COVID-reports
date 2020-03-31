@@ -179,8 +179,11 @@ if(use.uk.data){
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
     dplyr::mutate(site.name = redcap_data_access_group) %>%
-    # filter(daily_dsstdat <= embargo.limit) %>%
-    mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert)
+    mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert) %>%
+    # 1 is SARS-2 in ROW data but MERS in UK, and vice versa.
+    mutate(corna_mbcaty = map_dbl(corna_mbcaty, function(x){
+      
+    }))
 } else {
   uk.data <- NULL
 }
