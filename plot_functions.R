@@ -732,99 +732,6 @@ hospital.fatality.ratio <- function(data){
   
 }
 
-#### Function to round 0 days to 0.5 (half a day) #######
-
-round.zeros <- function(x){
-  
-  for (i in 1: length(x)){
-    
-    if (x[i]==0){
-      x[i] <- 0.5
-    }
-  }
-  
-  return(x) 
-}
-
-## Violin plot by sex ####
-
-violin.sex.func <- function(data, ...){
-  
-  # Analysis to be run on only entries with admission.to.exit entries
-  
-  data2 <- data %>% filter(!is.na(start.to.exit))      #| !is.na(admission.to.censored))
-  
-  # This is to include dates for individuals still in hospital
-  
-  data2 <- data2 %>% 
-    mutate(length.of.stay = abs(round.zeros(start.to.exit)))  %>%#, admission.to.censored, function(x,y){
-    #     max(x, y, na.rm = T)
-    #   })) %>%
-    mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
-    mutate(sex = factor(sex, levels = c("Male", "Female")))
-  
-  data2 <- data2 %>%
-    filter(!is.na(sex))
-  
-  
-  vd <- tibble(Sex = data2$sex, length.of.stay = data2$length.of.stay )
-  
-  # by sex
-  
-  x <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
-    geom_violin(trim=TRUE)+ 
-    geom_boxplot(width=0.1, fill="white")  +
-    scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
-    labs(title=" ", x="Sex", y = "Length of hospital stay") + 
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12) 
-    ) +  #+ ylim(0, max(length(vd$length.of.stay)))
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
-  
-  return(x)
-}
-
-
-### Violin age ####
-
-
-
-violin.age.func <- function(data, ...){
-  
-  # Analysis to be run on only entries with admission.to.exit entries
-  
-  data2 <- data %>% filter(!is.na(start.to.exit))      #| !is.na(admission.to.censored))
-  
-  data2 <- data2 %>% 
-    mutate(length.of.stay = abs(round.zeros(start.to.exit)))
-  
-  vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = abs(data2$length.of.stay) )
-  
-  # remove NAs (@todo for now?)
-  
-  vdx <- vdx %>% filter(!is.na(Age))
-  
-  vd2 <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
-    geom_violin(trim=F)+ geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
-    labs(title="  ", x="Age group", y = "Length of hospital stay") + 
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
-    scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
-    scale_x_discrete(drop = F) +
-    ylim(c(0,40)) +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
-  
-  return(vd2)
-  
-}
-
 
 
 # Upset plot for treatments @todo add maximum parameter?
@@ -1106,6 +1013,50 @@ antiviral.use.upset <- function(data, ...){
   
 }
 
+
+# Cumulative recruitment by outcome
+
+recruitment.dat.plot <- function(data, embargo.limit, ...) {
+  data$outcome.count <- 0
+  data$outcome.count[data$outcome != "censored"] <- 1
+  data$censored.count <- 0
+  data$censored.count[data$outcome == "censored"] <- 1
+  
+  from <- min(data$start.date, na.rm = TRUE)
+  to <- max(data$start.date, na.rm = TRUE)
+  
+  plt.d <- data.frame(d = from:to)
+  plt.d$date <- as.Date(plt.d$d, origin = "1970-01-01")
+  plt.d$outcome <- 0
+  plt.d$censored <- 0
+  
+  for (i in from:to) {
+    plt.d$outcome[plt.d$date == i] <- 
+      sum(data$outcome.count[data$start.date == i], na.rm = TRUE)
+    plt.d$censored[plt.d$date == i] <- 
+      sum(data$censored.count[data$start.date == i], na.rm = TRUE)    
+  }
+  plt.d$out.c <- cumsum(plt.d$outcome)
+  plt.d$cen.c <- cumsum(plt.d$censored)
+  
+  xmin <- as.Date("2020-02-01")
+  plt.d <- subset(plt.d, date >= xmin)
+  
+  p <- ggplot(data = plt.d, aes(x = date)) +
+    geom_line(aes(y = out.c, colour = "Outcome recorded"), size = 1.5) +
+    geom_line(aes(y = cen.c, colour = "Follow-up ongoing"), size = 1.5) +
+    geom_vline(xintercept = embargo.limit, linetype = "dashed") +
+    theme_bw() + 
+    theme(legend.title=element_blank(), legend.position="top") +
+    xlab("Admission date") +
+    xlim(xmin, to) +
+    ylab("Cumulative recruitment")
+  
+  return(p)
+}
+
+
+
 ##############################################################################
 # Function below calculates mean and variance estimates and confidence intervals (by bootstrap) for the following time-based distributions.
 # Onset to admission
@@ -1136,13 +1087,13 @@ fit.summary.gamma <- function(fit){
   # Bootstrap (variance)
   bv <- boot(data = X, statistic = samp.var, R=1000 )
   # CI
-  lower.v <- boot.ci(bv, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
-  upper.v <- boot.ci(bv, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
+  lower.v <- boot.ci(bv, type = 'bca')$bca[4]       # lower bound of confidence interval for variance
+  upper.v <- boot.ci(bv, type = 'bca')$bca[5]       # upper bound of confidence interval for variance
   # Bootstrap (median)
   bmed <- boot(data = X, statistic = samp.median, R=1000 )
   # CI
-  lower.med <- boot.ci(bmed, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
-  upper.med <- boot.ci(bmed, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
+  lower.med <- boot.ci(bmed, type = 'bca')$bca[4]       # lower bound of confidence interval for variance
+  upper.med <- boot.ci(bmed, type = 'bca')$bca[5]       # upper bound of confidence interval for variance
   
   
   return(list(m=m, lower.m = lower.m, upper.m = upper.m,  v=v, 
@@ -1281,10 +1232,96 @@ casefat2 <-  function(data, conf=0.95){
 
 
 
+#### Function to round 0 days to 0.5 (half a day) #######
+
+round.zeros <- function(x){
+  
+  for (i in 1: length(x)){
+    
+    if (x[i]==0){
+      x[i] <- 0.5
+    }
+  }
+  
+  return(x) 
+}
+
+## Violin plot by sex (length of hospital stay by sex) ####
+
+violin.sex.func <- function(data, ...){
+  
+  # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
+  
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex))
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = abs(round.zeros(start.to.exit)))  %>%
+    mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
+    mutate(sex = factor(sex, levels = c("Male", "Female")))
+  
+  
+  vd <- tibble(Sex = data2$sex, length.of.stay = data2$length.of.stay )
+  
+  # by sex
+  
+  plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
+    geom_violin(trim=TRUE)+ 
+    geom_boxplot(width=0.1, fill="white")  +
+    scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
+    labs(title=" ", x="Sex", y = "Length of hospital stay") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12) 
+    ) +  #+ ylim(0, max(length(vd$length.of.stay)))
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(plt)
+}
 
 
 
-########### Admission to outcome #########
+### Violin age ####
+
+
+
+violin.age.func <- function(data, ...){
+  
+  # Analysis to be run on only entries with start.to.exit entries
+  
+  data2 <- data %>% filter(!is.na(start.to.exit)) 
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = abs(round.zeros(start.to.exit)))
+  
+  vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = abs(data2$length.of.stay) )
+  
+  # remove NAs (@todo for now?)
+  
+  vdx <- vdx %>% filter(!is.na(Age))
+  
+  plt <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
+    geom_violin(trim=F)+ geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    labs(title="  ", x="Age group", y = "Length of hospital stay") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
+    scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
+    scale_x_discrete(drop = F) +
+    ylim(c(0,40)) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(plt)
+  
+}
+
+
+
+########### Admission to outcome (accounting for censorship) #########
 
 
 adm.outcome.func <- function(data){
@@ -1327,6 +1364,8 @@ adm.outcome.func <- function(data){
   
 }
 
+
+
 adm.outcome.plot <- function(data, ...){
   adm.outcome.func(data)$plt
 }
@@ -1334,7 +1373,7 @@ adm.outcome.plot <- function(data, ...){
 ########## Onset to admission #####
 
 
-onset.adm.func <- function(data){
+onset.adm.func <- function(data,...){
   
   admit.discharge <- data$onset.to.admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
@@ -1368,46 +1407,120 @@ onset.adm.plot <- function(data, ...){
 }
 
 
-# Cumulative recruitment by outcome
 
-recruitment.dat.plot <- function(data, embargo.limit, ...) {
-  data$outcome.count <- 0
-  data$outcome.count[data$outcome != "censored"] <- 1
-  data$censored.count <- 0
-  data$censored.count[data$outcome == "censored"] <- 1
+
+# Admission to NIMV #
+
+adm.to.niv <- function(data,...){
   
-  from <- min(data$start.date, na.rm = TRUE)
-  to <- max(data$start.date, na.rm = TRUE)
   
-  plt.d <- data.frame(d = from:to)
-  plt.d$date <- as.Date(plt.d$d, origin = "1970-01-01")
-  plt.d$outcome <- 0
-  plt.d$censored <- 0
+  data2 <- data %>% filter(!is.na(admission.to.NIMV))
   
-  for (i in from:to) {
-    plt.d$outcome[plt.d$date == i] <- 
-      sum(data$outcome.count[data$start.date == i], na.rm = TRUE)
-    plt.d$censored[plt.d$date == i] <- 
-      sum(data$censored.count[data$start.date == i], na.rm = TRUE)    
-  }
-  plt.d$out.c <- cumsum(plt.d$outcome)
-  plt.d$cen.c <- cumsum(plt.d$censored)
+  admit.discharge <- data2$admission.to.NIMV
+  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+  admit.discharge.2 <- round.zeros(admit.discharge)
   
-  xmin <- as.Date("2020-02-01")
-  plt.d <- subset(plt.d, date >= xmin)
+  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
   
-  p <- ggplot(data = plt.d, aes(x = date)) +
-    geom_line(aes(y = out.c, colour = "Outcome recorded"), size = 1.5) +
-    geom_line(aes(y = cen.c, colour = "Follow-up ongoing"), size = 1.5) +
-    geom_vline(xintercept = embargo.limit, linetype = "dashed") +
-    theme_bw() + 
-    theme(legend.title=element_blank(), legend.position="top") +
-    xlab("Admission date") +
-    xlim(xmin, to) +
-    ylab("Cumulative recruitment")
+  obs <-  admit.discharge.2  # record observed values for reporting
   
-  return(p)
+  # Plot 
+
+  t <- data.frame(x = admit.discharge)
+  
+  plt <- ggplot(data = t) + 
+    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+    labs(y = 'Density', x = 'Time (in days) from admission to NIV', title = '')
+  
+  return(list(plt=plt, fit=fit, obs = obs))
+  
 }
+
+#adm.to.niv(patient.data)
+
+
+# Duration of NIV [Under construction]
+
+# calculate.durations <- function(data){
+#   durs <- c()
+#   cens <- c()
+#   
+#   for(i in 1:nrow(data)){
+#     if(!is.na(data$event.end.date[i])){
+#       durs[i] <- data$event.end.date[i] - data$event.start.date[i]
+#       cens[i] <- 0                # if end.date is available, then consider as not censored
+#     }else{
+#       durs[i] <- ref.date - data2$event.start.date[i]  # if end.date is unreported, use embargo.limit date as duration.
+#       cens[i] <- 1                # if end.date is not reported, then consider as censored
+#     }
+#   }
+#   return(list(durs = durs, cens = cens))
+# }
+# 
+# adm.outcome.func <- function(data){
+#   
+#   data2 <- data %>% filter(!is.na(NIMV.start.date)) %>% mutate(event.start.date = NIMV.start.date) %>% mutate(event.end.date = NIMV.end.date)
+#   
+#   
+#   
+#   data2 <- data2 %>% 
+#     mutate(length.of.stay = map2_dbl(start.to.exit, start.to.censored, function(x,y){
+#       max(x, y, na.rm = T)
+#     }))
+#   
+#   admit.discharge <- data2$length.of.stay
+#   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
+#   admit.discharge <- round.zeros(admit.discharge)
+#   
+#   pos.cens <- which(data2$censored == 'TRUE')
+#   
+#   left <- c(admit.discharge)
+#   right <- replace(admit.discharge, pos.cens, values=NA )
+#   censored_df <- data.frame(left, right)
+#   fit <- fitdistcens(censored_df, dist = 'gamma')
+#   t <- data.frame(x = admit.discharge)
+#   
+#   obs <- right[!(is.na(right))] # cases with completed duration days.
+#   
+#   
+#   plt <- ggplot(data = t) + 
+#     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+#     geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+#     theme(
+#       plot.title = element_text( size=14, face="bold", hjust = 0.5),
+#       axis.title.x = element_text( size=12),
+#       axis.title.y = element_text( size=12)
+#     ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+#     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+#                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+#     labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
+#   
+#   return(list(plt=plt, fit=fit, obs = obs))
+#   
+# }
+
+
+
+
+
+
+
+
+
+
+# Admission to 
+
+
+
+
 
 
 
