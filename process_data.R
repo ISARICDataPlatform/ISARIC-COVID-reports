@@ -9,7 +9,8 @@ embargo.length <- 14
 use.uk.data <- TRUE
 use.row.data <- TRUE
 use.eot.data <- TRUE
-embargo.limit <- today() - embargo.length
+ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15))
+embargo.limit <- ref.date - embargo.length
 
 if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
@@ -687,7 +688,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
     }
   }
-  list(ever = ever, start.date = start.date, end.date = end.date, first.after.date = after.date, multiple.periods = multiple.periods)
+  list(ever = ever, start.date = start.date, end.date = end.date, first.after.date = first.after.date, multiple.periods = multiple.periods)
 }
 
 patient.data <- patient.data %>% 
@@ -733,6 +734,44 @@ patient.data <- patient.data %>%
     x$O2.ever[x$oxygen_cmoccur == 1] <- 1
     any(x$O2.ever)
   }))
+
+patient.data <- patient.data %>% 
+  mutate(ICU.cols  = map(events, function(el){
+    process.event.dates(el, "icu_hoterm", "daily_hoterm")
+  })) %>%
+  mutate(ICU.cols = map(ICU.cols, function(x){
+    names(x) <- glue("ICU.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
+  dplyr::select(-ICU.cols)
+patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) == FALSE] <- 
+  patient.data$ICU.admission.date
+patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <- 
+  patient.data$ICU.discharge.date
+# Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
+patient.data$ICU.admission.date <- patient.data$ICU.start.date
+patient.data$ICU.discharge.date <- patient.data$ICU.end.date
+
+patient.data <- patient.data %>% 
+  mutate(RRT.cols  = map(events, function(el){
+    process.event.dates(el, "rrt_prtrt", "daily_rrt_cmtrt")
+  })) %>%
+  mutate(RRT.cols = map(RRT.cols, function(x){
+    names(x) <- glue("RRT.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$RRT.cols)) } %>%
+  dplyr::select(-RRT.cols) %>%
+  mutate(Inotrope.cols  = map(events, function(el){
+    process.event.dates(el, "inotrop_cmtrt", "daily_inotrope_cmyn")
+  })) %>%
+  mutate(Inotrope.cols = map(Inotrope.cols, function(x){
+    names(x) <- glue("Inotrope.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$Inotrope.cols)) } %>%
+  dplyr::select(-Inotrope.cols)  
 
 # @todo this script needs to be more aware of the date of the dataset
 
