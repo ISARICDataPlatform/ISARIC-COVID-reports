@@ -9,7 +9,8 @@ embargo.length <- 14
 use.uk.data <- TRUE
 use.row.data <- TRUE
 use.eot.data <- TRUE
-embargo.limit <- today() - embargo.length
+ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15))
+embargo.limit <- ref.date - embargo.length
 
 if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
