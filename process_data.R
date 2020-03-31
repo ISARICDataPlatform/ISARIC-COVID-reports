@@ -686,7 +686,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
       multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
     }
   }
-  list(ever = ever, start.date = start.date, end.date = end.date, first.after.date = after.date, multiple.periods = multiple.periods)
+  list(ever = ever, start.date = start.date, end.date = end.date, first.after.date = first.after.date, multiple.periods = multiple.periods)
 }
 
 patient.data <- patient.data %>% 
