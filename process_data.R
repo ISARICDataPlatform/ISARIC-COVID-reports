@@ -652,11 +652,13 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
     # no reference 
     start.date <- NA
     end.date <- NA
+    first.after.date <- NA
     multiple.periods <- NA
   } else if(!any(rows$daily.col == 1)){
     # no "yes" 
     start.date <- NA
     end.date <- NA
+    first.after.date <- NA
     multiple.periods <- NA
   } else {
     start.date <- rows %>% filter(daily.col == 1) %>% slice(1) %>% pull(consolidated.dssdat)
