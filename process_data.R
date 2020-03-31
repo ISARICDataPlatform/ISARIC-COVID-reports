@@ -750,7 +750,7 @@ patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) = FALSE] <-
 patient.data$ICU.admission.date <- patient.data$ICU.start.date
 patient.data$ICU.discharge.date <- patient.data$ICU.end.date
 
-patient.data2 <- patient.data %>% 
+patient.data <- patient.data %>% 
   mutate(RRT.cols  = map(events, function(el){
     process.event.dates(el, "rrt_prtrt", "daily_rrt_cmtrt")
   })) %>%
