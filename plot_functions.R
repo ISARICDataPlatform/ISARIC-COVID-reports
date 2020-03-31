@@ -1045,8 +1045,8 @@ recruitment.dat.plot <- function(data, embargo.limit, ...) {
   plt.d <- subset(plt.d, date >= xmin)
   
   p <- ggplot(data = plt.d, aes(x = date)) +
-    geom_line(aes(y = out.c, colour = "Outcome recorded"), size = 1.5) +
-    geom_line(aes(y = cen.c, colour = "Follow-up ongoing"), size = 1.5) +
+    geom_line(aes(y = out.c, colour = "Outcome recorded"), size = 1) +
+    geom_line(aes(y = cen.c, colour = "Follow-up ongoing"), size = 1) +
     geom_vline(xintercept = embargo.limit, linetype = "dashed") +
     theme_bw() + 
     theme(legend.title=element_blank(), legend.position="top") +
@@ -1056,6 +1056,158 @@ recruitment.dat.plot <- function(data, embargo.limit, ...) {
   
   return(p)
 }
+
+
+
+### ICU plots ----------------------------------------------------------------
+
+get_icu_pts <- function(patient.data, ...) {
+  data <- patient.data %>%
+    filter(ICU.ever == 1)
+  
+  calc_dur <- function(duration, start, end, mult) {
+    data$calc.duration <- difftime(end, start, unit = "days")
+    # remove if <0 or if multiple periods
+    data$calc.duration[data$calc.duration < 0 | mult == TRUE] <- NA
+    duration[is.na(duration) == TRUE] <-
+      as.numeric(data$calc.duration[is.na(duration) == TRUE]) 
+    return(duration)
+  }
+  data$ICU.duration <- calc_dur(data$ICU.duration, data$ICU.start.date, 
+                                data$ICU.end.date, data$ICU.multiple.periods)
+  data$IMV.duration <- calc_dur(data$IMV.duration, data$IMV.start.date, 
+                                data$IMV.end.date, data$IMV.multiple.periods)
+  
+  return(data)
+}
+
+treatment.use.plot.icu <- function(data, ...){
+  d <- get_icu_pts(data)
+  #Overriding colour from treatment.use.plot, therefore suppressMessages
+  p <- suppressMessages(
+    treatment.use.plot(d) +
+      scale_fill_manual(
+        values = c("darkorchid2", "darkorchid4"), 
+        name = "Treatment", labels = c("No", "Yes")
+      )
+  )
+  return(p)
+}
+
+icu.treatment.upset.prep <- function(data, ...) {
+  d <- get_icu_pts(data)
+  details <- subset(
+    d, 
+    select = c(subjid,
+               antibiotic.any,
+               antiviral.any,
+               antifungal.any,
+               steroid.any,
+               NIMV.ever, IMV.ever, RRT.ever, Inotrope.ever, O2.ever
+    )
+  )
+  # Do not plot if all NA - likely just not had outcome form
+  col_from <- 2
+  col_to <- ncol(details) - 1  # -1 as O2.ever is never NA
+  details$allna <- 1
+  for (i in col_from:col_to) {
+    details$allna[is.na(details[, i]) == FALSE] <- 0
+  }
+  details <- subset(details, allna == 0)
+  # 1 is Yes, set anything else to 0 (No)
+  for (i in 2:10) {
+    details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
+  }
+  # Anyone who is ventilated will be set to O2 therapy = yes
+  details$O2.ever[details$NIMV.ever == 1 | details$IMV.ever == 1] <- 1
+  details <- details %>%
+    mutate(any.antimicrobial = 
+             pmax(antibiotic.any, antiviral.any, antifungal.any)) %>%
+    dplyr::select(-allna)
+  return(details)
+}
+
+icu.treatment.upset <- function(data, ...) {
+  details <- icu.treatment.upset.prep(data)
+  treatments <- details %>%
+    dplyr::select(
+      subjid, 
+      any.antimicrobial, 
+      steroid.any,
+      O2.ever, 
+      IMV.ever, 
+      RRT.ever, 
+      Inotrope.ever
+    ) %>%
+    pivot_longer(2:7, names_to = "Treatment", values_to = "Present") %>%
+    mutate(Present = as.logical(Present)) 
+  # Change labels
+  treatments$Treatment[treatments$Treatment == "O2.ever"] <- 
+    "Oxygen supplementation"
+  treatments$Treatment[treatments$Treatment == "any.antimicrobial"] <- 
+    "Any antimicrobials"
+  treatments$Treatment[treatments$Treatment == "IMV.ever"] <- 
+    "Invasive ventilation"
+  treatments$Treatment[treatments$Treatment == "RRT.ever"] <- 
+    "Renal replacement therapy"
+  treatments$Treatment[treatments$Treatment == "steroid.any"] <- 
+    "Corticosteroid"
+  treatments$Treatment[treatments$Treatment == "Inotrope.ever"] <- 
+    "Inotropes"
+  treatments <- treatments %>%
+    group_by(subjid) %>%
+    dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
+    mutate(treatments.used = map2(Treatments, Presence, function(c,p){
+      c[which(p)]
+    })) %>%
+    dplyr::select(-Treatments, -Presence)
+  p <- ggplot(treatments, aes(x = treatments.used)) + 
+    geom_bar(aes(y=..count../sum(..count..)), fill = "darkorchid4", col = "black") + 
+    theme_bw() +
+    xlab("Treatments used") +
+    ylab("Proportion of patients \n admitted to intensive care") +
+    scale_x_upset() 
+  
+  return(p)
+}
+
+icu.violin.plot  <- function(data, ...){
+  data <- get_icu_pts(data)
+  # Use available data for each measure
+  dur <- data$admission.to.exit
+  d <- data.frame(dur = dur)
+  d$type <- 1
+  
+  dur <- data$ICU.duration
+  d.2 <- data.frame(dur)
+  d.2$type <- 2
+  
+  d <- rbind(d, d.2, deparse.level = 1) %>%
+    filter(!is.na(dur))
+  d$type <- factor(d$type, levels = c(1, 2), labels = c("Total hospital stay", "ICU"))
+  
+  p <- ggplot(data = d, aes(x = type, y = dur, fill = type)) + 
+    geom_violin(trim = TRUE, show.legend = FALSE) +
+    scale_fill_manual(values = c("darkorchid2", "darkorchid4")) +
+    geom_boxplot(width = 0.1, fill = "white")  +
+    labs(title = " ", x = "Location", y = "Length of stay (days)") + 
+    theme(
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12), 
+      panel.grid.minor = element_line(size = 0.25, linetype = "solid", 
+                                      colour = "grey"),
+      panel.background = element_rect(fill = "white", colour = "white"),
+      panel.grid.major = element_line(size = 0.5, linetype = "solid", 
+                                      colour = "grey"),
+      axis.line = element_line(colour = "black"),
+      panel.border = element_rect(colour = "black", fill = NA, size = 1) 
+    )
+  
+  return(p)
+}
+
+
+
 
 
 
@@ -1464,6 +1616,10 @@ adm.to.niv <- function(data,...){
   return(list(plt=plt, fit=fit, obs = obs))
   
 }
+
+
+
+#adm.to.niv(patient.data)
 
 
 adm.to.niv.plot <- function(data,...){
