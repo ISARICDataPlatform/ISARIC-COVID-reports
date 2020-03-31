@@ -75,3 +75,4 @@ ICU.start.date,ICU start date,"icu_hostdat if not NA, otherwise first daily_dsst
 ICU.end.date,ICU end date,"icu_hoendat if not NA, otherwise day before the first daily_dsstdat for which a 2 appears after a 1 in daily_hoterm (NA if never)"
 ICU.multiple.periods,Multiple periods on ICU,Two separate runs of 1s in daily_hoterm
 RRT.ever,Ever on renal replacement therapy or dialysis,A 1 appears in rrt_prtrt or daily_rrt_cmtrt
+Inotrope.ever,Ever on inotropes or vasopressors,A 1 appears in inotrop_cmtrt or daily_inotrope_cmyn

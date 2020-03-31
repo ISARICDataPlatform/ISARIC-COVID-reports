@@ -759,7 +759,16 @@ patient.data2 <- patient.data %>%
     x
   })) %>%
   { bind_cols(., bind_rows(!!!.$RRT.cols)) } %>%
-  dplyr::select(-RRT.cols)
+  dplyr::select(-RRT.cols) %>%
+  mutate(Inotrope.cols  = map(events, function(el){
+    process.event.dates(el, "inotrop_cmtrt", "daily_inotrope_cmyn")
+  })) %>%
+  mutate(Inotrope.cols = map(Inotrope.cols, function(x){
+    names(x) <- glue("Inotrope.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$Inotrope.cols)) } %>%
+  dplyr::select(-Inotrope.cols)  
 
 # @todo this script needs to be more aware of the date of the dataset
 
