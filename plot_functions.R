@@ -98,13 +98,15 @@ outcomes.by.admission.date <- function(data, ...){
       ew <- epiweek(x)
       ifelse(nchar(as.character(ew))==1, glue("0{as.character(ew)}"), as.character(ew))
     })) %>%
-    filter(!is.na(hostdat))
+    filter(!is.na(admission.date)) %>%
+    filter(epiweek(start.date) <= epiweek(embargo.limit))
   ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week of admission/symptom onset (2020)") +
-    ylab("Cases") 
+    ylab("Cases") +
+    annotate(geom = "text", label = "*", x = max(data2$two.digit.epiweek), y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$two.digit.epiweek))), size =15)
 }
 
 # Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
