@@ -1506,6 +1506,8 @@ icu.treatment.upset.prep <- function(data, ...) {
   for (i in 2:10) {
     details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
   }
+  # Anyone who is ventilated will be set to O2 therapy = yes
+  details$O2.ever[details$NIMV.ever == 1 | details$IMV.ever == 1] <- 1
   details <- details %>%
     mutate(any.antimicrobial = 
              pmax(antibiotic.any, antiviral.any, antifungal.any)) %>%
