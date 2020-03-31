@@ -746,7 +746,9 @@ patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) = FALSE] <-
   patient.data$ICU.admission.date
 patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) = FALSE] <- 
   patient.data$ICU.discharge.date
-  
+# Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
+patient.data$ICU.admission.date <- patient.data$ICU.start.date
+patient.data$ICU.discharge.date <- patient.data$ICU.end.date
 
 
 # @todo this script needs to be more aware of the date of the dataset
