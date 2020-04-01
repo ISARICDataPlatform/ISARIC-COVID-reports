@@ -538,25 +538,26 @@ patient.data <- patient.data %>%
       }
     }
   })) %>%
-  # outcome is just death or discharge
+  # outcome is death, discharge or other for transfers etc
   dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
     if(x){
       return("censored")
     } else {
       return(switch(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsterm) %>% as.character(),
                     "1" = "discharge",
-                    "4" = "death"))
+                    "4" = "death",
+                    "other"))
     }
   })) %>%
-  dplyr::mutate(outcome.date.known = map2_dbl(censored, events, function(x, y){
-    if(x){
+  dplyr::mutate(outcome.date.known = map2_dbl(outcome, events, function(x, y){
+    if(!(x %in% c("discharge", "death"))){
       return(2)
     } else {
       return(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtcyn))
     }
   }))  %>%
-  dplyr::mutate(outcome.date = map2_chr(censored, events, function(x, y){
-    if(x){
+  dplyr::mutate(outcome.date = map2_chr(outcome, events, function(x, y){
+    if(!(x %in% c("discharge", "death"))){
       return(NA)
     } else {
       if(length(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtc) %>% as.character()) > 1){
