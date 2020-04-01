@@ -906,7 +906,8 @@ status.by.time.after.admission <- function(data, ...){
              "transfer.palliative" = "transfer",
              "unknown" = "unknown")}
     )) %>%
-    dplyr::mutate(final.status = factor(final.status)) 
+    dplyr::mutate(final.status = factor(final.status)) %>%
+    filter(!is.na(admission.date))
   
   timings.wrangle <- data2 %>%
     dplyr::select(subjid,
@@ -926,7 +927,7 @@ status.by.time.after.admission <- function(data, ...){
     mutate(ever.ICU = !is.na(ICU.start)) %>%
     # If hospital end is known but ICU end is not, impossible to resolve
     filter(!(!is.na(hospital.end) & is.na(ICU.end) & ever.ICU)) %>%
-    mutate(last.date = max(hospital.end, ICU.end, censored.date, na.rm = T))
+    mutate(last.date = pmax(hospital.end, ICU.end, censored.date, na.rm = T))
   
   overall.start <- 0
   overall.end <- max(timings.wrangle$hospital.end, na.rm = T)
@@ -936,35 +937,55 @@ status.by.time.after.admission <- function(data, ...){
   complete.timeline <- map(1:nrow(timings.wrangle), function(pat.no){
     times <- map(overall.start:overall.end, function(day){
       if(!timings.wrangle$ever.ICU[pat.no]){
-        if(is.na(timings.wrangle$hospital.end[pat.no])){
-          "Ward"
-        } else if(day < timings.wrangle$hospital.end[pat.no]){
-          "Admitted"
-        } else if(timings.wrangle$status[pat.no] == "death"){
-          "Died"
-        } else if(timings.wrangle$status[pat.no] == "discharge"){
-          "Discharged"
-        } else {
-          "Transferred"
-        }
-      } else {
-        if(is.na(timings.wrangle$hospital.end[pat.no])){
-          if(day >= timings.wrangle$ICU.start[pat.no] & (is.na(timings.wrangle$ICU.end[pat.no] | day < timings.wrangle$ICU.end[pat.no] ))){
-            "ICU"
+        if(!timings.wrangle$censored[pat.no] & is.na(timings.wrangle$hospital.end[pat.no])){
+          # this happens with an exit code but no exit date. We don't know what happened after admission
+          "unknown"
+        } else if(timings.wrangle$censored[pat.no]){
+          if(day <= timings.wrangle$censored.date[pat.no]){
+            "Ward"
           } else {
-            "Admitted"
+            "Censored"
           }
         } else {
-          if(day >= timings.wrangle$ICU.start[pat.no] &  day < timings.wrangle$ICU.end[pat.no]){
-            "ICU"
-          } else if(day < timings.wrangle$hospital.end[pat.no]){
-            "Admitted"
-          } else if(timings.wrangle$status[pat.no] == "death"){
-            "Died"
-          } else if(timings.wrangle$status[pat.no] == "discharge"){
-            "Discharged"
+          if(day <= timings.wrangle$hospital.end[pat.no]){
+            "Ward"
           } else {
-            "Transferred"
+            as.character(timings.wrangle$final.status[pat.no])
+          }
+        }
+      } else {
+        if(!timings.wrangle$censored[pat.no] & is.na(timings.wrangle$hospital.end[pat.no])){
+          # this happens with an exit code but no exit date. We don't know what happened after ICU admission or ICU exit if recorded
+          if(day <= timings.wrangle$ICU.start[pat.no]){
+            "Ward"
+          } else if(!is.na(timings.wrangle$ICU.end[pat.no]) & day <= timings.wrangle$ICU.end[pat.no]){
+            "ICU"
+          } else {
+            "unknown"
+          }
+        } else if(timings.wrangle$censored[pat.no]){
+          if(day <= timings.wrangle$censored.date[pat.no]){
+            if(day <= timings.wrangle$ICU.start[pat.no]) {
+              "Ward"
+            } else if(is.na(timings.wrangle$ICU.end[pat.no]) | day <= timings.wrangle$ICU.end[pat.no]) {
+              "ICU"
+            } else {
+              "Ward"
+            }
+          } else {
+            "Censored"
+          }
+        } else {
+          if(day <= timings.wrangle$hospital.end[pat.no]){
+            if(day <= timings.wrangle$ICU.start[pat.no]) {
+              "Ward"
+            } else if(is.na(timings.wrangle$ICU.end[pat.no]) | day <= timings.wrangle$ICU.end[pat.no]) {
+              "ICU"
+            } else {
+              "Ward"
+            }
+          } else {
+            as.character(timings.wrangle$final.status[pat.no])
           }
         }
       }
