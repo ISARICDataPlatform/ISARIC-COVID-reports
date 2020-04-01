@@ -36,7 +36,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- T
+reprocess.data <- F
 
 # file locations
 
@@ -60,11 +60,13 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/patient_data_{today()}.rda"
 
 source(glue("{code.path}/plot_functions.R"))
 
+
 if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}.rda"))){
   load(glue("{code.path}/report_input_data_{today()}.rda"))
 } else {
   source(glue("{code.path}/generate_report_input.R"))
 }
+
 
 ```
 
@@ -75,7 +77,7 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
 
 <f style="font-family: times, serif; font-size:11pt; font-style:italic"> - A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases</f>
 
-# COVID-19 Report:`r format(embargo.limit, "%d %B %Y")` {-}
+# COVID-19 Report: `r format(as.Date(substr(uk.data.file, start = 6, stop  = 15)), "%d %B %Y")` {-}
 
 # Summary
 
