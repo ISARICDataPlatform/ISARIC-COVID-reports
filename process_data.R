@@ -546,7 +546,7 @@ patient.data <- patient.data %>%
       return(switch(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsterm) %>% as.character(),
                     "1" = "discharge",
                     "4" = "death",
-                    "other"))
+                    NA))
     }
   })) %>%
   dplyr::mutate(outcome.date.known = map2_dbl(outcome, events, function(x, y){
