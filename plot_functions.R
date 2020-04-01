@@ -615,7 +615,8 @@ modified.km.plot <- function(data, ...) {
     scale_colour_manual(values = c("indianred",  "green", "black"), name = "Legend", labels = c( "Deaths", "Recoveries","Case\n fatality ratio")) +
     scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
     xlab("Days after admission") +
-    ylab("Cumulative probability")
+    ylab("Cumulative probability") +
+    ylim(c(0,1))
   
 }
 
