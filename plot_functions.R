@@ -1019,6 +1019,8 @@ antiviral.use.upset <- function(data, ...){
 # Cumulative recruitment by outcome
 
 recruitment.dat.plot <- function(data, embargo.limit, ...) {
+  data <- data %>% filter(start.date <= today())
+  
   data$outcome.count <- 0
   data$outcome.count[data$outcome != "censored"] <- 1
   data$censored.count <- 0
@@ -1029,15 +1031,21 @@ recruitment.dat.plot <- function(data, embargo.limit, ...) {
   
   plt.d <- data.frame(d = from:to)
   plt.d$date <- as.Date(plt.d$d, origin = "1970-01-01")
-  plt.d$outcome <- 0
-  plt.d$censored <- 0
+
+  counts.tbl <- data %>% 
+    group_by(start.date) %>%
+    summarise(outcome = sum(outcome.count, na.rm = T), censored = sum(censored.count, na.rm = T))
   
-  for (i in from:to) {
-    plt.d$outcome[plt.d$date == i] <- 
-      sum(data$outcome.count[data$start.date == i], na.rm = TRUE)
-    plt.d$censored[plt.d$date == i] <- 
-      sum(data$censored.count[data$start.date == i], na.rm = TRUE)    
-  }
+  plt.d <- plt.d %>%
+    left_join(counts.tbl, by=c("date" = "start.date"))  %>%
+    filter(!is.na(outcome) & !is.na(censored))
+  
+  # for (i in from:to) {
+  #   plt.d$outcome[plt.d$date == i] <- 
+  #     sum(data$outcome.count[data$start.date == i], na.rm = TRUE)
+  #   plt.d$censored[plt.d$date == i] <- 
+  #     sum(data$censored.count[data$start.date == i], na.rm = TRUE)    
+  # }
   plt.d$out.c <- cumsum(plt.d$outcome)
   plt.d$cen.c <- cumsum(plt.d$censored)
   

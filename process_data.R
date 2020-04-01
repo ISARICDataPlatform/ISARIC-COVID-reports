@@ -853,5 +853,5 @@ countries.and.sites <-  unembargoed.data %>%
 patient.data <-  patient.data %>%
   filter(dsstdat <= embargo.limit) # exclude all cases on or after embargo limit
 
-save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
+save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
 
