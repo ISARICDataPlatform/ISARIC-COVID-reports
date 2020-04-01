@@ -172,11 +172,12 @@ if(use.uk.data){
   }
   
   
-  uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 20000) %>%
+  uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 30000) %>%
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
     # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
     dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
     dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
+    dplyr::mutate(apvs_weight = as.numeric(apvs_weight)) %>%
     dplyr::mutate(Country = "UK") %>%
     dplyr::mutate(data.source = "UK") %>%
     dplyr::mutate(site.name = redcap_data_access_group) %>%
@@ -192,6 +193,7 @@ if(use.uk.data){
                x)
       }
     }))
+  
 } else {
   uk.data <- NULL
 }
@@ -489,19 +491,20 @@ patient.data <- patient.data %>%
     any(temp$tr)
   })) %>%
   # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
-  dplyr::mutate(exit.date = map_chr(events, function(x){
+  dplyr::mutate(exit.date = map2_chr(subjid, events, function(y, x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsstdtc)) 
     if(nrow(outcome.rows) == 0){
       return(NA)
-    } else if(nrow(outcome.rows) > 1) {
-      stop("Multiple exit dates?")
     } else {
-      return(outcome.rows %>% slice(1) %>% pull(dsstdtc) %>% as.character())
+      if(nrow(outcome.rows) > 1) {
+        warning(glue("Multiple exit dates for patient {y}"))
+      }
+      return(outcome.rows  %>% slice(nrow(outcome.rows)) %>% pull(dsstdtc) %>% as.character())
     }
   })) %>%
   dplyr::mutate(exit.date = ymd(exit.date)) %>%
   # exit code is the reason for leaving the site. Unsure what "hospitalisation" means but it's yet to appear in actual data
-  dplyr::mutate(exit.code = map_chr(events, function(x){
+  dplyr::mutate(exit.code = map2_chr(subjid, events, function(y,x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm))
     if(nrow(outcome.rows) == 0){
       return(NA)
@@ -516,7 +519,7 @@ patient.data <- patient.data %>%
     }
   })) %>%
   # censorship occurs if either the patient is still in site or is moved offsite without a death or discharge code
-  dplyr::mutate(censored = map_lgl(events, function(x){
+  dplyr::mutate(censored = map2_lgl(subjid, events, function(y, x){
     if(x %>% pull(redcap_event_name) %>% startsWith("discharge") %>% any() %>% not()){
       # still in site
       return(TRUE)
@@ -526,7 +529,7 @@ patient.data <- patient.data %>%
       if(nrow(temp) == 0){
         return(TRUE)
       } else {
-        return(temp %>% pull(dsterm)%>% match(c(1,4)) %>% is.na() %>% any())
+        return(temp %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
       }
     }
   })) %>%
@@ -645,7 +648,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
   }
   
   
-  rows <- subtbl %>% filter(!is.na(daily.col)) %>%
+  rows <- subtbl %>% filter(!is.na(daily.col) & !(is.na(dsstdat) & is.na(daily_dsstdat))) %>%
     mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
     mutate(consolidated.dssdat = ymd(consolidated.dssdat))
   
@@ -701,7 +704,7 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>%
   dplyr::select(-NIMV.cols) %>%
-  mutate(IMV.cols  = map(events, function(el){
+  mutate(IMV.cols  = map2(subjid, events, function(id, el){
     process.event.dates(el, "invasive_proccur", "daily_invasive_prtrt")
   })) %>%
   mutate(IMV.cols = map(IMV.cols, function(x){
@@ -710,7 +713,7 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
   dplyr::select(-IMV.cols) %>%
-  mutate(ECMO.cols  = map(events, function(el){
+  mutate(ECMO.cols  = map2(subjid, events, function(id, el){
     process.event.dates(el, "extracorp_prtrt", "daily_ecmo_prtrt")
   })) %>%
   mutate(ECMO.cols = map(ECMO.cols, function(x){
@@ -788,7 +791,7 @@ patient.data <- patient.data %>%
                 start.to.exit = as.numeric(difftime(exit.date, start.date,  unit="days"))) %>%
   dplyr::mutate(admission.to.censored = map2_dbl(admission.to.exit, admission.date, function(x,y){
     if(is.na(x)){
-     # censored until today
+      # censored until today
       as.numeric(difftime(ref.date, y,  unit="days"))
     }
     else {
