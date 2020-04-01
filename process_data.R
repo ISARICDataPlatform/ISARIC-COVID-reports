@@ -258,13 +258,13 @@ date.sanity.check <- function(date) {
 }
 
 raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
-  dplyr::mutate(dsstdat = ymd(date.sanity.check(dsstdat)),
-                agedat = ymd(date.sanity.check(agedat)), 
-                daily_dsstdat = ymd(date.sanity.check(daily_dsstdat)), 
-                daily_lbdat = ymd(date.sanity.check(daily_lbdat)),
-                hostdat = ymd(date.sanity.check(hostdat)),
-                cestdat = ymd(date.sanity.check(cestdat)),
-                dsstdtc = ymd(date.sanity.check(dsstdtc)))    
+  dplyr::mutate(dsstdat = date.sanity.check(ymd(dsstdat)),
+                agedat = date.sanity.check(ymd(agedat)), 
+                daily_dsstdat = date.sanity.check(ymd(daily_dsstdat)), 
+                daily_lbdat = date.sanity.check(ymd(daily_lbdat)),
+                hostdat = date.sanity.check(ymd(hostdat)),
+                cestdat = date.sanity.check(ymd(cestdat)),
+                dsstdtc = date.sanity.check(ymd(dsstdtc)))    
 
 # Demographic data is in the first row
 

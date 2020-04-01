@@ -115,7 +115,7 @@ server <- function(input, output) {
           filter(Country %in% input$Country) %>%
           filter(outcome %in% input$outcome) %>%
           filter(sex %in% input$sex) %>%
-          filter(!is.na(sex)) %>%
+          filter(!is.na(sex) & sex != 3) %>%
           filter(consolidated.age >= input$agegp5[1] & consolidated.age < input$agegp5[2])
       })
       renderPlot(confidentiality.check(filtered.data.vsf(), violin.sex.func), height = 300)
