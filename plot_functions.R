@@ -771,7 +771,7 @@ treatment.upset.prep <- function(data, ...) {
 
 treatment.upset <- function(data, ...) {
   details <- treatment.upset.prep(data)
-  treatments <- details %>%
+  treatments2 <- details %>%
     dplyr::select(
       subjid, 
       antiviral.any, 
@@ -783,24 +783,24 @@ treatment.upset <- function(data, ...) {
     pivot_longer(2:6, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) 
   # Change labels
-  treatments$Treatment[treatments$Treatment == "O2.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "O2.ever"] <- 
     "Oxygen supplementation"
-  treatments$Treatment[treatments$Treatment == "antiviral.any"] <- 
+  treatments2$Treatment[treatments2$Treatment == "antiviral.any"] <- 
     "Antiviral"
-  treatments$Treatment[treatments$Treatment == "antibiotic.any"] <- 
+  treatments2$Treatment[treatments2$Treatment == "antibiotic.any"] <- 
     "Antibiotic"
-  treatments$Treatment[treatments$Treatment == "antifungal.any"] <- 
+  treatments2$Treatment[treatments2$Treatment == "antifungal.any"] <- 
     "Antifungal"
-  treatments$Treatment[treatments$Treatment == "steroid.any"] <- 
+  treatments2$Treatment[treatments2$Treatment == "steroid.any"] <- 
     "Corticosteroid"
-  treatments <- treatments %>%
+  treatments2 <- treatments2 %>%
     group_by(subjid) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
     mutate(treatments.used = map2(Treatments, Presence, function(c,p){
       c[which(p)]
     })) %>%
     dplyr::select(-Treatments, -Presence)
-  p <- ggplot(treatments, aes(x = treatments.used)) + 
+  p <- ggplot(treatments2, aes(x = treatments.used)) + 
     geom_bar(aes(y=..count../sum(..count..)), fill = "chartreuse3", col = "black") + 
     theme_bw() +
     xlab("Treatments used during hospital admission") +
@@ -893,18 +893,27 @@ treatment.upset.numbers <- function(data, ...) {
 status.by.time.after.admission <- function(data, ...){
   
   data2 <- data %>%
-    dplyr::mutate(status = map_chr(exit.code, function(x){
+    dplyr::mutate(final.status = map_chr(exit.code, function(x){
       ifelse(is.na(x), "censored", x)
     })) %>%
+    dplyr::mutate(final.status = switch(final.status,
+                                  "censored" = "censored",
+                                  "death" = "death",
+                                  "discharge" = "discharge",
+                                  "hospitalisation" = "unknown",
+                                  "transfer" = "transfer",
+                                  "transfer.palliative" = "transfer",
+                                  "unknown" = "unknown")) %>%
     dplyr::mutate(status = factor(status)) 
   
   timings.wrangle <- data2 %>%
     dplyr::select(subjid,
                   status,
                   start.to.ICU,
+                  start.to.exit,
+                  start.to.censored,
                   ICU.duration,
-                  censored,
-                  start.to.exit) %>%
+                  censored) %>%
     dplyr::mutate(hospital.start = 0) %>%
     dplyr::mutate(hospital.end = start.to.exit) %>%
     mutate(ICU.start = start.to.ICU) %>%
