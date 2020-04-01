@@ -781,10 +781,6 @@ patient.data <- patient.data %>%
   { bind_cols(., bind_rows(!!!.$Inotrope.cols)) } %>%
   dplyr::select(-Inotrope.cols)  
 
-# @todo this script needs to be more aware of the date of the dataset
-
-ref.date = today()
-
 # calculation of time periods @todo NIMV, IMV
 
 patient.data <- patient.data %>%
