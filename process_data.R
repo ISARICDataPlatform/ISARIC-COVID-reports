@@ -254,7 +254,7 @@ if(use.row.data){
 }
 
 date.sanity.check <- function(date) {
-  ifelse(date > today(), NA, date)
+  as.Date(ifelse(date > today(), as.Date(NA), date),  origin = "1970-01-01")
 }
 
 raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
@@ -264,7 +264,8 @@ raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
                 daily_lbdat = date.sanity.check(ymd(daily_lbdat)),
                 hostdat = date.sanity.check(ymd(hostdat)),
                 cestdat = date.sanity.check(ymd(cestdat)),
-                dsstdtc = date.sanity.check(ymd(dsstdtc)))    
+                dsstdtc = date.sanity.check(ymd(dsstdtc)))
+  
 
 # Demographic data is in the first row
 
