@@ -402,7 +402,7 @@ symptom.prevalence.plot <- function(data, ...){
     theme(axis.text.y = element_text(size = 7))
   
   plt
-
+  
 }
 
 # Prevalence of comorbidities
@@ -430,7 +430,7 @@ comorb.prev.calc <- function(data){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
-
+  
   return(data3)
   
 }
@@ -442,7 +442,7 @@ comorbidity.prevalence.plot <- function(data, ...){
     dplyr::select(subjid, one_of(comorbidities$field)) 
   
   nconds <- ncol(data2) - 1
-
+  
   data2 <- data2 %>%
     pivot_longer(2:(nconds + 1), names_to = "Condition", values_to = "Present") %>%
     group_by(Condition) %>%
@@ -502,7 +502,7 @@ treatment.use.calc <- function(data){
     dplyr::select(subjid, one_of(treatments$field))
   
   ntr <- ncol(data2) - 1
-
+  
   data3 <- data2 %>%
     pivot_longer(2:(ntr + 1), names_to = "Condition", values_to = "Present") %>%
     group_by(Condition) %>%
@@ -519,7 +519,7 @@ treatment.use.calc <- function(data){
     })) %>%
     group_by(Condition) %>%
     dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
-
+  
   return(data3)
 }
 
@@ -539,7 +539,7 @@ treatment.use.plot <- function(data, ...){
     dplyr::select(subjid, one_of(treatments$field))
   
   ntr <- ncol(data2) - 1
-
+  
   data2 <- data2 %>%
     pivot_longer(2:(ntr + 1), names_to = "Treatment", values_to = "Present") %>%
     group_by(Treatment) %>%
@@ -826,7 +826,7 @@ treatment.upset.ventilation <- function(data, ...) {
   for (i in 2:5) {
     vd[, i][vd[, i] != TRUE | is.na(vd[, i]) == TRUE] <- FALSE
   }
-  treatments <- vd %>%
+  treatments2 <- vd %>%
     dplyr::select(
       subjid, 
       O2.ever, NIMV.ever, IMV.ever, ECMO.ever
@@ -834,22 +834,22 @@ treatment.upset.ventilation <- function(data, ...) {
     pivot_longer(2:4, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) 
   # Change labels
-  treatments$Treatment[treatments$Treatment == "O2.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "O2.ever"] <- 
     "Any oxygen supplementation"
-  treatments$Treatment[treatments$Treatment == "NIMV.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "NIMV.ever"] <- 
     "Non-invasive ventilation"
-  treatments$Treatment[treatments$Treatment == "IMV.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "IMV.ever"] <- 
     "Invasive ventilation"
-  treatments$Treatment[treatments$Treatment == "ECMO.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "ECMO.ever"] <- 
     "ECMO"
-  treatments <- treatments %>%
+  treatments2 <- treatments2 %>%
     group_by(subjid) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
     mutate(treatments.used = map2(Treatments, Presence, function(c,p){
       c[which(p)]
     })) %>%
     dplyr::select(-Treatments, -Presence) 
-  vent.plt <- ggplot(treatments, aes(x = treatments.used)) + 
+  vent.plt <- ggplot(treatments2, aes(x = treatments.used)) + 
     geom_bar(aes(y=..count../sum(..count..)), fill = "blue", col = "black") + 
     theme_bw() +
     xlab("Oxygen therapies used during hospital admission") +
@@ -896,19 +896,21 @@ status.by.time.after.admission <- function(data, ...){
     dplyr::mutate(final.status = map_chr(exit.code, function(x){
       ifelse(is.na(x), "censored", x)
     })) %>%
-    dplyr::mutate(final.status = switch(final.status,
-                                  "censored" = "censored",
-                                  "death" = "death",
-                                  "discharge" = "discharge",
-                                  "hospitalisation" = "unknown",
-                                  "transfer" = "transfer",
-                                  "transfer.palliative" = "transfer",
-                                  "unknown" = "unknown")) %>%
-    dplyr::mutate(status = factor(status)) 
+    dplyr::mutate(final.status = map_chr(final.status, function(x){
+      switch(x,
+             "censored" = "censored",
+             "death" = "death",
+             "discharge" = "discharge",
+             "hospitalisation" = "unknown",
+             "transfer" = "transfer",
+             "transfer.palliative" = "transfer",
+             "unknown" = "unknown")}
+    )) %>%
+    dplyr::mutate(final.status = factor(final.status)) 
   
   timings.wrangle <- data2 %>%
     dplyr::select(subjid,
-                  status,
+                  final.status,
                   start.to.ICU,
                   start.to.exit,
                   start.to.censored,
@@ -918,11 +920,13 @@ status.by.time.after.admission <- function(data, ...){
     dplyr::mutate(hospital.end = start.to.exit) %>%
     mutate(ICU.start = start.to.ICU) %>%
     mutate(ICU.end = start.to.ICU + ICU.duration) %>%
-    dplyr::select(subjid,  ends_with("start"), ends_with("end"), censored, status) %>%
+    mutate(censored.date = start.to.censored) %>%
+    dplyr::select(subjid,  ends_with("start"), ends_with("end"), censored.date,  censored, final.status) %>%
     filter(hospital.end >= 0 | is.na(hospital.end))  %>%
     mutate(ever.ICU = !is.na(ICU.start)) %>%
     # If hospital end is known but ICU end is not, impossible to resolve
-    filter(!(!is.na(hospital.end) & is.na(ICU.end) & ever.ICU))
+    filter(!(!is.na(hospital.end) & is.na(ICU.end) & ever.ICU)) %>%
+    mutate(last.date = max(hospital.end, ICU.end, censored.date, na.rm = T))
   
   overall.start <- 0
   overall.end <- max(timings.wrangle$hospital.end, na.rm = T)
@@ -933,7 +937,7 @@ status.by.time.after.admission <- function(data, ...){
     times <- map(overall.start:overall.end, function(day){
       if(!timings.wrangle$ever.ICU[pat.no]){
         if(is.na(timings.wrangle$hospital.end[pat.no])){
-          "Admitted"
+          "Ward"
         } else if(day < timings.wrangle$hospital.end[pat.no]){
           "Admitted"
         } else if(timings.wrangle$status[pat.no] == "death"){
@@ -1041,7 +1045,7 @@ recruitment.dat.plot <- function(data, embargo.limit, ...) {
   
   plt.d <- data.frame(d = from:to)
   plt.d$date <- as.Date(plt.d$d, origin = "1970-01-01")
-
+  
   counts.tbl <- data %>% 
     group_by(start.date) %>%
     summarise(outcome = sum(outcome.count, na.rm = T), censored = sum(censored.count, na.rm = T))
@@ -1147,7 +1151,7 @@ icu.treatment.upset.prep <- function(data, ...) {
 
 icu.treatment.upset <- function(data, ...) {
   details <- icu.treatment.upset.prep(data)
-  treatments <- details %>%
+  treatments2 <- details %>%
     dplyr::select(
       subjid, 
       any.antimicrobial, 
@@ -1160,26 +1164,26 @@ icu.treatment.upset <- function(data, ...) {
     pivot_longer(2:7, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present)) 
   # Change labels
-  treatments$Treatment[treatments$Treatment == "O2.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "O2.ever"] <- 
     "Oxygen supplementation"
-  treatments$Treatment[treatments$Treatment == "any.antimicrobial"] <- 
+  treatments2$Treatment[treatments2$Treatment == "any.antimicrobial"] <- 
     "Any antimicrobials"
-  treatments$Treatment[treatments$Treatment == "IMV.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "IMV.ever"] <- 
     "Invasive ventilation"
-  treatments$Treatment[treatments$Treatment == "RRT.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "RRT.ever"] <- 
     "Renal replacement therapy"
-  treatments$Treatment[treatments$Treatment == "steroid.any"] <- 
+  treatments2$Treatment[treatments2$Treatment == "steroid.any"] <- 
     "Corticosteroid"
-  treatments$Treatment[treatments$Treatment == "Inotrope.ever"] <- 
+  treatments2$Treatment[treatments2$Treatment == "Inotrope.ever"] <- 
     "Inotropes"
-  treatments <- treatments %>%
+  treatments2 <- treatments2 %>%
     group_by(subjid) %>%
     dplyr::summarise(Treatments = list(Treatment), Presence = list(Present)) %>%
     mutate(treatments.used = map2(Treatments, Presence, function(c,p){
       c[which(p)]
     })) %>%
     dplyr::select(-Treatments, -Presence)
-  p <- ggplot(treatments, aes(x = treatments.used)) + 
+  p <- ggplot(treatments2, aes(x = treatments.used)) + 
     geom_bar(aes(y=..count../sum(..count..)), fill = "darkorchid4", col = "black") + 
     theme_bw() +
     xlab("Treatments used") +
@@ -1616,7 +1620,7 @@ adm.to.niv <- function(data,...){
   obs <-  admit.discharge.2  # record observed values for reporting
   
   # Plot 
-
+  
   t <- data.frame(x = admit.discharge)
   
   plt <- ggplot(data = t) + 
@@ -1648,20 +1652,20 @@ adm.to.niv.plot <- function(data,...){
 ####### Duration of NIV ###########
 
 dur.niv <- function(data,...){
-
+  
   data2 <- data %>% filter(!is.na(NIMV.start.date)) %>% mutate(event.start.date = NIMV.start.date) %>% mutate(event.end.date = NIMV.end.date)
-
+  
   data2 <- data2  %>% mutate(event.duration = abs(round.zeros(calculate.durations(data2)$durs)))  %>%
-                       mutate(event.censoring = calculate.durations(data2)$cens) 
-
- 
+    mutate(event.censoring = calculate.durations(data2)$cens) 
+  
+  
   left <- data2$event.duration   # all duration dates 
   pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
   t <- data.frame(x = left)
-
+  
   plt <- ggplot(data = t) +
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
     geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
@@ -1673,9 +1677,9 @@ dur.niv <- function(data,...){
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
     labs(y = 'Density', x = 'Duration of NIV (in days)', title = '')
-
+  
   return(list(plt=plt, fit=fit, obs = obs))
-
+  
 }
 
 

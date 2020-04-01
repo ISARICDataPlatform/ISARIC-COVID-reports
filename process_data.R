@@ -761,6 +761,7 @@ patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <-
 # Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
 patient.data$ICU.admission.date <- patient.data$ICU.start.date
 patient.data$ICU.discharge.date <- patient.data$ICU.end.date
+# if we can get those from the daily forms then we can get this
 patient.data <- patient.data %>% 
   mutate(ICU.duration = replace(ICU.duration, 
                                 is.na(ICU.duration) & !is.na(ICU.end.date) & !is.na(ICU.start.date),
