@@ -71,7 +71,7 @@ sites.by.country <- function(data, ...){
   ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
     theme_bw() +
     xlab("Country") +
-    ylab("Sites") + theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+    ylab("Sites") + theme(axis.text.x = element_text(angle = 45, hjust=1.5)) +
     geom_text(aes(x=Country, y=n.sites + 3, label=n.sites), size=4)
 }
 
