@@ -1414,7 +1414,7 @@ violin.sex.func <- function(data, ...){
   
   # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
   
-  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex))
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3)
   
   data2 <- data2 %>% 
     mutate(length.of.stay = abs(round.zeros(start.to.exit)))  %>%

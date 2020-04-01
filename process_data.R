@@ -253,14 +253,18 @@ if(use.row.data){
   row.data <- NULL
 }
 
+date.sanity.check <- function(date) {
+  ifelse(date > today(), NA, date)
+}
+
 raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
-  dplyr::mutate(dsstdat = ymd(dsstdat),
-                agedat = ymd(agedat), 
-                daily_dsstdat = ymd(daily_dsstdat), 
-                daily_lbdat = ymd(daily_lbdat),
-                hostdat = ymd(hostdat),
-                cestdat = ymd(cestdat),
-                dsstdtc = ymd(dsstdtc))    
+  dplyr::mutate(dsstdat = ymd(date.sanity.check(dsstdat)),
+                agedat = ymd(date.sanity.check(agedat)), 
+                daily_dsstdat = ymd(date.sanity.check(daily_dsstdat)), 
+                daily_lbdat = ymd(date.sanity.check(daily_lbdat)),
+                hostdat = ymd(date.sanity.check(hostdat)),
+                cestdat = ymd(date.sanity.check(cestdat)),
+                dsstdtc = ymd(date.sanity.check(dsstdtc)))    
 
 # Demographic data is in the first row
 
