@@ -753,6 +753,7 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
   dplyr::select(-ICU.cols)
+
 patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) == FALSE] <- 
   patient.data$ICU.admission.date
 patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <- 
@@ -760,6 +761,11 @@ patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <-
 # Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
 patient.data$ICU.admission.date <- patient.data$ICU.start.date
 patient.data$ICU.discharge.date <- patient.data$ICU.end.date
+patient.data <- patient.data %>% 
+  mutate(ICU.duration = replace(ICU.duration, 
+                                is.na(ICU.duration) & !is.na(ICU.end.date) & !is.na(ICU.start.date),
+                                as.numeric(difftime(ICU.end.date, ICU.start.date,  unit="days"))
+                                ))
 
 patient.data <- patient.data %>% 
   mutate(RRT.cols  = map(events, function(el){
