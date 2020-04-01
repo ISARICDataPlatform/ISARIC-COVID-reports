@@ -534,7 +534,7 @@ patient.data <- patient.data %>%
       if(nrow(temp) == 0){
         return(TRUE)
       } else {
-        return(temp %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
+        return(temp %>% pull(dsterm) %>% is.na() %>% any())
       }
     }
   })) %>%
