@@ -19,7 +19,7 @@ d.e <- function(data, datafull, ...){
   
   min.age <- ceiling(min(data$age_estimateyears, na.rm=T)) # minimum age
   max.age <- ceiling(max(data$age_estimateyears, na.rm=T)) # maximum age
-
+  
   
   
   # ages by sex
@@ -86,13 +86,13 @@ d.e <- function(data, datafull, ...){
   # Duration of ICU (more censored cases than cases with outcomes; causing mle error)
   
   
- # dur.icu.1 <- dur.icu(data)
- # dur.icu.summ <- fit.summary.gamma(dur.icu.1$fit)
+  # dur.icu.1 <- dur.icu(data)
+  # dur.icu.summ <- fit.summary.gamma(dur.icu.1$fit)
   
   
- # dur.icu <- round( dur.icu.summ$m, 1)
- # dur.icu.u <- round(dur.icu.summ$lower.m, 1)
-#  dur.icu.l <- round(dur.icu.summ$upper.m, 1)
+  # dur.icu <- round( dur.icu.summ$m, 1)
+  # dur.icu.u <- round(dur.icu.summ$lower.m, 1)
+  #  dur.icu.l <- round(dur.icu.summ$upper.m, 1)
   
   
   
@@ -108,7 +108,7 @@ d.e <- function(data, datafull, ...){
   
   
   
-   
+  
   # # Duration of IMV (more censored cases than cases with outcomes; causing mle error)
   # 
   # 
@@ -148,7 +148,7 @@ d.e <- function(data, datafull, ...){
   
   
   
-
+  
   
   # Distribution estimates - OBSERVED
   
@@ -163,7 +163,7 @@ d.e <- function(data, datafull, ...){
   obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
   obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
   obs.sd.adm.outcome <- round(x_sd, 1)
-  cases.full.adm.outcome <- length(adm.outcome.func(patient.data)$obs)
+  cases.full.adm.outcome <- length(adm.outcome(patient.data)$obs)
   obs.median.adm.outcome <- round(x_median, 1)
   
   # Onset to admission
@@ -317,60 +317,54 @@ d.e <- function(data, datafull, ...){
               N.recoveries = N.recoveries,
               N.outcomes = N.outcomes,
               N.healthworkers = N.healthworkers,
-     
+              
               
               m.age.mean =  m.age.mean,
               m.age.sd  =   m.age.sd,
               f.age.mean = f.age.mean,
               f.age.sd = f.age.sd,
               
-            adm.to.outcome =  adm.to.outcome,            # admission to outcome
+              adm.to.outcome =  adm.to.outcome,            # admission to outcome
               adm.outcome.l =  adm.outcome.l,
               adm.outcome.u = adm.outcome.u,
               
               
-            onset.to.adm = onset.to.adm ,             # onset to admission
-            onset.to.adm.lower =   onset.to.adm.l,
-             onset.to.adm.u = onset.to.adm.u,
-            
-            
-            adm.icu = adm.icu,                   # admission to ICU
-            adm.icu.l  =adm.icu.l,
-            adm.icu.u = adm.icu.u,
-            
-           #  
-           # dur.icu =dur.icu,                     # Duration of ICU
-           # dur.icu.l  =adm.icu.l,
-           # dur.icu.u =dur.icu.u,
-           
-           adm.niv = adm.niv,                    # Admission to NIV         
-           adm.niv.l =adm.niv.l,
-           adm.niv.u = adm.niv.u,
-           
-          dur.niv =dur.niv,                    # NIV duration
-          dur.niv.l =dur.niv.l,
-          dur.niv.u =dur.niv.u,
-          
-          
-          adm.imv = adm.imv,                    # Admission to IMV     
-          adm.imv.l =adm.imv.l,
-          adm.imv.u = adm.imv.u,
-          # 
-          # dur.imv =dur.imv,                    # IMV duration
-          # dur.imv.l =dur.imv.l,
-          # dur.imv.u =dur.imv.u,
-          # 
-          
-           
-           
-           
-           
-            
+              onset.to.adm = onset.to.adm ,             # onset to admission
+              onset.to.adm.lower =   onset.to.adm.l,
+              onset.to.adm.u = onset.to.adm.u,
               
+              
+              adm.icu = adm.icu,                   # admission to ICU
+              adm.icu.l  =adm.icu.l,
+              adm.icu.u = adm.icu.u,
+              
+              #  
+              # dur.icu =dur.icu,                     # Duration of ICU
+              # dur.icu.l  =adm.icu.l,
+              # dur.icu.u =dur.icu.u,
+              
+              adm.niv = adm.niv,                    # Admission to NIV         
+              adm.niv.l =adm.niv.l,
+              adm.niv.u = adm.niv.u,
+              
+              dur.niv =dur.niv,                    # NIV duration
+              dur.niv.l =dur.niv.l,
+              dur.niv.u =dur.niv.u,
+              
+              
+              adm.imv = adm.imv,                    # Admission to IMV     
+              adm.imv.l =adm.imv.l,
+              adm.imv.u = adm.imv.u,
+              # 
+              # dur.imv =dur.imv,                    # IMV duration
+              # dur.imv.l =dur.imv.l,
+              # dur.imv.u =dur.imv.u,
+              # 
+
               # sd.onset.to.adm = sd.onset.to.adm,
               # sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
               # sd.onset.to.adm.upper = sd.onset.to.adm.upper,
-          
+              
               obs.mean.adm.outcome =  obs.mean.adm.outcome,
               obs.mean.adm.outcome.lower = obs.mean.adm.outcome.lower,
               obs.mean.adm.outcome.upper = obs.mean.adm.outcome.upper,
@@ -386,7 +380,7 @@ d.e <- function(data, datafull, ...){
               
               
               
-            
+              
               
               
               a.icu = a.icu,
@@ -402,7 +396,7 @@ d.e <- function(data, datafull, ...){
               cfr = cfr,
               cfr.lower = cfr.lower,
               cfr.upper = cfr.upper,
-             
+              
               hfr = hfr,
               hfr.lower = hfr.lower,
               hfr.upper =  hfr.upper,
@@ -417,14 +411,14 @@ d.e <- function(data, datafull, ...){
               p.o2 = p.o2,
               p.NIV = p.NIV,
               p.In.Ven = p.In.Ven,
-          
+              
               icu.n.treat = icu.n.treat,
               icu.p.abx = icu.p.abx,
               icu.p.av = icu.p.av,
               icu.p.o2 = icu.p.o2,
               icu.p.NIV = icu.p.NIV,
               icu.p.In.Ven = icu.p.In.Ven,
-          
+              
               N.icu.deaths = N.icu.deaths,
               N.icu.censored = N.icu.censored,
               N.icu.recoveries = N.icu.recoveries,
