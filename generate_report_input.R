@@ -418,12 +418,16 @@ d.e <- function(data, datafull, ...){
               p.NIV = p.NIV,
               p.In.Ven = p.In.Ven,
           
-             icu.n.treat = icu.n.treat,
-             icu.p.abx = icu.p.abx,
-             icu.p.av = icu.p.av,
-             icu.p.o2 = icu.p.o2,
-             icu.p.NIV = icu.p.NIV,
-             icu.p.In.Ven = icu.p.In.Ven,
+              icu.n.treat = icu.n.treat,
+              icu.p.abx = icu.p.abx,
+              icu.p.av = icu.p.av,
+              icu.p.o2 = icu.p.o2,
+              icu.p.NIV = icu.p.NIV,
+              icu.p.In.Ven = icu.p.In.Ven,
+          
+              N.icu.deaths = N.icu.deaths,
+              N.icu.censored = N.icu.censored,
+              N.icu.recoveries = N.icu.recoveries,
               
               s.dat = s.dat,
               c.dat = c.dat,
