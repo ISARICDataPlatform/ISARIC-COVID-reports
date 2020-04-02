@@ -1568,14 +1568,14 @@ adm.outcome <- function(data, plt = F){
 
 
 
-adm.outcome.plot <- function(data, plt=T,...){
-  adm.outcome(data)$plt
+adm.outcome.plot <- function(data,...){
+  adm.outcome(data, plt=T)$plt
 }
 
 ########## Onset to admission #####
 
 
-onset.adm <- function(data, plt = F, ...){
+onset.adm <- function(data, plt = F){
   
   admit.discharge <- data$onset.to.admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
@@ -1586,6 +1586,7 @@ onset.adm <- function(data, plt = F, ...){
   
   # Plot 
   
+
   if (plt==T){
     t <- data.frame(x=admit.discharge)
     plt <- ggplot(data = t) + 
@@ -1607,8 +1608,8 @@ onset.adm <- function(data, plt = F, ...){
   
 }
 
-onset.adm.plot <- function(data, plt = T, ...){
-  onset.adm(data)$plt
+onset.adm.plot <- function(data,...){
+ onset.adm(data, plt=T)$plt
 }
 
 
@@ -1682,8 +1683,8 @@ adm.to.niv <- function(data,plt = F,...){
 #adm.to.niv(patient.data)
 
 
-adm.to.niv.plot <- function(data, plt = T,...){
-  adm.to.niv(data)$plt
+adm.to.niv.plot <- function(data,...){
+  adm.to.niv(data, plt = T)$plt
 }
 
 
@@ -1735,8 +1736,8 @@ dur.niv <- function(data,plt = F, ...){
 }
 
 
-dur.niv.plot <-  function(data, plt=T, ...){
-  dur.niv(data)$plt
+dur.niv.plot <-  function(data,  ...){
+  dur.niv(data, plt=T)$plt
 }
 
 
@@ -1781,9 +1782,8 @@ adm.to.icu <- function(data, plt = F,...){
   
 }
 
-
-adm.to.icu.plot <- function(data, plt= T,...){
-  adm.to.icu(data, T)$plt
+adm.to.icu.plot <- function(data,...){
+  adm.to.icu(data, plt=T)$plt
 }
 
 
@@ -1832,8 +1832,8 @@ dur.icu <- function(data, plt = F, ...) {
 }
 
 
-dur.icu.plot <- function(data, plt = T,...){
-  dur.icu(data)$plt
+dur.icu.plot <- function(data,...){
+  dur.icu(data, plt=T)$plt
 }
 
 
@@ -1879,8 +1879,8 @@ adm.to.imv <- function(data, plt = F, ...){
   }
 }
 
-adm.to.imv.plot <- function(data,plt=T,...){
-  adm.to.imv(data)$plt
+adm.to.imv.plot <- function(data,...){
+  adm.to.imv(data, plt=T)$plt
 }
 
 
@@ -1927,8 +1927,8 @@ dur.imv <- function(data, plt=F, ...) {
 }
 
 
-dur.imv.plot <- function(data, plt=T,...){
-  dur.imv(data)$plt
+dur.imv.plot <- function(data,...){
+  dur.imv(data, plt=T)$plt
 }
 
 
