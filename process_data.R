@@ -768,6 +768,7 @@ patient.data <- patient.data %>%
   mutate(ICU.duration = replace(ICU.duration, 
                                 is.na(ICU.duration) & !is.na(ICU.end.date) & !is.na(ICU.start.date),
                                 as.numeric(difftime(ICU.end.date, ICU.start.date,  unit="days"))
+
   ))
 
 patient.data <- patient.data %>% 
