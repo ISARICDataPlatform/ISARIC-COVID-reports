@@ -266,7 +266,8 @@ raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
                 daily_lbdat = date.sanity.check(ymd(daily_lbdat)),
                 hostdat = date.sanity.check(ymd(hostdat)),
                 cestdat = date.sanity.check(ymd(cestdat)),
-                dsstdtc = date.sanity.check(ymd(dsstdtc)))
+                dsstdtc = date.sanity.check(ymd(dsstdtc))) %>%
+  mutate(daily_fio2_lborres = as.numeric(daily_fio2_lborres))
 
 
 # Demographic data is in the first row
@@ -285,7 +286,7 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
 
 # Clinical data is in subsequent rows but also _sometimes_ in the first row. So the events column still contains a copy of the first row.
 
-event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup() %>% ungroup()
+event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup()
 
 patient.data <- demog.data %>% left_join(event.data)  %>%
   filter(!str_detect(subjid, "TEST"))
@@ -738,12 +739,14 @@ patient.data <- patient.data %>%
 
 patient.data <- patient.data %>%
   mutate(O2.ever = map_lgl(events, function(x){
-    x$O2.ever <- 0
-    x$O2.ever[x$daily_fio2_lborres > .21] <- 1
-    # to add O2 flow if it becomes available
-    x$O2.ever[x$daily_nasaloxy_cmtrt == 1] <- 1
-    x$O2.ever[x$oxygen_cmoccur == 1] <- 1
-    any(x$O2.ever)
+    
+    x2 <- x %>% filter(!is.na(daily_fio2_lborres) | !is.na(daily_nasaloxy_cmtrt) | !is.na(x$daily_nasaloxy_cmtrt))
+    if(nrow(x2) == 0){
+      NA 
+    } else {
+      x2 <- x2 %>% mutate(O2.ever = daily_fio2_lborres > .21 | daily_nasaloxy_cmtrt == 1 | oxygen_cmoccur == 1)
+      any(x2$O2.ever, na.rm = T)
+    }
   }))
 
 patient.data <- patient.data %>% 
