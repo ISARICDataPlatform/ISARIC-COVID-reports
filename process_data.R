@@ -534,29 +534,30 @@ patient.data <- patient.data %>%
       if(nrow(temp) == 0){
         return(TRUE)
       } else {
-        return(temp %>% pull(dsterm) %>% match(c(1,4)) %>% is.na() %>% any())
+        return(temp %>% pull(dsterm) %>% is.na() %>% any())
       }
     }
   })) %>%
-  # outcome is just death or discharge
+  # outcome is death, discharge or other for transfers etc
   dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
     if(x){
       return("censored")
     } else {
       return(switch(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsterm) %>% as.character(),
                     "1" = "discharge",
-                    "4" = "death"))
+                    "4" = "death",
+                    NA))
     }
   })) %>%
-  dplyr::mutate(outcome.date.known = map2_dbl(censored, events, function(x, y){
-    if(x){
+  dplyr::mutate(outcome.date.known = map2_dbl(outcome, events, function(x, y){
+    if(!(x %in% c("discharge", "death"))){
       return(2)
     } else {
       return(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtcyn))
     }
   }))  %>%
-  dplyr::mutate(outcome.date = map2_chr(censored, events, function(x, y){
-    if(x){
+  dplyr::mutate(outcome.date = map2_chr(outcome, events, function(x, y){
+    if(!(x %in% c("discharge", "death"))){
       return(NA)
     } else {
       if(length(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtc) %>% as.character()) > 1){
@@ -753,6 +754,7 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
   dplyr::select(-ICU.cols)
+
 patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) == FALSE] <- 
   patient.data$ICU.admission.date
 patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <- 
@@ -760,6 +762,12 @@ patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <-
 # Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
 patient.data$ICU.admission.date <- patient.data$ICU.start.date
 patient.data$ICU.discharge.date <- patient.data$ICU.end.date
+# if we can get those from the daily forms then we can get this
+patient.data <- patient.data %>% 
+  mutate(ICU.duration = replace(ICU.duration, 
+                                is.na(ICU.duration) & !is.na(ICU.end.date) & !is.na(ICU.start.date),
+                                as.numeric(difftime(ICU.end.date, ICU.start.date,  unit="days"))
+                                ))
 
 patient.data <- patient.data %>% 
   mutate(RRT.cols  = map(events, function(el){
@@ -780,10 +788,6 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$Inotrope.cols)) } %>%
   dplyr::select(-Inotrope.cols)  
-
-# @todo this script needs to be more aware of the date of the dataset
-
-ref.date = today()
 
 # calculation of time periods @todo NIMV, IMV
 
