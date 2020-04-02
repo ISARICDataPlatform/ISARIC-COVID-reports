@@ -6,6 +6,7 @@
 age.pyramid <- function(data, ...){
   
   data2 <- data %>%
+    filter(!is.na(outcome)) %>%
     group_by(agegp5, sex, outcome) %>%
     dplyr::summarise(count = n()) %>%
     ungroup() %>%
@@ -79,6 +80,7 @@ sites.by.country <- function(data, ...){
 
 outcomes.by.country <- function(data, ...){
   data2 <- data %>%
+    filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country))
   
@@ -93,6 +95,7 @@ outcomes.by.country <- function(data, ...){
 
 outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
+    filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored", "death"))) %>%
     mutate(two.digit.epiweek = map_chr(start.date, function(x){
       ew <- epiweek(x)
@@ -1006,9 +1009,10 @@ status.by.time.after.admission <- function(data, ...){
     ungroup() 
   
   ggplot(complete.timeline.2) + geom_bar(aes(x = day, fill = status), position = "fill") +
-    scale_fill_brewer(palette = "Dark2", name  = "Status", drop = F, labels = c("Discharged", "Transferred","Unknown", "Censored", "Ward", "ICU", "Dead")) + 
+    scale_fill_brewer(palette = "Dark2", name  = "Status", drop = F, labels = c("Discharged", "Transferred","Unknown", "Ongoing care", "Ward", "ICU", "Dead")) + 
     theme_bw() + 
     xlab("Days relative to admission") +
+    geom_vline(xintercept = 14.5) + 
     ylab("Proportion")
 }
 

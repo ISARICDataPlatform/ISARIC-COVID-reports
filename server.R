@@ -24,6 +24,7 @@ server <- function(input, output) {
   output$agePyramid <- {
     filtered.data.ap <- reactive({
       fd <- patient.data %>% 
+        filter(!is.na(outcome)) %>%
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
         filter(sex %in% input$sex) %>%
@@ -86,6 +87,7 @@ server <- function(input, output) {
   output$outcomesByAdmissionDate <- {
     filtered.data.obad <- reactive({
       fd <- patient.data %>% 
+        filter(!is.na(outcome)) %>%
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
         filter(sex %in% input$sex) %>%
@@ -174,6 +176,7 @@ server <- function(input, output) {
   output$admOutcomePlot <- {
     filtered.data.aop <- reactive({
       fd <- patient.data %>%
+        filter(!is.na(outcome)) %>%
         filter(Country %in% input$Country) %>%
         filter(outcome %in% input$outcome) %>%
         filter(sex %in% input$sex) %>%
