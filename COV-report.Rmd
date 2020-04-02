@@ -1,6 +1,9 @@
 ---
 title: "International Severe Acute Respiratory and Emerging Infections Consortium (ISARIC)"
 output:
+  pdf_document:
+    toc: no
+    toc_depth: '2'
   html_document:
     df_print: paged
     number_sections: yes
@@ -8,9 +11,6 @@ output:
     toc_depth: 2
     toc_float:
       collapsed: no
-  pdf_document:
-    toc: yes
-    toc_depth: '2'
 ---
 
 ```{r setup, include = FALSE}
@@ -137,7 +137,7 @@ violin.age.func(patient.data)
 
 <!-- ``` -->
 
-**Figure 6**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset). The rightmost bar, marked with an asterisk, represents an incomplete week (due to the embargo date) rather than a genuine decline in cases.
+**Figure 6**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset). The rightmost bar, marked with an asterisk, represents an incomplete week (due to the 14-day cutoff) rather than a genuine decline in cases.
 
 ```{r recruitment3, echo=FALSE}
 
@@ -178,7 +178,7 @@ treatment.use.plot.icu(patient.data)
 icu.treatment.upset(patient.data)
 ```
 
-**Figure 11* Distribution of lengths of stay for patients who were admitted to an Intensive Care Unit: total length of stay for this group and length of stay within Intensive Care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+**Figure 11** Distribution of lengths of stay for patients who were admitted to an Intensive Care Unit: total length of stay for this group and length of stay within Intensive Care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r icu_los, echo=FALSE}
 icu.violin.plot(patient.data)
