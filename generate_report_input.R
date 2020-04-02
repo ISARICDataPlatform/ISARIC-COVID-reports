@@ -43,18 +43,16 @@ d.e <- function(data, datafull, ...){
   N.healthworkers <- summary(as.factor(patient.data$healthwork_erterm))[[1]]
   
   
-  # Distribution estimates
+  # Distribution estimates - EXPECTED 
   
   # Admission to outcome
   
-  adm.out.func.1 <- adm.outcome.func(data)
-  gamma.adm.outcome.fit <- fit.summary.gamma(adm.out.func.1$fit)
+  adm.out.func.1 <- adm.outcome(data)
+  adm.out.summ <- fit.summary.gamma(adm.out.func.1$fit)
   
-  mean.adm.to.outcome <-  round(gamma.adm.outcome.fit$m, 1)
-  adm.outcome.lower <-   round(gamma.adm.outcome.fit$lower.m, 1)
-  adm.outcome.upper <-   round(gamma.adm.outcome.fit$upper.m, 1)
-  median.adm.to.outcome <- round(gamma.adm.outcome.fit$bmed$t0, 1)
-  
+  adm.to.outcome <-  round(adm.out.summ$m, 1)
+  adm.outcome.l <-   round(adm.out.summ$lower.m, 1)
+  adm.outcome.u <-   round(adm.out.summ$upper.m, 1)
   
   # Onset to admission
   
@@ -63,14 +61,93 @@ d.e <- function(data, datafull, ...){
   # sd.onset.to.adm.upper <-  round(sqrt(fit.summary.gamma(onset.adm.func(data)$fit)$upper.v), 1)
   # 
   
-  onset.adm.fn.1 <- onset.adm.func(data)
-  gamma.onset.adm.fit <- fit.summary.gamma(onset.adm.fn.1$fit)
+  onset.adm.fn.1 <- onset.adm(data)
+  onset.adm.summ <- fit.summary.gamma(onset.adm.fn.1$fit)
   
   
-  mean.onset.to.adm <-  round(gamma.onset.adm.fit$m, 1)
-  mean.onset.to.adm.lower <-  round(gamma.onset.adm.fit$lower.m, 1)
-  mean.onset.to.adm.upper <-  round(gamma.onset.adm.fit$upper.m, 1)
-  median.onset.to.adm <- round(gamma.onset.adm.fit$bmed$t0, 1)
+  onset.to.adm <-  round(onset.adm.summ$m, 1)
+  onset.to.adm.l <-  round(onset.adm.summ$lower.m, 1)
+  onset.to.adm.u <-  round(onset.adm.summ$upper.m, 1)
+  
+  
+  
+  # Admission to ICU
+  
+  adm.to.icu.1 <- adm.to.icu(data)
+  adm.icu.summ <-  fit.summary.gamma(adm.to.icu.1$fit)
+  
+  
+  adm.icu <- round(adm.icu.summ$m, 1)
+  adm.icu.l <- round(adm.icu.summ$lower.m, 1)
+  adm.icu.u <- round(adm.icu.summ$upper.m, 1)
+  
+  
+  
+  # Duration of ICU (more censored cases than cases with outcomes; causing mle error)
+  
+  
+ # dur.icu.1 <- dur.icu(data)
+ # dur.icu.summ <- fit.summary.gamma(dur.icu.1$fit)
+  
+  
+ # dur.icu <- round( dur.icu.summ$m, 1)
+ # dur.icu.u <- round(dur.icu.summ$lower.m, 1)
+#  dur.icu.l <- round(dur.icu.summ$upper.m, 1)
+  
+  
+  
+  # Admission to IMV
+  
+  adm.imv.1 <- adm.to.imv(data)
+  adm.imv.summ <- fit.summary.gamma(adm.imv.1$fit)
+  
+  
+  adm.imv <- round(adm.imv.summ$m, 1)
+  adm.imv.l <- round(adm.imv.summ$lower.m, 1)
+  adm.imv.u <- round(adm.imv.summ$upper.m, 1)
+  
+  
+  
+   
+  # # Duration of IMV (more censored cases than cases with outcomes; causing mle error)
+  # 
+  # 
+  # dur.imv.1 <- dur.imv(data)
+  # dur.imv.summ <- fit.summary.gamma(dur.imv.1$fit)
+  # 
+  # 
+  # dur.imv <- round(dur.imv.summ$m, 1)
+  # dur.imv.l <- round(dur.imv.summ$lower.m, 1)
+  # dur.imv.u <- round(dur.imv.summ$upper.m, 1)
+  # 
+  
+  # Admission to NIV
+  
+  adm.niv.1 <- adm.to.niv(data)
+  adm.niv.summ <- fit.summary.gamma(adm.niv.1$fit)
+  
+  
+  adm.niv <- round(adm.niv.summ$m, 1)
+  adm.niv.l <- round(adm.niv.summ$lower.m, 1)
+  adm.niv.u <- round(adm.niv.summ$upper.m, 1)
+  
+  
+  
+  
+  
+  # Duration of NIV
+  
+  dur.niv.1 <- dur.niv(data)
+  dur.niv.summ <- fit.summary.gamma(dur.niv.1$fit)
+  
+  
+  dur.niv <- round(dur.niv.summ$m, 1)
+  dur.niv.l <- round(dur.niv.summ$lower.m, 1)
+  dur.niv.u <- round(dur.niv.summ$upper.m, 1)
+  
+  
+  
+  
 
   
   # Distribution estimates - OBSERVED
@@ -80,23 +157,27 @@ d.e <- function(data, datafull, ...){
   x <- adm.out.func.1$obs
   x_mean <- mean(x, na.rm = T)
   x_sd <- sd(x, na.rm = T)
+  x_median <- median(x, na.rm = T)
   
   obs.mean.adm.outcome <- round(x_mean, 1)
   obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
   obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
-  obs.sd.adm.outcome <- round(x_sd, 2)
+  obs.sd.adm.outcome <- round(x_sd, 1)
   cases.full.adm.outcome <- length(adm.outcome.func(patient.data)$obs)
+  obs.median.adm.outcome <- round(x_median, 1)
   
   # Onset to admission
   
   y <- onset.adm.fn.1$obs
   y_mean <- sd(y, na.rm = T)
   y_sd <- mean(y, na.rm = T)
+  y_median <- median(y, na.rm = T)
   
   obs.mean.onset.adm <- round(y_mean, 1)
   obs.mean.onset.adm.lower <- round( y_mean - 1.96*(y_sd/sqrt(length(y))), 1)
   obs.mean.onset.adm.upper <-  round( y_mean + 1.96*(y_sd/sqrt(length(y))), 1)
-  obs.sd.onset.adm <- round(y_sd, 2)
+  obs.sd.onset.adm <- round(y_sd, 1)
+  obs.median.onset.adm <- round(y_median, 1)
   
   
   # Admission to ICU (not fitted due to low count)
@@ -114,7 +195,7 @@ d.e <- function(data, datafull, ...){
   
   # Admission to IMV
   
-  a.imv <- patient.data$admission.to.IMV
+  a.imv <- data$admission.to.IMV
   a.imv <- round.zeros(abs(a.imv[!is.na(a.imv)]))
   
   
@@ -126,12 +207,12 @@ d.e <- function(data, datafull, ...){
   
   # Admission to NIMV
   
-  a.nimv <- patient.data$admission.to.NIMV
+  a.nimv <- data$admission.to.NIMV
   a.nimv <- round.zeros(abs(a.nimv[!is.na(a.nimv)]))
   
   
   # NIMV duration
-  d.nimv <- patient.data$NIMV.duration
+  d.nimv <- data$NIMV.duration
   d.nimv <- round.zeros(abs(d.nimv[!is.na(d.nimv)]))
   
   
@@ -219,13 +300,48 @@ d.e <- function(data, datafull, ...){
               f.age.mean = f.age.mean,
               f.age.sd = f.age.sd,
               
-              mean.adm.to.outcome =  mean.adm.to.outcome,
-              adm.outcome.lower =  adm.outcome.lower,
-              adm.outcome.upper = adm.outcome.upper,
+            adm.to.outcome =  adm.to.outcome,            # admission to outcome
+              adm.outcome.l =  adm.outcome.l,
+              adm.outcome.u = adm.outcome.u,
               
-              mean.onset.to.adm = mean.onset.to.adm ,
-              mean.onset.to.adm.lower =   mean.onset.to.adm.lower,
-              mean.onset.to.adm.upper = mean.onset.to.adm.upper,
+              
+            onset.to.adm = onset.to.adm ,             # onset to admission
+            onset.to.adm.lower =   onset.to.adm.l,
+             onset.to.adm.u = onset.to.adm.u,
+            
+            
+            adm.icu = adm.icu,                   # admission to ICU
+            adm.icu.l  =adm.icu.l,
+            adm.icu.u = adm.icu.u,
+            
+           #  
+           # dur.icu =dur.icu,                     # Duration of ICU
+           # dur.icu.l  =adm.icu.l,
+           # dur.icu.u =dur.icu.u,
+           
+           adm.niv = adm.niv,                    # Admission to NIV         
+           adm.niv.l =adm.niv.l,
+           adm.niv.u = adm.niv.u,
+           
+          dur.niv =dur.niv,                    # NIV duration
+          dur.niv.l =dur.niv.l,
+          dur.niv.u =dur.niv.u,
+          
+          
+          adm.imv = adm.imv,                    # Admission to IMV     
+          adm.imv.l =adm.imv.l,
+          adm.imv.u = adm.imv.u,
+          # 
+          # dur.imv =dur.imv,                    # IMV duration
+          # dur.imv.l =dur.imv.l,
+          # dur.imv.u =dur.imv.u,
+          # 
+          
+           
+           
+           
+           
+            
               
               # sd.onset.to.adm = sd.onset.to.adm,
               # sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
@@ -236,11 +352,18 @@ d.e <- function(data, datafull, ...){
               obs.mean.adm.outcome.upper = obs.mean.adm.outcome.upper,
               obs.sd.adm.outcome  = obs.sd.adm.outcome,
               cases.full.adm.outcome = cases.full.adm.outcome, 
+              obs.median.adm.outcome = obs.median.adm.outcome,
               
               obs.mean.onset.adm =  obs.mean.onset.adm,
               obs.mean.onset.adm.lower = obs.mean.onset.adm.lower,
               obs.mean.onset.adm.upper = obs.mean.onset.adm.upper,
               obs.sd.onset.adm = obs.sd.onset.adm,
+              obs.median.onset.adm =  obs.median.onset.adm,
+              
+              
+              
+            
+              
               
               a.icu = a.icu,
               d.icu = d.icu,
