@@ -3,6 +3,7 @@ title: "Summary Tables"
 output: html_document
 ---
 
+
 **Table 1:** Patient Characteristics
 
 | Description                  | Value                                      |
@@ -69,8 +70,8 @@ output: html_document
 | Diabetes                      | `r de$c.dat$present[8]`        | `r de$c.dat$absent[8]`        | `r de$c.dat$unknown[8]`        |
 | Liver disease                 | `r de$c.dat$present[9]`        | `r de$c.dat$absent[9]`        | `r de$c.dat$unknown[9]`        |
 | Malignant neoplasm            | `r de$c.dat$present[10]`       | `r de$c.dat$absent[10]`       | `r de$c.dat$unknown[10]`       |
-| Malnutrition                  | `r de$c.dat$absent[11]`        | `r de$c.dat$absent[11]`       | `r de$c.dat$unknown[11]`       |
-| Obesity                       | `r de$c.dat$absent[12]`        | `r de$c.dat$absent[12]`       | `r de$c.dat$unknown[12]`       |
+| Malnutrition                  | `r de$c.dat$present[11]`        | `r de$c.dat$absent[11]`       | `r de$c.dat$unknown[11]`       |
+| Obesity                       | `r de$c.dat$present[12]`        | `r de$c.dat$absent[12]`       | `r de$c.dat$unknown[12]`       |
 | Chronic kidney disease        | `r de$c.dat$present[14]`       | `r de$c.dat$absent[14]`       | `r de$c.dat$unknown[14]`       |
 | Rheumatologic disorder        | `r de$c.dat$present[15]`       | `r de$c.dat$absent[15]`       | `r de$c.dat$unknown[15]`       |
 | Smoking                       | `r de$c.dat$present[16]`       | `r de$c.dat$absent[16]`       | `r de$c.dat$unknown[16]`       |
@@ -96,20 +97,54 @@ output: html_document
 <br /><br /><br />
 
 
-**Table 3:** Duration of stay
+<!-- **Table 3:** Key time variables -->
 
 
-| **Time (in days)**   | **Observed mean**  | **Observed SD**    | **Expected mean** (95% CI) | **Notes** |
-|------------------------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------|-------------------------------------------------------------------------------------------|---------------------------------------------|
-| Length of hospital stay              | `r de$obs.mean.adm.outcome` (`r de$obs.mean.adm.outcome.lower`, `r de$obs.mean.adm.outcome.upper`) | `r de$obs.sd.adm.outcome`            | `r de$mean.adm.to.outcome` (`r de$adm.outcome.lower`, `r de$adm.outcome.upper`)           |                                             |
-|Symptom onset to admission | `r  de$obs.mean.onset.adm` (`r de$obs.mean.onset.adm.lower`, `r de$obs.mean.onset.adm.upper`)      | `r de$obs.sd.onset.adm`              | `r de$mean.onset.to.adm` (`r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) |                                             |
-|                                                |                                                                                                    |                                      |                                                                                           |                                             |
-|Admission to ICU entry     | `r round(mean(de$a.icu, na.rm=T), 1)`                                                              | `r round(sd(de$a.icu, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.icu)` observations  |
-| Duration of ICU                     | `r round(mean(de$d.icu, na.rm=T), 1)`                                                              | `r round(sd(de$d.icu, na.rm=T), 1)`     |                                                                                           | Based on `r length(de$d.icu)` observations  |
-|                                                |                                                                                                    |                                      |                                                                                           |                                             |
-| Admission to IMV           | `r round(mean(de$a.imv, na.rm=T), 1)`                                                              | `r round(sd(de$a.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.imv)` observations  |
-| Duration of IMV                                | `r round(mean(de$d.imv, na.rm=T), 1)`                                                              | `r round(sd(de$d.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$d.imv)` observations  |
-|                                                |                                                                                                    |                                      |                                                                                           |                                             |
-| Admission to NIV          | `r round(mean(de$a.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$a.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$a.nimv)` observations |
-| Duration of NIV                               | `r round(mean(de$d.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$d.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$d.nimv)` observations |
+<!-- | **Time (in days)**   | **Observed mean** (95% CI)  | **Observed SD**    | **Expected mean** (95% CI)^[Unlike the observed mean, the expected mean estimate accounts for all cases, irrespective of whether an outcome has been observed by the time of analysis.] | **Notes** | -->
+<!-- |------------------------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------|-------------------------------------------------------------------------------------------|---------------------------------------------| -->
+<!-- | Length of hospital stay              | `r de$obs.mean.adm.outcome` (`r de$obs.mean.adm.outcome.lower`, `r de$obs.mean.adm.outcome.upper`) | `r de$obs.sd.adm.outcome`            | `r de$mean.adm.to.outcome` (`r de$adm.outcome.lower`, `r de$adm.outcome.upper`)           |                                             | -->
+<!-- |Symptom onset to admission | `r  de$obs.mean.onset.adm` (`r de$obs.mean.onset.adm.lower`, `r de$obs.mean.onset.adm.upper`)      | `r de$obs.sd.onset.adm`              | `r de$mean.onset.to.adm` (`r de$mean.onset.to.adm.lower`, `r de$mean.onset.to.adm.upper`) |                                             | -->
+<!-- |                                                |                                                                                                    |                                      |                                                                                           |                                             | -->
+<!-- |Admission to ICU entry     | `r round(mean(de$a.icu, na.rm=T), 1)`                                                              | `r round(sd(de$a.icu, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.icu)` observations  | -->
+<!-- | Duration of ICU                     | `r round(mean(de$d.icu, na.rm=T), 1)`                                                              | `r round(sd(de$d.icu, na.rm=T), 1)`     |                                                                                           | Based on `r length(de$d.icu)` observations  | -->
+<!-- |                                                |                                                                                                    |                                      |                                                                                           |                                             | -->
+<!-- | Admission to IMV           | `r round(mean(de$a.imv, na.rm=T), 1)`                                                              | `r round(sd(de$a.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$a.imv)` observations  | -->
+<!-- | Duration of IMV                                | `r round(mean(de$d.imv, na.rm=T), 1)`                                                              | `r round(sd(de$d.imv, na.rm=T), 1)`  |                                                                                           | Based on `r length(de$d.imv)` observations  | -->
+<!-- |                                                |                                                                                                    |                                      |                                                                                           |                                             | -->
+<!-- | Admission to NIV          | `r round(mean(de$a.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$a.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$a.nimv)` observations | -->
+<!-- | Duration of NIV                               | `r round(mean(de$d.nimv, na.rm=T), 1)`                                                             | `r round(sd(de$d.nimv, na.rm=T), 1)` |                                                                                           | Based on `r length(de$d.nimv)` observations | -->
+
+
+
+
+**Table 3:** Key time variables.
+
+
+The expected mean is 'NA' for those variables for which parameter estimation could not be performed, due to the high proportion of unobserved end dates.
+
+
+| Time (in days)             | Observed mean                          | Observed SD                          | Observed median                          | Expected mean (95% CI)                                             |
+|----------------------------|----------------------------------------|--------------------------------------|------------------------------------------|--------------------------------------------------------------------|
+| Length of hospital stay    | `r de$obs.mean.adm.outcome`            | `r de$obs.sd.adm.outcome`            | `r de$obs.median.adm.outcome`            | `r de$adm.to.outcome` (`r de$adm.outcome.l`, `r de$adm.outcome.u`) |
+| Symptom onset to admission | `r  de$obs.mean.onset.adm`             | `r de$obs.sd.onset.adm`              | `r  de$obs.median.onset.adm`             | `r de$onset.to.adm` (`r de$onset.to.adm.l`, `r de$onset.to.adm.u`) |
+|                            |                                        |                                      |                                          |                                                                    |
+| Admission to ICU entry     | `r round(mean(de$a.icu, na.rm=T), 1)`  | `r round(sd(de$a.icu, na.rm=T), 1)`  | `r round(median(de$a.icu, na.rm=T), 1)`  | `r de$adm.icu` (`r adm.icu.l`, `r adm.icu.u`)                      |
+| Duration of ICU            | `r round(mean(de$d.icu, na.rm=T), 1)`  | `r round(sd(de$d.icu, na.rm=T), 1)`  | `r round(median(de$d.icu, na.rm=T), 1)`  | NA                                                                 |
+|                            |                                        |                                      |                                          |                                                                    |
+| Admission to IMV           | `r round(mean(de$a.imv, na.rm=T), 1)`  | `r round(sd(de$a.imv, na.rm=T), 1)`  | `r round(median(de$a.imv, na.rm=T), 1)`  | `r de$adm.imv` (`r adm.imv.l`, `r adm.imv.u`)                      |
+| Duration of IMV            | `r round(mean(de$d.imv, na.rm=T), 1)`  | `r round(sd(de$d.imv, na.rm=T), 1)`  | `r round(median(de$d.imv, na.rm=T), 1)`  | NA                                                                 |
+|                            |                                        |                                      |                                          |                                                                    |
+| Admission to NIV           | `r round(mean(de$a.nimv, na.rm=T), 1)` | `r round(sd(de$a.nimv, na.rm=T), 1)` | `r round(median(de$a.nimv, na.rm=T), 1)` | `r de$adm.niv` (`r adm.niv.l`, `r adm.niv.u`)                      |
+| Duration of NIV            | `r round(mean(de$d.nimv, na.rm=T), 1)` | `r round(sd(de$d.nimv, na.rm=T), 1)` | `r round(median(de$d.nimv, na.rm=T), 1)` | `r de$dur.niv` (`r dur.niv.l`, `r dur.niv.u`)                      |
+
+
+
+
+
+
+
+
+
+
+
 

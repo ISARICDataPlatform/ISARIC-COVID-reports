@@ -1521,7 +1521,7 @@ violin.age.func <- function(data, ...){
 ########### Admission to outcome (accounting for censorship) #########
 
 
-adm.outcome.func <- function(data){
+adm.outcome <- function(data, plt = F){
   
   data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
   
@@ -1540,11 +1540,12 @@ adm.outcome.func <- function(data){
   right <- replace(admit.discharge, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
-  t <- data.frame(x = admit.discharge)
+ 
   
   obs <- right[!(is.na(right))] # cases with completed duration days.
   
-  
+  if(plt == T){
+  t <- data.frame(x = admit.discharge)
   plt <- ggplot(data = t) + 
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
     geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
@@ -1559,18 +1560,22 @@ adm.outcome.func <- function(data){
   
   return(list(plt=plt, fit=fit, obs = obs))
   
+  }else{
+    return(list(fit=fit, obs = obs))
+  }
+  
 }
 
 
 
-adm.outcome.plot <- function(data, ...){
-  adm.outcome.func(data)$plt
+adm.outcome.plot <- function(data, plt=T,...){
+  adm.outcome(data)$plt
 }
 
 ########## Onset to admission #####
 
 
-onset.adm.func <- function(data,...){
+onset.adm <- function(data, plt = F, ...){
   
   admit.discharge <- data$onset.to.admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
@@ -1581,6 +1586,7 @@ onset.adm.func <- function(data,...){
   
   # Plot 
   
+  if (plt==T){
   t <- data.frame(x=admit.discharge)
   plt <- ggplot(data = t) + 
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
@@ -1595,17 +1601,22 @@ onset.adm.func <- function(data,...){
     labs(y = 'Density', x = 'Time (in days) from symptom onset to admission', title = ' ')
   
   return(list(plt=plt, fit=fit, obs = obs))
-  
+  }else{
+    return(list(fit=fit, obs = obs))
+  }
   
 }
 
-onset.adm.plot <- function(data, ...){
-  onset.adm.func(data)$plt
+onset.adm.plot <- function(data, plt = T, ...){
+  onset.adm(data)$plt
 }
 
 
 # Function to calculate NIMV durations for all cases with reported NIMV.start dates. 
 # Durations are calculated for cases that are still in NIMV by the ref.date (i.e. date of the data).
+
+
+ref.date <<- as.Date(substr(uk.data.file, start = 6, stop  = 15))
 
 calculate.durations <- function(data){
   durs <- c()
@@ -1616,7 +1627,7 @@ calculate.durations <- function(data){
       durs[i] <- data$event.end.date[i] - data$event.start.date[i]
       cens[i] <- 0                # if end.date is available, then consider as not censored
     }else{
-      durs[i] <- ref.date - data2$event.start.date[i]  # if end.date is unreported, use embargo.limit date as duration.
+      durs[i] <- ref.date - data$event.start.date[i]  # if end.date is unreported, use reference date (ie. data pull date) as reference
       cens[i] <- 1                # if end.date is not reported, then consider as censored
     }
   }
@@ -1627,7 +1638,7 @@ calculate.durations <- function(data){
 
 ######## Admission to NIV ############
 
-adm.to.niv <- function(data,...){
+adm.to.niv <- function(data,plt = F,...){
   
   
   data2 <- data %>% filter(!is.na(admission.to.NIMV))
@@ -1641,9 +1652,11 @@ adm.to.niv <- function(data,...){
   obs <-  admit.discharge.2  # record observed values for reporting
   
   # Plot 
+
+  if(plt == T){
   
-  t <- data.frame(x = admit.discharge)
-  
+    t <- data.frame(x = admit.discharge)
+    
   plt <- ggplot(data = t) + 
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
     geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
@@ -1658,6 +1671,10 @@ adm.to.niv <- function(data,...){
   
   return(list(plt=plt, fit=fit, obs = obs))
   
+  }else{
+    return(list(fit=fit, obs = obs))
+  }
+  
 }
 
 
@@ -1665,15 +1682,15 @@ adm.to.niv <- function(data,...){
 #adm.to.niv(patient.data)
 
 
-adm.to.niv.plot <- function(data,...){
+adm.to.niv.plot <- function(data, plt = T,...){
   adm.to.niv(data)$plt
 }
 
 
 ####### Duration of NIV ###########
 
-dur.niv <- function(data,...){
-  
+
+dur.niv <- function(data,plt = F, ...){
   data2 <- data %>% filter(!is.na(NIMV.start.date)) %>% mutate(event.start.date = NIMV.start.date) %>% mutate(event.end.date = NIMV.end.date)
   
   data2 <- data2  %>% mutate(event.duration = abs(round.zeros(calculate.durations(data2)$durs)))  %>%
@@ -1685,8 +1702,19 @@ dur.niv <- function(data,...){
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
-  t <- data.frame(x = left)
+
   
+  pos.n.cens <- which(data2$event.censoring == 0)
+  obs <- left[pos.n.cens]
+  
+ 
+  
+  # Plt
+  
+  if(plt == T){
+  
+   t <- data.frame(x = left)
+
   plt <- ggplot(data = t) +
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
     geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
@@ -1700,11 +1728,14 @@ dur.niv <- function(data,...){
     labs(y = 'Density', x = 'Duration of NIV (in days)', title = '')
   
   return(list(plt=plt, fit=fit, obs = obs))
-  
+
+  }else{
+    return(list(fit=fit, obs = obs))
+  }
 }
 
 
-dur.niv.plot <-  function(data, ...){
+dur.niv.plot <-  function(data, plt=T, ...){
   dur.niv(data)$plt
 }
 
@@ -1713,7 +1744,7 @@ dur.niv.plot <-  function(data, ...){
 ######## Admission to ICU #######
 
 
-adm.to.icu <- function(data,...){
+adm.to.icu <- function(data, plt = F,...){
   
   data2 <- data %>% filter(!is.na(admission.to.ICU))
   
@@ -1726,6 +1757,8 @@ adm.to.icu <- function(data,...){
   obs <-  admit.discharge.2  # record observed values for reporting
   
   # Plot 
+  
+  if(plt==T){
   
   t <- data.frame(x = admit.discharge)
   
@@ -1742,18 +1775,21 @@ adm.to.icu <- function(data,...){
     labs(y = 'Density', x = 'Time (in days) from admission to ICU', title = '')
   
   return(list(plt=plt, fit=fit, obs = obs))
+  }else{
+    return(list(fit=fit, obs = obs))
+  }
   
 }
 
 
-adm.to.icu.plot <- function(data,...){
+adm.to.icu.plot <- function(data, plt= T,...){
   adm.to.icu(data)$plt
 }
 
 
 ####### Duration of ICU #########
 
-dur.icu <- function(data,...) {
+dur.icu <- function(data, plt = F, ...) {
   
   data2 <- data %>% filter(!is.na(ICU.admission.date)) %>% mutate(event.start.date = ICU.admission.date) %>% mutate(event.end.date = ICU.discharge.date)
   
@@ -1766,6 +1802,14 @@ dur.icu <- function(data,...) {
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
+  
+  pos.n.cens <- which(data2$event.censoring == 0)
+  obs <- left[pos.n.cens]
+  
+  
+  
+  if(plt==T){
+  
   t <- data.frame(x = left)
   
   plt <- ggplot(data = t) +
@@ -1781,10 +1825,14 @@ dur.icu <- function(data,...) {
     labs(y = 'Density', x = 'Time (in days) spent in ICU', title = '')
   
   return(list(plt=plt, fit=fit, obs = obs))
+  
+  }else{
+    return(list(fit=fit, obs = obs))
+  }
 }
 
 
-dur.icu.plot <- function(data){
+dur.icu.plot <- function(data, plt = T,...){
   dur.icu(data)$plt
 }
 
@@ -1794,7 +1842,7 @@ dur.icu.plot <- function(data){
 ############## Admission to IMV #######################
 
 
-adm.to.imv <- function(data,...){
+adm.to.imv <- function(data, plt = F, ...){
   
   data2 <- data %>% filter(!is.na(admission.to.IMV))
   
@@ -1807,6 +1855,8 @@ adm.to.imv <- function(data,...){
   obs <-  admit.discharge.2  # record observed values for reporting
   
   # Plot 
+  
+  if(plt == T){
   
   t <- data.frame(x = admit.discharge)
   
@@ -1823,9 +1873,13 @@ adm.to.imv <- function(data,...){
     labs(y = 'Density', x = 'Time (in days) from admission to IMV', title = '')
   
   return(list(plt=plt, fit=fit, obs = obs))
+  
+  }else{
+    return(list(fit=fit, obs = obs))
+  }
 }
 
-adm.to.imv.plot <- function(data,...){
+adm.to.imv.plot <- function(data,plt=T,...){
   adm.to.imv(data)$plt
 }
 
@@ -1833,7 +1887,7 @@ adm.to.imv.plot <- function(data,...){
 ################ Duration of IMV ####################
 
 
-dur.imv <- function(data,...) {
+dur.imv <- function(data, plt=F, ...) {
   
   data2 <- data %>% filter(!is.na(IMV.start.date)) %>% mutate(event.start.date = IMV.start.date) %>% mutate(event.end.date = IMV.end.date)
   
@@ -1846,10 +1900,13 @@ dur.imv <- function(data,...) {
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
-  t <- data.frame(x = left)
   
   pos.n.cens <- which(data2$event.censoring == 0)
   obs <- left[pos.n.cens]
+  
+  if(plt ==T){
+  
+  t <- data.frame(x = left)
   
   plt <- ggplot(data = t) +
     #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
@@ -1864,10 +1921,13 @@ dur.imv <- function(data,...) {
     labs(y = 'Density', x = 'Time (in days) spent receiving IMV', title = '')
   
   return(list(plt=plt, fit=fit, obs = obs))
+  }else{
+    return(list(fit=fit, obs = obs))
+  }
 }
 
 
-dur.imv.plot <- function(data){
+dur.imv.plot <- function(data, plt=T,...){
   dur.imv(data)$plt
 }
 

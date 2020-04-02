@@ -10,6 +10,7 @@ output: html_document
 * Christl A. Donnelly
 * Christophe Fraser
 * Matthew Hall
+* Hayley Hardwick
 *	Ewen Harrison
 * Karl Holden
 * Peter Horby
