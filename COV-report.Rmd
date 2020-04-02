@@ -129,7 +129,7 @@ violin.age.func(patient.data)
 ```
 
 \newpage
-**Figure 6**: The distribution of patient status by number days after admission. Patients with "Unknown" status have left the site at the time of report but have unknown outcomes due to missing data. Patients with "Ongoing care" are still in site at the time of analysis. The black line marks the end of 14 days; due to the cut-off, only a small number of patients (those acquiring the infection in hospital) appear in the "ongoing care" category left of this line.
+**Figure 6**: The distribution of patient status by number days after admission. Patients with "Unknown" status have left the site at the time of report but have unknown outcomes due to missing data. Patients with "Ongoing care" are still in site at the time of analysis. The black line marks the end of 14 days; due to the cut-off, only a small number of patients appear in the "ongoing care" category left of this line.
 
 ```{r  timeline, out.width= "100%"}
 
