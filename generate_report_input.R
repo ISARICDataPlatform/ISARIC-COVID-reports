@@ -250,8 +250,8 @@ d.e <- function(data, datafull, ...){
   p.In.Ven <- paste(sprintf("%.1f", p.In.Ven))
   
   # ICU treatments
-  icu.d <- icu.treatment.upset.prep(patient.data)
-  icu.df <- treatment.upset.numbers(icu.d)
+  icu.df <- icu.treatment.upset.prep(data)
+  icu.df <- treatment.upset.numbers(icu.df)
   icu.n.treat <- icu.df$All
   icu.p.none <- 100 * icu.df$None / icu.df$All 
   icu.p.none <- paste(sprintf("%.1f", icu.p.none))
