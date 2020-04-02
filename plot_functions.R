@@ -998,15 +998,15 @@ status.by.time.after.admission <- function(data, ...){
   
   n.days <- ncol(complete.timeline) - 1
   
-  complete.timeline <- complete.timeline %>%
+  complete.timeline.2 <- complete.timeline %>%
     pivot_longer(1:n.days, names_to = "day", values_to = "status") %>%
     dplyr::select(subjid, day, status) %>%
     dplyr::mutate(day = map_dbl(day, function(x) as.numeric(str_split_fixed(x, "_", 2)[2]))) %>%
-    dplyr::mutate(status = factor(status, levels = rev(c("Died", "ICU", "Admitted", "Transferred", "Discharged")))) %>%
+    dplyr::mutate(status = factor(status, levels = c("discharge", "transfer","unknown", "Censored", "Ward", "ICU", "death"))) %>%
     ungroup() 
   
-  ggplot(complete.timeline) + geom_bar(aes(x = day, fill = status), position = "fill") +
-    scale_fill_brewer(palette = "Set3", name  = "Status", drop = F) + 
+  ggplot(complete.timeline.2) + geom_bar(aes(x = day, fill = status), position = "fill") +
+    scale_fill_brewer(palette = "Dark2", name  = "Status", drop = F, labels = c("Discharged", "Transferred","Unknown", "Censored", "Ward", "ICU", "Dead")) + 
     theme_bw() + 
     xlab("Days relative to admission") +
     ylab("Proportion")
