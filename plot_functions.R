@@ -45,14 +45,14 @@ age.pyramid <- function(data, ...){
       limits = c(-1.1*max.count, 1.1*max.count)) +
     annotation_custom(
       grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
-      ymin = -max(data2$count)*1.1/2,      
-      ymax = -max(data2$count)*1.1/2,
+      ymin = -max.count/2,      
+      ymax = -max.count/2,
       xmin = length(levels(data2$agegp5))+1.5 ,         
       xmax = length(levels(data2$agegp5))+1.5) +
     annotation_custom(
       grob = textGrob(label = "Females", hjust = 0.4, gp = gpar(cex = 1.5)),
-      ymin = max(data2$count)*1.1/2,      
-      ymax = max(data2$count)*1.1/2,
+      ymin = max.count/2,      
+      ymax = max.count/2,
       xmin = length(levels(data2$agegp5))+1.5,         
       xmax = length(levels(data2$agegp5))+1.5) +
     theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
@@ -103,12 +103,14 @@ outcomes.by.admission.date <- function(data, ...){
     })) %>%
     filter(!is.na(admission.date)) %>%
     filter(epiweek(start.date) <= epiweek(embargo.limit))
+  
   ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week of admission/symptom onset (2020)") +
     ylab("Cases") +
+    ylim(c(0,450)) +
     annotate(geom = "text", label = "*", x = max(data2$two.digit.epiweek), y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$two.digit.epiweek))), size =15)
 }
 
@@ -1009,10 +1011,10 @@ status.by.time.after.admission <- function(data, ...){
     ungroup() 
   
   ggplot(complete.timeline.2) + geom_bar(aes(x = day, fill = status), position = "fill") +
-    scale_fill_brewer(palette = "Dark2", name  = "Status", drop = F, labels = c("Discharged", "Transferred","Unknown", "Ongoing care", "Ward", "ICU", "Dead")) + 
+    scale_fill_brewer(palette = "Dark2", name  = "Status", drop = F, labels = c("Discharged", "Transferred","Unknown", "Ongoing care", "Ward", "ICU", "Death")) + 
     theme_bw() + 
     xlab("Days relative to admission") +
-    geom_vline(xintercept = 14.5) + 
+    annotate(geom = "segment", x = 14.5, xend = 14.5, y = 0, yend = 1) +
     ylab("Proportion")
 }
 
@@ -1095,6 +1097,7 @@ recruitment.dat.plot <- function(data, embargo.limit, ...) {
     geom_line(aes(y = out.c, colour = "Outcome recorded"), size = 1) +
     geom_line(aes(y = cen.c, colour = "Follow-up ongoing"), size = 1) +
     geom_vline(xintercept = embargo.limit, linetype = "dashed") +
+    geom_vline(xintercept = embargo.limit + 7, linetype = "dashed") +
     theme_bw() + 
     theme(legend.title=element_blank(), legend.position="top") +
     xlab("Admission date") +
