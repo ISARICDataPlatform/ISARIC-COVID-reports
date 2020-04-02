@@ -275,10 +275,11 @@ d.e <- function(data, datafull, ...){
   icu.p.In.Ven <- paste(sprintf("%.1f", 100 * icu.n.In.Ven / icu.n.o2))
   # Putcomes for ICU patient
   icu.d <- get_icu_pts(data)
-  N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
+N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
   N.icu.deaths <- summary(as.factor(icu.d$outcome))[[2]]    # deaths-count
   N.icu.recoveries <- summary(as.factor(icu.d$outcome))[[3]]   # recoveries -count
-  
+  N.icu.NA <- summary(as.factor(icu.d$outcome))[[4]]      # ICU NA
+    # outcomes 
   
   # Symptoms 
   
@@ -428,6 +429,7 @@ d.e <- function(data, datafull, ...){
               N.icu.deaths = N.icu.deaths,
               N.icu.censored = N.icu.censored,
               N.icu.recoveries = N.icu.recoveries,
+              N.icu.NA =   N.icu.NA,
               
               s.dat = s.dat,
               c.dat = c.dat,
