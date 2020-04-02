@@ -239,7 +239,7 @@ outcomes.by.country(patient.data)
 
 # Recruitment
 
-**Figure 18**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included
+**Figure 18**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The first dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included. The second black line is the exclusion date for next week's report.
 
 ``` {r recruitmentbyoutcome, echo=FALSE}
 

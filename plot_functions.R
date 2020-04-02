@@ -614,10 +614,14 @@ modified.km.plot <- function(data, ...) {
                    status =factor(c(rep('discharge', length(Fd)), rep('death', length(Fd)), rep('cfr', length(Fd))),
                                   levels = c("death", "discharge", "cfr")
                    ))
+  
+  
   ggplot(data = df)+
     geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
+    geom_ribbon(data = df %>% filter(status == "death"), aes(x=day, ymin = 0, ymax = value), fill ="indianred", alpha = 0.66)+
+    geom_ribbon(data = df %>% filter(status == "discharge"), aes(x=day, ymin = value, ymax = 1), fill ="springgreen4", alpha = 0.66)+
     theme_bw()+ xlim(0, 20) +
-    scale_colour_manual(values = c("indianred",  "green", "black"), name = "Legend", labels = c( "Deaths", "Discharges","Case fatality\nratio")) +
+    scale_colour_manual(values = c("indianred",  "springgreen4", "black"), name = "Legend", labels = c( "Deaths", "Discharges","Case fatality\nratio")) +
     scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
     xlab("Days after admission") +
     ylab("Cumulative probability") +
@@ -1060,25 +1064,25 @@ antiviral.use.upset <- function(data, ...){
 # Cumulative recruitment by outcome
 
 recruitment.dat.plot <- function(data, embargo.limit, ...) {
-  data <- data %>% filter(start.date <= today())
+  data <- data %>% filter(admission.date <= today())
   
   data$outcome.count <- 0
   data$outcome.count[data$outcome != "censored"] <- 1
   data$censored.count <- 0
   data$censored.count[data$outcome == "censored"] <- 1
   
-  from <- min(data$start.date, na.rm = TRUE)
-  to <- max(data$start.date, na.rm = TRUE)
+  from <- min(data$admission.date, na.rm = TRUE)
+  to <- max(data$admission.date, na.rm = TRUE)
   
   plt.d <- data.frame(d = from:to)
   plt.d$date <- as.Date(plt.d$d, origin = "1970-01-01")
   
   counts.tbl <- data %>% 
-    group_by(start.date) %>%
+    group_by(admission.date) %>%
     summarise(outcome = sum(outcome.count, na.rm = T), censored = sum(censored.count, na.rm = T))
   
   plt.d <- plt.d %>%
-    left_join(counts.tbl, by=c("date" = "start.date"))  %>%
+    left_join(counts.tbl, by=c("date" = "admission.date"))  %>%
     filter(!is.na(outcome) & !is.na(censored))
   
   # for (i in from:to) {
