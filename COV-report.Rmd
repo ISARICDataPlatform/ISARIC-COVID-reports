@@ -197,7 +197,7 @@ icu.violin.plot(patient.data)
 onset.adm.plot(patient.data)
 
 ```
-
+\newpage
 
 **Figure 14**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
@@ -229,6 +229,8 @@ modified.km.plot(patient.data)
 sites.by.country(unembargoed.data)
 
 ```
+
+\newpage
 
 **Figure 17**: Distribution of patients by country and outcome
 
