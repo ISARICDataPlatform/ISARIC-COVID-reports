@@ -1,10 +1,6 @@
 ---
 title: "International Severe Acute Respiratory and Emerging Infections Consortium (ISARIC)"
 output:
-  pdf_document:
-    toc: no
-    includes:
-      in_header: header.tex
   html_document:
     df_print: paged
     number_sections: yes
@@ -12,6 +8,10 @@ output:
     toc_depth: 2
     toc_float:
       collapsed: no
+  pdf_document:
+    toc: no
+    includes:
+      in_header: header.tex
 ---
 
 ```{r setup, include = FALSE}
@@ -37,7 +37,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- FALSE
+reprocess.data <- F
 
 # file locations
 
