@@ -1,5 +1,6 @@
 
 
+
 #### Dataset inclusion flags ####
 
 # flags for inclusion of the three data files
@@ -852,7 +853,7 @@ patient.data <- patient.data %>%
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
          start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
-unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, outcome)
+unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, admission.date, outcome)
 
 countries.and.sites <-  unembargoed.data %>%
   group_by(Country, site.name) %>%
