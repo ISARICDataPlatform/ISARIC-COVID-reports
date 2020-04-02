@@ -85,14 +85,14 @@ output: html_document
 | Extracorporeal support        | `r de$t.dat$present[5]`        | `r de$t.dat$absent[5]`        | `r de$t.dat$unknown[5]`        |
 | Inhaled nitric oxide          | `r de$t.dat$present[6]`        | `r de$t.dat$absent[6]`        | `r de$t.dat$unknown[6]`        |
 | Inotropes / vasopressors      | `r de$t.dat$present[7]`        | `r de$t.dat$absent[7]`        | `r de$t.dat$unknown[7]`        |
-| Invasive ventilation          | `r sum(patient.data$IMV.ever=='TRUE', na.rm=T)`        | `r sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        | `r de$N.cases - sum(patient.data$IMV.ever=='TRUE', na.rm=T) - sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        |
-| Non-invasive ventilation      | `r sum(patient.data$NIMV.ever=='TRUE', na.rm=T)`          | `r sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`          | `r de$N.cases- sum(patient.data$NIMV.ever=='TRUE', na.rm=T) - sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`        |
-| Oxygen therapy                | `r sum(patient.data$O2.ever=='TRUE', na.rm=T)`       | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)`       | `r de$N.cases -  sum(patient.data$O2.ever=='TRUE', na.rm=T) - sum(patient.data$O2.ever=='FALSE', na.rm=T)`       |
+| Invasive ventilation          | `r sum(patient.data$IMV.ever=='TRUE', na.rm=T)`        | `r sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        | `r nrow(patient.data) - sum(patient.data$IMV.ever=='TRUE', na.rm=T) - sum(patient.data$IMV.ever=='FALSE', na.rm=T)`        |
+| Non-invasive ventilation      | `r sum(patient.data$NIMV.ever=='TRUE', na.rm=T)`          | `r sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`          | `r nrow(patient.data)- sum(patient.data$NIMV.ever=='TRUE', na.rm=T) - sum(patient.data$NIMV.ever=='FALSE', na.rm=T)`        |
+| Oxygen therapy                | `r sum(patient.data$O2.ever=='TRUE', na.rm=T)`       | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)`       | `r nrow(patient.data) -  sum(patient.data$O2.ever=='TRUE', na.rm=T) - sum(patient.data$O2.ever=='FALSE', na.rm=T)`       |
 | Prone ventilation             | `r de$t.dat$present[12]`       | `r de$t.dat$absent[12]`       | `r de$t.dat$unknown[12]`       |
 | Renal replacement therapy     | `r de$t.dat$present[13]`       | `r de$t.dat$absent[13]`       | `r de$t.dat$unknown[13]`       |
 | Tracheostomy inserted         | `r de$t.dat$present[14]`       | `r de$t.dat$absent[14]`       | `r de$t.dat$unknown[14]`       |
 | Other                         | `r de$t.dat$present[10]`       | `r de$t.dat$absent[10]`       | `r de$t.dat$unknown[10]`       |
-| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)` | `r de$N.cases- sum(patient.data$O2.ever=='TRUE', na.rm=T)- sum(patient.data$O2.ever=='FALSE', na.rm=T)`|
+| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)` | `r nrow(patient.data)- sum(patient.data$O2.ever=='TRUE', na.rm=T)- sum(patient.data$O2.ever=='FALSE', na.rm=T)`|
 
 <br /><br /><br />
 
