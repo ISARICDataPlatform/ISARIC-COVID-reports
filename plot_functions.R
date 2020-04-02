@@ -1540,26 +1540,26 @@ adm.outcome <- function(data, plt = F){
   right <- replace(admit.discharge, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
- 
+  
   
   obs <- right[!(is.na(right))] # cases with completed duration days.
   
   if(plt == T){
-  t <- data.frame(x = admit.discharge)
-  plt <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
-  
-  return(list(plt=plt, fit=fit, obs = obs))
-  
+    t <- data.frame(x = admit.discharge)
+    plt <- ggplot(data = t) + 
+      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+      labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
+    
+    return(list(plt=plt, fit=fit, obs = obs))
+    
   }else{
     return(list(fit=fit, obs = obs))
   }
@@ -1587,20 +1587,20 @@ onset.adm <- function(data, plt = F, ...){
   # Plot 
   
   if (plt==T){
-  t <- data.frame(x=admit.discharge)
-  plt <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) + xlim(0, 30) + geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) from symptom onset to admission', title = ' ')
-  
-  return(list(plt=plt, fit=fit, obs = obs))
+    t <- data.frame(x=admit.discharge)
+    plt <- ggplot(data = t) + 
+      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) + xlim(0, 30) + geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+      labs(y = 'Density', x = 'Time (in days) from symptom onset to admission', title = ' ')
+    
+    return(list(plt=plt, fit=fit, obs = obs))
   }else{
     return(list(fit=fit, obs = obs))
   }
@@ -1652,25 +1652,25 @@ adm.to.niv <- function(data,plt = F,...){
   obs <-  admit.discharge.2  # record observed values for reporting
   
   # Plot 
-
-  if(plt == T){
   
+  if(plt == T){
+    
     t <- data.frame(x = admit.discharge)
     
-  plt <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) from admission to NIV', title = '')
-  
-  return(list(plt=plt, fit=fit, obs = obs))
-  
+    plt <- ggplot(data = t) + 
+      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+      labs(y = 'Density', x = 'Time (in days) from admission to NIV', title = '')
+    
+    return(list(plt=plt, fit=fit, obs = obs))
+    
   }else{
     return(list(fit=fit, obs = obs))
   }
@@ -1702,33 +1702,33 @@ dur.niv <- function(data,plt = F, ...){
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
   fit <- fitdistcens(censored_df, dist = 'gamma')
-
+  
   
   pos.n.cens <- which(data2$event.censoring == 0)
   obs <- left[pos.n.cens]
   
- 
+  
   
   # Plt
   
   if(plt == T){
-  
-   t <- data.frame(x = left)
-
-  plt <- ggplot(data = t) +
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Duration of NIV (in days)', title = '')
-  
-  return(list(plt=plt, fit=fit, obs = obs))
-
+    
+    t <- data.frame(x = left)
+    
+    plt <- ggplot(data = t) +
+      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
+      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+      labs(y = 'Density', x = 'Duration of NIV (in days)', title = '')
+    
+    return(list(plt=plt, fit=fit, obs = obs))
+    
   }else{
     return(list(fit=fit, obs = obs))
   }
@@ -1759,22 +1759,22 @@ adm.to.icu <- function(data, plt = F,...){
   # Plot 
   
   if(plt==T){
-  
-  t <- data.frame(x = admit.discharge)
-  
-  plt <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) from admission to ICU', title = '')
-  
-  return(list(plt=plt, fit=fit, obs = obs))
+    
+    t <- data.frame(x = admit.discharge)
+    
+    plt <- ggplot(data = t) + 
+      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+      labs(y = 'Density', x = 'Time (in days) from admission to ICU', title = '')
+    
+    return(list(plt=plt, fit=fit, obs = obs))
   }else{
     return(list(fit=fit, obs = obs))
   }
@@ -1783,7 +1783,7 @@ adm.to.icu <- function(data, plt = F,...){
 
 
 adm.to.icu.plot <- function(data, plt= T,...){
-  adm.to.icu(data)$plt
+  adm.to.icu(data, T)$plt
 }
 
 
@@ -1809,23 +1809,23 @@ dur.icu <- function(data, plt = F, ...) {
   
   
   if(plt==T){
-  
-  t <- data.frame(x = left)
-  
-  plt <- ggplot(data = t) +
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) spent in ICU', title = '')
-  
-  return(list(plt=plt, fit=fit, obs = obs))
-  
+    
+    t <- data.frame(x = left)
+    
+    plt <- ggplot(data = t) +
+      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
+      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+      labs(y = 'Density', x = 'Time (in days) spent in ICU', title = '')
+    
+    return(list(plt=plt, fit=fit, obs = obs))
+    
   }else{
     return(list(fit=fit, obs = obs))
   }
@@ -1857,23 +1857,23 @@ adm.to.imv <- function(data, plt = F, ...){
   # Plot 
   
   if(plt == T){
-  
-  t <- data.frame(x = admit.discharge)
-  
-  plt <- ggplot(data = t) + 
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) from admission to IMV', title = '')
-  
-  return(list(plt=plt, fit=fit, obs = obs))
-  
+    
+    t <- data.frame(x = admit.discharge)
+    
+    plt <- ggplot(data = t) + 
+      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
+      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+      labs(y = 'Density', x = 'Time (in days) from admission to IMV', title = '')
+    
+    return(list(plt=plt, fit=fit, obs = obs))
+    
   }else{
     return(list(fit=fit, obs = obs))
   }
@@ -1905,22 +1905,22 @@ dur.imv <- function(data, plt=F, ...) {
   obs <- left[pos.n.cens]
   
   if(plt ==T){
-  
-  t <- data.frame(x = left)
-  
-  plt <- ggplot(data = t) +
-    #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-    geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-    theme(
-      plot.title = element_text( size=14, face="bold", hjust = 0.5),
-      axis.title.x = element_text( size=12),
-      axis.title.y = element_text( size=12)
-    ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-    labs(y = 'Density', x = 'Time (in days) spent receiving IMV', title = '')
-  
-  return(list(plt=plt, fit=fit, obs = obs))
+    
+    t <- data.frame(x = left)
+    
+    plt <- ggplot(data = t) +
+      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
+      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+      labs(y = 'Density', x = 'Time (in days) spent receiving IMV', title = '')
+    
+    return(list(plt=plt, fit=fit, obs = obs))
   }else{
     return(list(fit=fit, obs = obs))
   }

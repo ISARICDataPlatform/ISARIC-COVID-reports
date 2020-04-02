@@ -3,6 +3,8 @@ title: "International Severe Acute Respiratory and Emerging Infections Consortiu
 output:
   pdf_document:
     toc: no
+    includes:
+      in_header: header.tex
   html_document:
     df_print: paged
     number_sections: yes
@@ -69,12 +71,8 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
 
 ```
 
-<!-- <p style="font-family: times, serif; font-size:24pt> **International Severe Acute Respiratory and Emerging Infections Consortium (ISARIC)**</p> -->
+*A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases*
 
-<!-- <f style="font-family: times, serif; font-size:11pt; font-style:italic"> - A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases</f> -->
-
-
-<f style="font-family: times, serif; font-size:11pt; font-style:italic"> - A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases</f>
 
 # COVID-19 Report: `r format(as.Date(substr(uk.data.file, start = 6, stop  = 15)), "%d %B %Y")` {-}
 
