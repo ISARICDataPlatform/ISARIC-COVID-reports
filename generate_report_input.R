@@ -230,24 +230,20 @@ d.e <- function(data, datafull, ...){
   hfr.lower <- round(db[nrow(db), 'lower'], 2)
   
   # Treatments data
-  df <- treatment.upset.numbers(data)
-  n.treat <- df$All
-  p.none <- 100 * df$None / df$All 
-  p.none <- paste(sprintf("%.1f", p.none))
-  p.abx <- 100 * df$Abx / df$All 
-  p.abx <- paste(sprintf("%.1f", p.abx))
-  p.av <- 100 * df$Av / df$All
-  p.av <- paste(sprintf("%.1f", p.av))
-  
-  n.o2 <- df$O2
-  p.o2 <- 100 * df$O2 / df$All
-  p.o2 <- paste(sprintf("%.1f", p.o2))
-  
+  n.treat <- make.props.treats(data)$N
+  df <- make.props.treats(data)$data2
+  p.abx <- df$Proportion[df$Condition == "Antibiotic agent" & df$affected == "TRUE"]
+  p.abx <- paste(sprintf("%.1f", 100 * p.abx))
+  p.av <- df$Proportion[df$Condition == "Antiviral agent" & df$affected == "TRUE"]
+  p.av <- paste(sprintf("%.1f", 100 * p.av))
+  p.o2 <- df$Proportion[df$Condition == "Oxygen therapy" & df$affected == "TRUE"]
+  p.o2 <- paste(sprintf("%.1f", 100 * p.o2))
   # Note, proportions of ventilation have denominator O2
-  p.NIV <- 100 * df$NIV / df$O2
-  p.NIV <- paste(sprintf("%.1f", p.NIV))
-  p.In.Ven <- 100 * df$Inv.ven / df$O2
-  p.In.Ven <- paste(sprintf("%.1f", p.In.Ven))
+  n.o2 <- df$Present[df$Condition == "Oxygen therapy" & df$affected == "TRUE"]
+  n.NIV <- df$Present[df$Condition == "Non-invasive ventilation" & df$affected == "TRUE"]
+  p.NIV <- paste(sprintf("%.1f", 100 * n.NIV / n.o2))
+  n.In.Ven <- df$Present[df$Condition == "Invasive ventilation" & df$affected == "TRUE"]
+  p.In.Ven <- paste(sprintf("%.1f", 100 * n.In.Ven / n.o2))
   
   # ICU treatments
   icu.df <- icu.treatment.upset.prep(data)
