@@ -73,7 +73,7 @@ sites.by.country <- function(data, ...){
     theme_bw() +
     xlab("Country") +
     ylab("Sites") + theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    geom_text(aes(x=Country, y=n.sites + 4, label=n.sites), size=4)
+    geom_text(aes(x=Country, y=n.sites + 6, label=n.sites), size=4)
 }
 
 # Distribution of patients and outcomes by country
@@ -84,11 +84,17 @@ outcomes.by.country <- function(data, ...){
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country))
   
+  data3 <- data2 %>%
+    group_by(Country) %>%
+    summarise(count = n())
+  
   ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     xlab("Country") +
-    ylab("Cases") + theme(axis.text.x = element_text(angle = 45, hjust=1))
+    ylab("Cases") + 
+    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+    geom_text(data = data3, aes(x=Country, y= count + 35, label=count), size=4)
 }
 
 # Outcomes by epi-week
