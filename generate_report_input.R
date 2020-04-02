@@ -13,7 +13,7 @@ d.e <- function(data, datafull, ...){
   N.var <- ncol(data)  # number of variables
   N.sites.full <- length(unique(datafull$site.name)) # number of sites 
   N.countries.full <- length(unique(datafull$Country)) # number of countries
-  median.age <- median(data$age_estimateyears, na.rm = T) # median age (observed)
+  median.age <- round(median(data$age_estimateyears, na.rm = T), 1) # median age (observed)
   mean.age <-  mean(data$age_estimateyears, na.rm = T)  # mean age
   sd.age <- sd(data$age_estimateyears, na.rm = T)
   
