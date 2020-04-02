@@ -190,7 +190,7 @@ icu.violin.plot(patient.data)
 
 **Figure 13**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
-```{r onset.admission, out.width = '80%'}
+```{r onset.admission, out.width = '100%'}
 
 onset.adm.plot(patient.data)
 
