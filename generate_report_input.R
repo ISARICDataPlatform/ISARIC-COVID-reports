@@ -366,13 +366,7 @@ d.e <- function(data, datafull, ...){
               # dur.imv.l =dur.imv.l,
               # dur.imv.u =dur.imv.u,
               # 
-              
-              
-              
-              
-              
-              
-              
+
               # sd.onset.to.adm = sd.onset.to.adm,
               # sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
               # sd.onset.to.adm.upper = sd.onset.to.adm.upper,
