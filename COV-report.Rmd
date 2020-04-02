@@ -155,6 +155,7 @@ treatment.use.plot(patient.data)
 ```
 
 \newpage
+
 **Figure 9**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients with completed hospital stay and recorded treatment data. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
 
 ```{r treatment2, echo=FALSE}
@@ -162,6 +163,7 @@ treatment.upset(patient.data)
 ```
 
 \newpage
+
 # Intensive Care Unit Treatments
 
 These figures include only the `r de$icu.n.treat` ICU patients with complete details of treatments.
@@ -172,13 +174,18 @@ These figures include only the `r de$icu.n.treat` ICU patients with complete det
 ```{r treatment.icu, echo=FALSE}
 treatment.use.plot.icu(patient.data)
 ```
+
+
 \newpage
+
 **Figure 11**: The distribution of combinations of treatments administered during ICU stay. Filled and empty circles below the x-axis indicate treatments that were and were not administered respectively.
 <!-- The distribution of combinations of treatments administered during  hospital stay for patients who were admitted to an Intensive Care Unit . Filled and empty circles below the x-axis indicate treatments that were and were not administered. -->
 
 ```{r treatment2.icu, echo=FALSE}
 icu.treatment.upset(patient.data)
 ```
+
+
 \newpage
 **Figure 12** Distribution of lengths of stay for patients who were admitted to ICU: total length of stay for this group and length of stay within intensive care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
@@ -198,6 +205,7 @@ onset.adm.plot(patient.data)
 
 ```
 
+\newpage
 
 **Figure 14**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
@@ -218,6 +226,7 @@ adm.outcome.plot(patient.data)
 modified.km.plot(patient.data)
 
 ```
+
 \newpage
 
 # Country Comparisons
@@ -230,6 +239,8 @@ sites.by.country(unembargoed.data)
 
 ```
 
+\newpage
+
 **Figure 17**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
@@ -237,6 +248,8 @@ sites.by.country(unembargoed.data)
 outcomes.by.country(patient.data)
 
 ```
+
+
 \newpage
 
 # Recruitment
