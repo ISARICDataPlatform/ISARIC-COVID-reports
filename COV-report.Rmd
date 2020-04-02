@@ -3,7 +3,6 @@ title: "International Severe Acute Respiratory and Emerging Infections Consortiu
 output:
   pdf_document:
     toc: no
-    toc_depth: '2'
   html_document:
     df_print: paged
     number_sections: yes
@@ -36,7 +35,7 @@ library(survival)
 library(survminer)
 library(broom)
 
-reprocess.data <- F
+reprocess.data <- FALSE
 
 # file locations
 
@@ -83,7 +82,7 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
 
 ```{r child = 'markdown/summary.Rmd'}
 ```
-
+\newpage
 # Patient Characteristics
 
 
@@ -94,7 +93,7 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}
 age.pyramid(patient.data)
 
 ```
-
+\newpage
 **Figure 2**: Top: Frequency of symptoms seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common symptoms, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining symptoms in the top plot.
 
 
@@ -105,7 +104,7 @@ symptoms.upset(patient.data, 4)
 
 ```
 
-
+\newpage
 **Figure 3**:  Top: Frequency of comorbidities seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common comorbidities, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining comorbidities in the top plot, and any other comorbidities recorded as free text by clinical staff.
 
 ```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
@@ -113,7 +112,7 @@ comorbidity.prevalence.plot(patient.data)
 comorbidities.upset(patient.data, 4)
 
 ```
-
+\newpage
 **Figure 4**: Distribution of length of hospital stay, according to sex. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r  stay.by.sex, out.width= "80%"}
@@ -136,7 +135,7 @@ violin.age.func(patient.data)
 <!-- hospital.fatality.ratio(patient.data)$plt -->
 
 <!-- ``` -->
-
+\newpage
 **Figure 6**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset). The rightmost bar, marked with an asterisk, represents an incomplete week (due to the 14-day cutoff) rather than a genuine decline in cases.
 
 ```{r recruitment3, echo=FALSE}
@@ -144,7 +143,7 @@ violin.age.func(patient.data)
 outcomes.by.admission.date(patient.data)
 
 ```
-
+\newpage
 
 # Treatment
 
@@ -154,14 +153,14 @@ outcomes.by.admission.date(patient.data)
 treatment.use.plot(patient.data)
 ```
 
-
+\newpage
 **Figure 8**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients with completed hospital stay and recorded treatment data. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)
 ```
 
-
+\newpage
 # Intensive Care Unit Treatments
 
 These figures include only the `r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients who were admitted to an Intensive Care Unit.
@@ -171,31 +170,22 @@ These figures include only the `r sum(patient.data$ICU.ever == 'TRUE', na.rm = T
 ```{r treatment.icu, echo=FALSE}
 treatment.use.plot.icu(patient.data)
 ```
-
+\newpage
 **Figure 10**: The distribution of combinations of treatments administered during hospital stay for patients who were admitted to an Intensive Care Unit. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
 
 ```{r treatment2.icu, echo=FALSE}
 icu.treatment.upset(patient.data)
 ```
-
+\newpage
 **Figure 11** Distribution of lengths of stay for patients who were admitted to an Intensive Care Unit: total length of stay for this group and length of stay within Intensive Care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r icu_los, echo=FALSE}
 icu.violin.plot(patient.data)
 ```
 
+\newpage
+
 # Statistical Analysis
-
-<!-- **Figure 9**: Survival analysis for length of hospital stay by sex. The y-axis shows the probability of missing discharge (i.e. remaining in hospital) at any given time. The shaded areas around the Kaplan-Meier curves are 95% confidence limits. Cases still in hospital are indicated by tick marks. A p-value less than 0.05 is an indication of a significant difference in duration of hospital stay by sex. -->
-
-
-```{r survival, out.width= "80%", eval=FALSE}
-
-#survival.plot.func(data)$plt
-
-```
- 
-
 
 **Figure 12**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
@@ -215,7 +205,7 @@ adm.outcome.plot(patient.data)
 
 ```
 
-
+\newpage
 
 **Figure 14**: Nonparametric probabilities of death (red curve) and recovery (green curve) over time. The black line indicates the case fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
@@ -225,7 +215,7 @@ adm.outcome.plot(patient.data)
 modified.km.plot(patient.data)
 
 ```
-
+\newpage
 
 # Country Comparisons
 
@@ -244,6 +234,7 @@ sites.by.country(unembargoed.data)
 outcomes.by.country(patient.data)
 
 ```
+\newpage
 
 # Recruitment
 
@@ -254,6 +245,8 @@ outcomes.by.country(patient.data)
 recruitment.dat.plot(unembargoed.data, today()-14)
 
 ```
+
+\newpage
 
 # Background
 
