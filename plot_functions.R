@@ -581,6 +581,54 @@ treatment.use.plot <- function(data, ...){
   plt
 }
 
+make.props.treats <- function(data, ...){
+  #reproducing data from treatment.use.plot
+  treatment.columns <- map(1:nrow(data), function(i){
+    data$events[i][[1]] %>% 
+      filter(startsWith(redcap_event_name, "dischargeoutcome")) %>%
+      dplyr::select( one_of(treatments$field)) %>%
+      add_column(subjid = data$subjid[i]) %>%
+      slice(1)
+  }) %>% bind_rows()
+  
+  N.p <- nrow(treatment.columns)
+  
+  data2 <- data %>% 
+    dplyr::select(-one_of(treatments$field)) %>%
+    left_join(treatment.columns, by="subjid") %>%
+    dplyr::select(subjid, one_of(treatments$field))
+  
+  ntr <- ncol(data2) - 1
+  
+  data2 <- data2 %>%
+    pivot_longer(2:(ntr + 1), names_to = "Treatment", values_to = "Present") %>%
+    group_by(Treatment) %>%
+    filter(!is.na(Present)) %>%
+    dplyr::mutate(Present = map_lgl(Present, function(x){
+      if(is.na(x)){
+        NA
+      } else if(x == 1){
+        TRUE
+      } else if(x == 2){
+        FALSE
+      } else {
+        NA
+      }
+    })) %>%
+    dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
+    left_join(treatments, by = c("Treatment" = "field")) %>%
+    dplyr::select(-Treatment) %>%
+    dplyr::mutate(prop.yes = Present/Total) %>%
+    dplyr::mutate(prop.no = 1-prop.yes) %>%
+    arrange(prop.yes) %>%
+    dplyr::mutate(Condition = as_factor(label)) %>%
+    pivot_longer(c(prop.yes, prop.no), names_to = "treated", values_to = "Proportion") %>%
+    dplyr::mutate(affected = map_lgl(treated, function(x) x == "prop.yes")) 
+  
+  return(data2)
+  
+}
+
 ## "modified KM plot" ##
 
 
