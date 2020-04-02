@@ -119,8 +119,7 @@ output: html_document
 
 **Table 3:** Key time variables.
 
-
-The expected mean is 'NA' for those variables for which parameter estimation could not be performed, due to the high proportion of unobserved end dates.
+Unlike the observed mean, the estimation process of the **expected mean** accounts for all cases, irrespective of whether an outcome has been observed. The expected mean is 'NA' for those variables for which parameter estimation could not be performed, due to the high proportion of unobserved end dates.
 
 
 | Time (in days)             | Observed mean                          | Observed SD                          | Observed median                          | Expected mean (95% CI)                                             |
