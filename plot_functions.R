@@ -625,7 +625,7 @@ make.props.treats <- function(data, ...){
     pivot_longer(c(prop.yes, prop.no), names_to = "treated", values_to = "Proportion") %>%
     dplyr::mutate(affected = map_lgl(treated, function(x) x == "prop.yes")) 
   
-  return(n = N.p, data2 = data2)
+  return(list(n = N.p, data2 = data2))
   
 }
 

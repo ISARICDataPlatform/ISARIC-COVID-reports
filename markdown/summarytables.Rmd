@@ -92,7 +92,7 @@ output: html_document
 | Renal replacement therapy     | `r de$t.dat$present[13]`       | `r de$t.dat$absent[13]`       | `r de$t.dat$unknown[13]`       |
 | Tracheostomy inserted         | `r de$t.dat$present[14]`       | `r de$t.dat$absent[14]`       | `r de$t.dat$unknown[14]`       |
 | Other                         | `r de$t.dat$present[10]`       | `r de$t.dat$absent[10]`       | `r de$t.dat$unknown[10]`       |
-| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)` | `r nrow(patient.data)- sum(patient.data$O2.ever=='TRUE', na.rm=T)- sum(patient.data$O2.ever=='FALSE', na.rm=T)`|
+| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)` | `r nrow(patient.data)- sum(patient.data$ECMO.ever=='TRUE', na.rm=T)- sum(patient.data$ECMO.ever=='FALSE', na.rm=T)`|
 
 <br /><br /><br />
 
