@@ -46,5 +46,7 @@ The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r
 
 The mean and SD for the duration of IMV -- estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays -- is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.
 
-Of `r de$n.treat` patients with complete details of treatments received `r de$p.none`% of patients did not receive any antimicrobial treatments or steroids. `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. These treatment categories are not mutually exclusive since some patients received multiple treatments. `r de$p.o2`% of patients received some degree of oxygen supplementation.  Of these, `r de$p.NIV`% received non-invasive ventilation and `r de$p.In.Ven`% received invasive mechanical ventilation.
+Of `r de$n.treat` patients with complete details of treatments received, `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. These treatment categories are not mutually exclusive since some patients received multiple treatments. `r de$p.o2`% of patients received some degree of oxygen supplementation: of these, `r de$p.NIV`% received NIV and `r de$p.In.Ven`% IMV.
+
+Of `r de$icu.n.treat` patients admitted into ICU with complete details of treatments, `r de$icu.p.abx`% received antibiotics and `r de$icu.p.av`% antivirals; and `r de$icu.p.o2`% received some degree of oxygen supplementation, of which `r de$icu.p.NIV`% was NIV and `r de$icu.p.In.Ven`% IMV.
 

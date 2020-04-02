@@ -249,6 +249,30 @@ d.e <- function(data, datafull, ...){
   p.In.Ven <- 100 * df$Inv.ven / df$O2
   p.In.Ven <- paste(sprintf("%.1f", p.In.Ven))
   
+  # ICU treatments
+  icu.df <- icu.treatment.upset.prep(data)
+  icu.df <- treatment.upset.numbers(icu.df)
+  icu.n.treat <- icu.df$All
+  icu.p.none <- 100 * icu.df$None / icu.df$All 
+  icu.p.none <- paste(sprintf("%.1f", icu.p.none))
+  icu.p.abx <- 100 * icu.df$Abx / icu.df$All 
+  icu.p.abx <- paste(sprintf("%.1f", icu.p.abx))
+  icu.p.av <- 100 * icu.df$Av / icu.df$All
+  icu.p.av <- paste(sprintf("%.1f", icu.p.av))
+  icu.n.o2 <- icu.df$O2
+  icu.p.o2 <- 100 * icu.df$O2 / icu.df$All
+  icu.p.o2 <- paste(sprintf("%.1f", icu.p.o2))
+  # Note, proportions of ventilation have denominator O2
+  icu.p.NIV <- 100 * icu.df$NIV / icu.df$O2
+  icu.p.NIV <- paste(sprintf("%.1f", icu.p.NIV))
+  icu.p.In.Ven <- 100 * icu.df$Inv.ven / icu.df$O2
+  icu.p.In.Ven <- paste(sprintf("%.1f", icu.p.In.Ven))
+  # Putcomes for ICU patient
+  icu.d <- get_icu_pts(data)
+  N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
+  N.icu.deaths <- summary(as.factor(icu.d$outcome))[[2]]    # deaths-count
+  N.icu.recoveries <- summary(as.factor(icu.d$outcome))[[3]]   # recoveries -count
+  
   
   # Symptoms 
   
@@ -393,6 +417,13 @@ d.e <- function(data, datafull, ...){
               p.o2 = p.o2,
               p.NIV = p.NIV,
               p.In.Ven = p.In.Ven,
+          
+             icu.n.treat = icu.n.treat,
+             icu.p.abx = icu.p.abx,
+             icu.p.av = icu.p.av,
+             icu.p.o2 = icu.p.o2,
+             icu.p.NIV = icu.p.NIV,
+             icu.p.In.Ven = icu.p.In.Ven,
               
               s.dat = s.dat,
               c.dat = c.dat,
