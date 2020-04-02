@@ -128,14 +128,14 @@ The expected mean is 'NA' for those variables for which parameter estimation cou
 | Length of hospital stay    | `r de$obs.mean.adm.outcome`            | `r de$obs.sd.adm.outcome`            | `r de$obs.median.adm.outcome`            | `r de$adm.to.outcome` (`r de$adm.outcome.l`, `r de$adm.outcome.u`) |
 | Symptom onset to admission | `r  de$obs.mean.onset.adm`             | `r de$obs.sd.onset.adm`              | `r  de$obs.median.onset.adm`             | `r de$onset.to.adm` (`r de$onset.to.adm.l`, `r de$onset.to.adm.u`) |
 |                            |                                        |                                      |                                          |                                                                    |
-| Admission to ICU entry     | `r round(mean(de$a.icu, na.rm=T), 1)`  | `r round(sd(de$a.icu, na.rm=T), 1)`  | `r round(median(de$a.icu, na.rm=T), 1)`  | `r de$adm.icu` (`r adm.icu.l`, `r adm.icu.u`)                      |
+| Admission to ICU entry     | `r round(mean(de$a.icu, na.rm=T), 1)`  | `r round(sd(de$a.icu, na.rm=T), 1)`  | `r round(median(de$a.icu, na.rm=T), 1)`  | `r de$adm.icu` (`r de$adm.icu.l`, `r de$adm.icu.u`)                      |
 | Duration of ICU            | `r round(mean(de$d.icu, na.rm=T), 1)`  | `r round(sd(de$d.icu, na.rm=T), 1)`  | `r round(median(de$d.icu, na.rm=T), 1)`  | NA                                                                 |
 |                            |                                        |                                      |                                          |                                                                    |
-| Admission to IMV           | `r round(mean(de$a.imv, na.rm=T), 1)`  | `r round(sd(de$a.imv, na.rm=T), 1)`  | `r round(median(de$a.imv, na.rm=T), 1)`  | `r de$adm.imv` (`r adm.imv.l`, `r adm.imv.u`)                      |
+| Admission to IMV           | `r round(mean(de$a.imv, na.rm=T), 1)`  | `r round(sd(de$a.imv, na.rm=T), 1)`  | `r round(median(de$a.imv, na.rm=T), 1)`  | `r de$adm.imv` (`r de$adm.imv.l`, `r de$adm.imv.u`)                      |
 | Duration of IMV            | `r round(mean(de$d.imv, na.rm=T), 1)`  | `r round(sd(de$d.imv, na.rm=T), 1)`  | `r round(median(de$d.imv, na.rm=T), 1)`  | NA                                                                 |
 |                            |                                        |                                      |                                          |                                                                    |
-| Admission to NIV           | `r round(mean(de$a.nimv, na.rm=T), 1)` | `r round(sd(de$a.nimv, na.rm=T), 1)` | `r round(median(de$a.nimv, na.rm=T), 1)` | `r de$adm.niv` (`r adm.niv.l`, `r adm.niv.u`)                      |
-| Duration of NIV            | `r round(mean(de$d.nimv, na.rm=T), 1)` | `r round(sd(de$d.nimv, na.rm=T), 1)` | `r round(median(de$d.nimv, na.rm=T), 1)` | `r de$dur.niv` (`r dur.niv.l`, `r dur.niv.u`)                      |
+| Admission to NIV           | `r round(mean(de$a.nimv, na.rm=T), 1)` | `r round(sd(de$a.nimv, na.rm=T), 1)` | `r round(median(de$a.nimv, na.rm=T), 1)` | `r de$adm.niv` (`r de$adm.niv.l`, `r de$adm.niv.u`)                      |
+| Duration of NIV            | `r round(mean(de$d.nimv, na.rm=T), 1)` | `r round(sd(de$d.nimv, na.rm=T), 1)` | `r round(median(de$d.nimv, na.rm=T), 1)` | `r de$dur.niv` (`r de$dur.niv.l`, `r de$dur.niv.u`)                      |
 
 
 
