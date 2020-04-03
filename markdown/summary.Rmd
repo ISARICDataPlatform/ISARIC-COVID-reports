@@ -13,7 +13,7 @@ Please note the following caveats. Information is incomplete for the many patien
 
 The analysis detailed in this report only includes individuals for whom data collection commenced on or before <span style="background-color: #FFFF00">`r format(embargo.limit, "%d %B %Y")`</span>. We have applied a 14-day rule to focus analysis on individuals who are more likely to have a recorded outcome. By excluding patients enrolled during the last 14 days, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. However, this limits our analysis to this restricted cohort despite the much larger volumes of data held in the database.  
 
-The cohort comprises <span style="background-color: #FFFF00">**`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females</span> -- sex is unreported for `r de$N.sex.unknown` cases. 
+The cohort comprises <span style="background-color: #FFFF00">**`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females</span> -- sex is unreported for `r de$N.sex.unknown` cases. SARS-COV-2 infection has been confirmed by laboratory testing in `r de$cov.19.confirmed` of these individuals. `r de$cov.19.suspected` individuals are recorded as suspected of SARS-COV-2 infection, without laboratory confirmation at the time of data analysis. 
 
 The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
 

@@ -15,13 +15,17 @@ output: html_document
 | Female                       | `r de$N.females`                          |
 | Unknown                      | `r de$N.sex.unknown`                     |
 |                              |                                            |
-| **By Status**                   |                                            |
+| **By outcome status**                   |                                            |
 | Dead                         | `r de$N.deaths` |
 | Recovered (discharged alive) | `r de$N.recoveries`                          |
 | Still in hospital            | `r de$N.censored`                            |
-| Tranferred to another facility                      |  `r de$transfer.outcome`                       |
-| Unknown               | `r de$unk.outcome` 
+| Tranferred to another facility|  `r de$transfer.outcome`                       |
+| Unknown                         | `r de$unk.outcome` 
 |                               |                                           |
+| **By COVID-19 status**                           |                                  |
+|  Positive (laboratory-confirmed)   |       `r de$cov.19.suspected`                            |
+|   Suspected                           |     `r de$cov.19.suspected`                                 |
+|                               |                                  |
 | **By age group**                 |                                            |
 | `r levels(patient.data$agegp10)[1]` | `r summary(patient.data$agegp10)[[1]]`          |
 | `r levels(patient.data$agegp10)[2]` | `r summary(patient.data$agegp10)[[2]]`             |

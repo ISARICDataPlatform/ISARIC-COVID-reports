@@ -45,6 +45,11 @@ d.e <- function(data, datafull, ...){
   N.healthworkers <- summary(as.factor(patient.data$healthwork_erterm))[[1]]
   
   
+  # COV status
+  
+  cov.19.confirmed <- summary(patient.data$positive.COV19.test)[['TRUE']]
+  cov.19.suspected <- summary(patient.data$positive.COV19.test)[['FALSE']]
+  
   # Distribution estimates - EXPECTED 
   
   # Admission to outcome
@@ -335,6 +340,9 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
               
               transfer.outcome = transfer.outcome,
               unk.outcome = unk.outcome,
+              
+              cov.19.confirmed =  cov.19.confirmed,
+              cov.19.suspected =  cov.19.suspected,
               
               adm.to.outcome =  adm.to.outcome,            # admission to outcome
               adm.outcome.l =  adm.outcome.l,
