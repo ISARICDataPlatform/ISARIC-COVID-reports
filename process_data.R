@@ -907,10 +907,10 @@ patient.data <- patient.data %>%
                                           anytest2 <- as.numeric(anytest)
                                           anyfreetext2 <- anyfreetext[which(!is.na(anytest))]
                                           # if(id == "RJR05-5001") print(anyfreetext)
-                                          if((ctest  %in% c(1,2)) & ((!is.na(cpos) & cpos == 1 | cpos == 2) | (cpos == 888 & !is.na(cfreetext) & cpos.covlikely))){
+                                          if((ctest  %in% c(1,2)) & ((!is.na(cpos) & cpos == 1) | (cpos == 888 & !is.na(cfreetext) & cpos.covlikely))){
                                             # print('a')
                                             return(TRUE)
-                                          } else if(ctest == 0 | is.na(ctest) | (ctest  %in% c(1,2) & (is.na(cpos) | (!is.na(cpos.covlikely) & !cpos.covlikely)))){
+                                          } else if(ctest == 0 | is.na(ctest) | (ctest  %in% c(1,2) & (is.na(cpos) | cpos == 2 | (!is.na(cpos.covlikely) & !cpos.covlikely)))){
                                             if(length(anyfreetext) > 0){
                                               otherpos.covlikely = map_lgl(anyfreetext2, probable.cov.freetext)
                                               if(any(!is.na(otherpos.covlikely) & !is.na(anytest2) & otherpos.covlikely & anytest2 == 1)){
