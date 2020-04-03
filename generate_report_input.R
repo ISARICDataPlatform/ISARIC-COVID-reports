@@ -449,3 +449,5 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
 de <- d.e(patient.data, unembargoed.data)
 
 save(de, file = glue("{code.path}/report_input_data_{today()}.rda"))
+
+#save(de, file = glue("{code.path}/report_input_data_sa_{today()}.rda"))
