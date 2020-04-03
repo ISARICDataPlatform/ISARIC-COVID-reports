@@ -19,7 +19,9 @@ output: html_document
 | Dead                         | `r de$N.deaths` |
 | Recovered (discharged alive) | `r de$N.recoveries`                          |
 | Still in hospital            | `r de$N.censored`                            |
-|                              |                                            |
+| Tranferred to another facility                      |  `r de$transfer.outcome`                       |
+| Unknown               | `r de$unk.outcome` 
+|                               |                                           |
 | **By age group**                 |                                            |
 | `r levels(patient.data$agegp10)[1]` | `r summary(patient.data$agegp10)[[1]]`          |
 | `r levels(patient.data$agegp10)[2]` | `r summary(patient.data$agegp10)[[2]]`             |
@@ -139,7 +141,7 @@ Unlike the observed mean, the estimation process of the **expected mean** accoun
 
 
 
-
+**Table 4:** Outcomes
 
 
 

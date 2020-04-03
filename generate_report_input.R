@@ -20,6 +20,8 @@ d.e <- function(data, datafull, ...){
   min.age <- ceiling(min(data$age_estimateyears, na.rm=T)) # minimum age
   max.age <- ceiling(max(data$age_estimateyears, na.rm=T)) # maximum age
   
+  transfer.outcome <- sum(summary(as.factor(patient.data$exit.code))[['transfer']],  summary(as.factor(patient.data$exit.code))[['transfer.palliative']])
+  unk.outcome <- sum(summary(as.factor(patient.data$exit.code))[['unknown']], summary(as.factor(patient.data$exit.code))[['hospitalisation']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed 
   
   
   # ages by sex
@@ -330,6 +332,9 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
               m.age.sd  =   m.age.sd,
               f.age.mean = f.age.mean,
               f.age.sd = f.age.sd,
+              
+              transfer.outcome = transfer.outcome,
+              unk.outcome = unk.outcome,
               
               adm.to.outcome =  adm.to.outcome,            # admission to outcome
               adm.outcome.l =  adm.outcome.l,
