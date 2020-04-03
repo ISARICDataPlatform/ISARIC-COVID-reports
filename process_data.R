@@ -289,7 +289,7 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
 event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup()
 
 patient.data <- demog.data %>% left_join(event.data)  %>%
-  filter(!str_detect(subjid, "TEST"))
+  filter(!str_detect(subjid, "[tT][eE][sS][tT]"))
 
 #### Comorbitities, symptoms, and treatments ####
 
@@ -772,7 +772,7 @@ patient.data <- patient.data %>%
   mutate(ICU.duration = replace(ICU.duration, 
                                 is.na(ICU.duration) & !is.na(ICU.end.date) & !is.na(ICU.start.date),
                                 as.numeric(difftime(ICU.end.date, ICU.start.date,  unit="days"))
-
+                                
   ))
 
 patient.data <- patient.data %>% 
@@ -855,6 +855,73 @@ patient.data <- patient.data %>%
          start.to.ICU = as.numeric(difftime(ICU.admission.date, start.date, unit="days")),
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
          start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
+
+# Resolving the tangle of COVID tests 
+
+
+patient.data <- patient.data %>% 
+  mutate(cov.test.result = 
+           map_dbl(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "corna_mbcat"))) %>%
+  mutate(cov.test.organism = 
+           map_dbl(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "corna_mbcaty"))) %>%
+  mutate(cov.other.organism.freetext = 
+           map_chr(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "coronaother_mborres"))) %>%
+  mutate(any.test.result = 
+           map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mborres"))) %>%
+  mutate(any.test.freetext = 
+           map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mbtestcd")))
+
+
+
+probable.cov.freetext <- function(text){
+  str_detect(text, "[sS][aA][rR][sS]") |
+    str_detect(text, "[cC][oO]r?[vV]") |
+    str_detect(text, "[nN][cC][oO][cC]") |
+    str_detect(text, "[nN][cC][vV][oO]") |
+    str_detect(text, "[cC][oO][iI][vV][dD]") |
+    str_detect(text, "[cC][vV][iI][dD]") | 
+    str_detect(text, "[cC][oO][vV][oO][iI][dD]") |
+    str_detect(text, "[cC]or?n?o?n[ao]vir[iu]s") |
+    str_detect(text, "[cC]OR?N?O?N[AO]VIR[IU]S") |
+    str_detect(text, "[cC]or?n?o?n[ao]\\s[Vv]ir[iu]s") |
+    str_detect(text, "[cC]OR?N?O?N[AO]\\sVIR[IU]S") |
+    str_detect(text, "[Cc][Oo][Rr][Oo][Nn][Aa]")
+}
+
+# e <- 88
+# 
+# id <- patient.data$subjid[e]
+# anytest <- patient.data$any.test.result[e][[1]]
+# anyfreetext <- patient.data$any.freetext[e][[1]]
+# cfreetext <- patient.data$cov19.other.freetext[e]
+# cpos <- patient.data$cov19.result[e]
+# ctest <- patient.data$cov19.test[e]
+
+patient.data <- patient.data %>%
+  mutate(positive.COV19.test = pmap_lgl(list(subjid, cov.test.result, cov.test.organism, cov.other.organism.freetext, any.test.result, any.test.freetext), 
+                                        function(id, ctest, cpos, cfreetext, anytest, anyfreetext){
+                                          cpos.covlikely = probable.cov.freetext(cfreetext)
+                                          anytest2 <- as.numeric(anytest)
+                                          anyfreetext2 <- anyfreetext[which(!is.na(anytest))]
+                                          # if(id == "RJR05-5001") print(anyfreetext)
+                                          if((ctest  %in% c(1,2)) & ((!is.na(cpos) & cpos == 1) | (cpos == 888 & !is.na(cfreetext) & cpos.covlikely))){
+                                            # print('a')
+                                            return(TRUE)
+                                          } else if(ctest == 0 | is.na(ctest) | (ctest  %in% c(1,2) & (is.na(cpos) | (!is.na(cpos.covlikely) & !cpos.covlikely)))){
+                                            if(length(anyfreetext) > 0){
+                                              otherpos.covlikely = map_lgl(anyfreetext2, probable.cov.freetext)
+                                              if(any(!is.na(otherpos.covlikely) & !is.na(anytest2) & otherpos.covlikely & anytest2 == 1)){
+                                                # print("v")
+                                                return(TRUE)
+                                              } else {
+                                                return(FALSE)
+                                              }
+                                            }
+                                          } else {
+                                            return(FALSE)
+                                          }
+                                        }))
+
 
 unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, admission.date, outcome)
 
