@@ -103,12 +103,19 @@ outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored", "death"))) %>%
-    mutate(two.digit.epiweek = map_chr(start.date, function(x){
+    mutate(epiweek = map_dbl(start.date, function(x){
       ew <- epiweek(x)
-      ifelse(nchar(as.character(ew))==1, glue("0{as.character(ew)}"), as.character(ew))
+    })) %>%
+    mutate(two.digit.epiweek = map_chr(epiweek, function(x){
+      ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
     })) %>%
     filter(!is.na(admission.date)) %>%
     filter(epiweek(start.date) <= epiweek(embargo.limit))
+  
+  ew.labels <- map_chr(min(data2$epiweek):max(data2$epiweek), function(x)ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x)))
+  
+  data2 <- data2 %>% 
+    mutate(two.digit.epiweek = factor(two.digit.epiweek, levels = ew.labels))
   
   ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
@@ -117,7 +124,9 @@ outcomes.by.admission.date <- function(data, ...){
     xlab("Epidemiological week of admission/symptom onset (2020)") +
     ylab("Cases") +
     ylim(c(0,450)) +
-    annotate(geom = "text", label = "*", x = max(data2$two.digit.epiweek), y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$two.digit.epiweek))), size =15)
+    scale_x_discrete(drop = F) +
+    annotate(geom = "text", label = "*", x = max(data2$epiweek) - min(data2$epiweek) + 1, 
+             y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$epiweek))), size =15)
 }
 
 # Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
