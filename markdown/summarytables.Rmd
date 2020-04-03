@@ -19,7 +19,9 @@ output: html_document
 | Dead                         | `r de$N.deaths` |
 | Recovered (discharged alive) | `r de$N.recoveries`                          |
 | Still in hospital            | `r de$N.censored`                            |
-|                              |                                            |
+| Tranferred to another facility                      |  `r de$transfer.outcome`                       |
+| Unknown               | `r de$unk.outcome` 
+|                               |                                           |
 | **By age group**                 |                                            |
 | `r levels(patient.data$agegp10)[1]` | `r summary(patient.data$agegp10)[[1]]`          |
 | `r levels(patient.data$agegp10)[2]` | `r summary(patient.data$agegp10)[[2]]`             |
@@ -92,7 +94,7 @@ output: html_document
 | Renal replacement therapy     | `r de$t.dat$present[13]`       | `r de$t.dat$absent[13]`       | `r de$t.dat$unknown[13]`       |
 | Tracheostomy inserted         | `r de$t.dat$present[14]`       | `r de$t.dat$absent[14]`       | `r de$t.dat$unknown[14]`       |
 | Other                         | `r de$t.dat$present[10]`       | `r de$t.dat$absent[10]`       | `r de$t.dat$unknown[10]`       |
-| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$O2.ever=='FALSE', na.rm=T)` | `r nrow(patient.data)- sum(patient.data$ECMO.ever=='TRUE', na.rm=T)- sum(patient.data$ECMO.ever=='FALSE', na.rm=T)`|
+| Extracorporeal membrane oxygenation (ECMO) | `r sum(patient.data$ECMO.ever=='TRUE', na.rm=T)` | `r sum(patient.data$ECMO.ever=='FALSE', na.rm=T)` | `r nrow(patient.data)- sum(patient.data$ECMO.ever=='TRUE', na.rm=T)- sum(patient.data$ECMO.ever=='FALSE', na.rm=T)`|
 
 <br /><br /><br />
 
@@ -139,7 +141,7 @@ Unlike the observed mean, the estimation process of the **expected mean** accoun
 
 
 
-
+**Table 4:** Outcomes
 
 
 

@@ -1,0 +1,338 @@
+---
+title: "International Severe Acute Respiratory and Emerging Infections Consortium (ISARIC)"
+output:
+  pdf_document:
+    toc: no
+    includes:
+      in_header: header.tex
+  html_document:
+    df_print: paged
+    number_sections: yes
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: no
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+library(plyr)
+library(tidyverse)
+library(glue)
+library(viridis)
+library(ggupset)
+library(sf)
+library(rgeos)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(magrittr)
+library(binom)
+library(fitdistrplus)
+library(lubridate)
+library(grid)
+library(binom)
+library(boot)
+library(survival)
+library(survminer)
+library(broom)
+
+#reprocess.data <- F
+
+# file locations
+
+paths <- read_csv("paths.csv", col_names = F)
+
+code.path <- paths[[which(paths$X1 == "code.path"), 2]]
+data.path <- paths[[which(paths$X1 == "data.path"), 2]]
+data.dict.file <- paths[[which(paths$X1 == "data.dict.file"), 2]]
+site.list.file <- paths[[which(paths$X1 == "site.list.file"), 2]]
+uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
+row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
+eot.data.file <- paths[[which(paths$X1 == "eot.data.file"), 2]]
+
+
+# Extract 'mbcaty' (type of Coronavirus) for all cases
+
+extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
+  out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
+  
+  if(length(out) > 1 & sanity.check){
+    stop("Too many entries")
+  } else if(length(out) == 0){
+    NA
+  } else {
+    out
+  }
+}
+
+# Load data
+
+#load("patient_data_2020-04-02.rda")
+load(glue("{code.path}/patient_data_{today()}.rda"))
+
+# Call 'extract' function 
+
+pathogen.results.cor <- map_dbl(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "corna_mbcaty"))
+
+# Subset of interest:
+
+conf_ids <- which(pathogen.results.cor==1)
+
+patient.data <- patient.data[conf_ids, ]
+
+
+# Plot functions
+source(glue("{code.path}/plot_functions.R"))
+
+
+# Report inputs
+load(glue("{code.path}/report_input_data_{today()}.rda"))
+#load("report_input_data_sa_2020-04-02.rda")
+
+
+```
+
+*A global federation of clinical research networks, providing a proficient, coordinated, and agile research response to outbreak-prone infectious diseases*
+
+
+# COVID-19 Report: `r format(as.Date(substr(uk.data.file, start = 6, stop  = 15)), "%d %B %Y")` [Positive cases only] {-}
+
+
+
+# Summary
+
+
+The cohort comprises <span style="background-color: #FFFF00">**`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females</span> -- sex is unreported for `r de$N.sex.unknown` cases. 
+
+The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
+
+Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. 
+
+
+<!-- Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr*100`% (95% CI: `r de$hfr.lower*100`%, `r de$hfr.upper*100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed. -->
+
+The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome` days, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome`. These estimates are based on all cases which have complete records on length of hospital stay (N = `r de$cases.full.adm.outcome`).
+
+The observed mean  number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm` (SD: `r de$obs.sd.onset.adm`).
+
+The symptoms on admission represent the policy for hospital admission and containment at that time plus, whatever the case definition was. As time passes for most countries these will change. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
+
+
+`r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted at some point of their illness into intensive care unit (ICU). The observed mean duration (in days) from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` (SD: `r round(sd(de$a.icu, na.rm=T), 1)`) -- estimated from  records on cases with complete date records on hospital admission and ICU entry (N = `r length(de$a.icu)`).
+
+
+The duration of stay in the ICU has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days) -- estimated on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`). Of these `r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients who were admitted into ICU, `r de$N.icu.deaths` died, `r de$N.icu.censored` are still in hospital and `r de$N.icu.recoveries` have recovered and been discharged. Outcome records are unavailable for `r de$N.icu.NA` cases 
+
+
+`r sum(patient.data$NIMV.ever == 'TRUE', na.rm = T)` patients received non-invasive mechanical ventilation (NIV). The mean duration from admission to receiving NIV is `r round(mean(de$a.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days) -- estimated from  records on cases with complete records on dates of hospital admission and NIV onset (N = `r length(de$a.nimv)`).
+
+
+The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days) -- estimated based on only those cases which have complete NIV duration records (N = `r length(de$d.nimv)`).
+
+
+`r sum(patient.data$IMV.ever == 'TRUE', na.rm = T)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days) -- estimated from  records on cases with complete records on dates of hospital admission and IMV onset (N = `r length(de$a.imv)`).
+
+
+The mean and SD for the duration of IMV -- estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays -- is `r round(mean(de$d.imv, na.rm=T), 1)` days and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.
+
+Of `r de$n.treat` patients with complete details of treatments received, `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. These treatment categories are not mutually exclusive since some patients received multiple treatments. `r de$p.o2`% of patients received some degree of oxygen supplementation: of these, `r de$p.NIV`% received NIV and `r de$p.In.Ven`% IMV.
+
+Of `r de$icu.n.treat` patients admitted into ICU with complete details of treatments, `r de$icu.p.abx`% received antibiotics and `r de$icu.p.av`% antivirals; and `r de$icu.p.o2`% received some degree of oxygen supplementation, of which `r de$icu.p.NIV`% was NIV and `r de$icu.p.In.Ven`% IMV.
+
+
+\newpage
+# Patient Characteristics
+
+
+**Figure 1**: Age and sex distribution of patients. Bar fills are outcome (death/discharge/ongoing care) at the time of report. 
+
+```{r agepyramid, echo = FALSE}
+
+age.pyramid(patient.data)
+
+```
+\newpage
+**Figure 2**: Top: Frequency of symptoms seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common symptoms, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining symptoms in the top plot.
+
+
+```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
+symptom.prevalence.plot(patient.data)
+symptoms.upset(patient.data, 4)
+
+
+```
+
+\newpage
+**Figure 3**:  Top: Frequency of comorbidities seen at admission amongst COVID-19 patients. Bottom: The distribution of combinations of the four most common comorbidities, amongst all patients for whom this data was recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining comorbidities in the top plot, and any other comorbidities recorded as free text by clinical staff.
+
+```{r comorbcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
+comorbidity.prevalence.plot(patient.data)
+comorbidities.upset(patient.data, 4)
+
+```
+\newpage
+**Figure 4**: Distribution of length of hospital stay, according to sex. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+
+```{r  stay.by.sex, out.width= "80%"}
+
+violin.sex.func(patient.data)
+```
+
+**Figure 5**: Distribution of length of hospital stay, according to patient age group. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+
+```{r  stay.by.age, out.width= "80%"}
+
+violin.age.func(patient.data)
+```
+
+
+<!-- **Figure 7**: Estimated hospital fatality ratio based on patients with complete outcome data, showing changes to estimate over time. Shaded area represents 95% confidence interval. Methods from Wu *et al.*(2020). -->
+
+<!-- ```{r out.width= "80%"} -->
+
+<!-- hospital.fatality.ratio(patient.data)$plt -->
+
+<!-- ``` -->
+\newpage
+**Figure 6**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset). The rightmost bar, marked with an asterisk, represents an incomplete week (due to the 14-day cutoff) rather than a genuine decline in cases.
+
+```{r recruitment3, echo=FALSE}
+
+outcomes.by.admission.date(patient.data)
+
+```
+\newpage
+
+# Treatment
+
+**Figure 7**: Treatments used. This only includes patients where this information was recorded.
+
+```{r treatment1, echo=FALSE}
+treatment.use.plot(patient.data)
+```
+
+\newpage
+**Figure 8**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients with completed hospital stay and recorded treatment data. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
+
+```{r treatment2, echo=FALSE}
+treatment.upset(patient.data)
+```
+
+\newpage
+# Intensive Care Unit Treatments
+
+These figures include only the `r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients who were admitted to an Intensive Care Unit.
+
+**Figure 9**: Treatments used. This only includes patients where this information was recorded.
+
+```{r treatment.icu, echo=FALSE}
+treatment.use.plot.icu(patient.data)
+```
+\newpage
+**Figure 10**: The distribution of combinations of treatments administered during hospital stay for patients who were admitted to an Intensive Care Unit. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
+
+```{r treatment2.icu, echo=FALSE}
+icu.treatment.upset(patient.data)
+```
+\newpage
+**Figure 11** Distribution of lengths of stay for patients who were admitted to an Intensive Care Unit: total length of stay for this group and length of stay within Intensive Care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+
+```{r icu_los, echo=FALSE}
+icu.violin.plot(patient.data)
+```
+
+\newpage
+
+# Statistical Analysis
+
+**Figure 12**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
+
+```{r onset.admission, out.width = '80%'}
+
+onset.adm.plot(patient.data)
+
+```
+
+
+**Figure 13**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
+
+
+```{r  adm.outcome, out.width = '80%'}
+
+adm.outcome.plot(patient.data)
+
+```
+
+\newpage
+
+**Figure 14**: Nonparametric probabilities of death (red curve) and recovery (green curve) over time. The black line indicates the case fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+
+
+```{r outcomelines}
+
+modified.km.plot(patient.data)
+
+```
+\newpage
+
+# Country Comparisons
+
+**Figure 15**: Number of sites per country.
+
+```{r recruitment1, echo=FALSE}
+
+sites.by.country(unembargoed.data)
+
+```
+
+**Figure 16**: Distribution of patients by country and outcome
+
+```{r recruitment2, echo=FALSE}
+
+outcomes.by.country(patient.data)
+
+```
+\newpage
+
+# Recruitment
+
+**Figure 17**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included
+
+``` {r recruitmentbyoutcome, echo=FALSE}
+
+recruitment.dat.plot(unembargoed.data, today()-14)
+
+```
+
+\newpage
+
+# Background
+
+```{r child = 'markdown/background.Rmd'}
+```
+
+# Methods
+
+```{r child = 'markdown/methods.Rmd'}
+```
+
+# Caveats
+
+```{r child = 'markdown/caveats.Rmd'}
+```
+
+# Summary Tables
+
+```{r child = 'markdown/summarytables.Rmd'}
+```
+
+# ISARIC Team Members
+
+```{r child = 'markdown/teammembers.Rmd'}
+```
+
+# References
+
+```{r child = 'markdown/references.Rmd'}
+```

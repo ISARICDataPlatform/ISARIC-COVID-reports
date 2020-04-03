@@ -760,19 +760,22 @@ patient.data <- patient.data %>%
   { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
   dplyr::select(-ICU.cols)
 
+# ICU.start.data and ICU.end.date hae values from daily sheets but omit some 
+# values from the outcome sheet. Where available, the outcome sheet is being
+# preferred.
 patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) == FALSE] <- 
-  patient.data$ICU.admission.date
+  patient.data$ICU.admission.date[is.na(patient.data$ICU.admission.date) == FALSE]
 patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <- 
-  patient.data$ICU.discharge.date
+  patient.data$ICU.discharge.date[is.na(patient.data$ICU.discharge.date) == FALSE] 
 # Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
 patient.data$ICU.admission.date <- patient.data$ICU.start.date
 patient.data$ICU.discharge.date <- patient.data$ICU.end.date
-# if we can get those from the daily forms then we can get this
-patient.data <- patient.data %>% 
-  mutate(ICU.duration = replace(ICU.duration, 
-                                is.na(ICU.duration) & !is.na(ICU.end.date) & !is.na(ICU.start.date),
-                                as.numeric(difftime(ICU.end.date, ICU.start.date,  unit="days"))
-                                
+ # if we can get those from the daily forms then we can get this
+patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <- 
+  as.numeric(difftime(
+    patient.data$ICU.end.date[is.na(patient.data$ICU.duration) == TRUE], 
+    patient.data$ICU.start.date[is.na(patient.data$ICU.duration) == TRUE],  
+    unit="days"
   ))
 
 patient.data <- patient.data %>% 
