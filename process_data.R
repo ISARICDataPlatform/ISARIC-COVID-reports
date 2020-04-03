@@ -760,13 +760,16 @@ patient.data <- patient.data %>%
   { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
   dplyr::select(-ICU.cols)
 
-# ICU.start.data and ICU.end.date previously created, but essentially not
-# added anything compared to ICU.admission.date and ICU.discharge.date. Plan
-# was to try to get these dates from the daily forms. As these variables have
-# been used in plots, keep them for now the same as ICU.admission.date and 
-# ICU.discharge.date. 
-patient.data$ICU.start.date <- patient.data$ICU.admission.date
-patient.data$ICU.end.date <- patient.data$ICU.discharge.date
+# ICU.start.data and ICU.end.date hae values from daily sheets but omit some 
+# values from the outcome sheet. Where available, the outcome sheet is being
+# preferred.
+patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) == FALSE] <- 
+  patient.data$ICU.admission.date[is.na(patient.data$ICU.admission.date) == FALSE]
+patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <- 
+  patient.data$ICU.discharge.date[is.na(patient.data$ICU.discharge.date) == FALSE] 
+# Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
+patient.data$ICU.admission.date <- patient.data$ICU.start.date
+patient.data$ICU.discharge.date <- patient.data$ICU.end.date
 patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <- 
   as.numeric(difftime(
     patient.data$ICU.end.date[is.na(patient.data$ICU.duration) == TRUE], 
