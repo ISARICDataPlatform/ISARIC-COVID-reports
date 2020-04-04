@@ -23,7 +23,7 @@ output: html_document
 | Unknown                         | `r de$unk.outcome` 
 |                               |                                           |
 | **By COVID-19 status**                           |                                  |
-|  Positive (laboratory-confirmed)   |       `r de$cov.19.suspected`                            |
+|  Positive (laboratory-confirmed)   |       `r de$cov.19.confirmed`                            |
 |   Suspected                           |     `r de$cov.19.suspected`                                 |
 |                               |                                  |
 | **By age group**                 |                                            |
@@ -34,10 +34,9 @@ output: html_document
 | `r levels(patient.data$agegp10)[5]` | `r summary(patient.data$agegp10)[[5]]`             |
 | `r levels(patient.data$agegp10)[6]` | `r summary(patient.data$agegp10)[[6]]`             |
 | `r levels(patient.data$agegp10)[7]` | `r summary(patient.data$agegp10)[[7]]`             |
-| `r levels(patient.data$agegp10)[8]` | `r summary(patient.data$agegp10)[[8]]`             |
-|                              |                                                      |
+| `r levels(patient.data$agegp10)[8]` | `r summary(patient.data$agegp10)[[8]]`            |
 | Unknown                      | `r summary(patient.data$agegp10)[[9]]`             |
-|                              |                                            |
+                        
 
 <br /><br /><br />
 
@@ -102,7 +101,7 @@ output: html_document
 
 <br /><br /><br />
 
-
+\newpage
 <!-- **Table 3:** Key time variables -->
 
 
@@ -144,8 +143,6 @@ Unlike the observed mean, the estimation process of the **expected mean** accoun
 
 
 
-
-**Table 4:** Outcomes
 
 
 
