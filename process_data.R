@@ -1,9 +1,8 @@
-
-
-
-#### Dataset inclusion flags ####
+#### Dataset inclusion flags and embargo calculation ####
 
 # flags for inclusion of the three data files
+
+if(verbose) cat("Setting up datasets and embargo date...\n")
 
 embargo.length <- 14
 
@@ -17,11 +16,17 @@ if(!use.uk.data & !use.row.data & !use.eot.data){
   stop("No data to be imported")
 }
 
-#### List of sites ####
+#### List of sites and countries ####
+
+if(verbose) cat("Getting sites and countries...\n")
+
+# This generates a list of sites and a mapping to countries, and to URLs for country flags
+# This more or less has to be done by hard-coding country codes, because they do not conform to international two- or three- letter codes
+# In fact different codes can be used for the same country (e.g. Ireland)
 
 site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>% 
-  dplyr::mutate(site.number = map_chr(`Site Number`, function(x) substr(x, 1, 3))) %>%
-  dplyr::mutate(site.name = map_chr(`Site Number_1`, function(x) {
+  dplyr::mutate(site.number = map_chr(Number, function(x) substr(x, 1, 3))) %>%
+  dplyr::mutate(site.name = map_chr(Number.and.name, function(x) {
     sub("^\\s+", "", substr(x, 5, nchar(x)))
   })) %>%
   dplyr::select(site.number, site.name, Country) %>%
@@ -154,10 +159,55 @@ site.list <- read_csv(glue("{data.path}/{site.list.file}")) %>%
            NA)
   }))
 
+# Check if any sites had no country mapping. If this warning is triggered, add them above,
+
+if(any(is.na(site.list$country.code))){
+  missing.sites <- site.list %>% filter(is.na(country.code)) %>% pull(site.name) %>% unique()
+  error.string <- glue_collapse(missing.sites, ", ")
+  warning(glue("Site codes with no country mapping: {error.string}"))
+}
+
+# Check if any country codes were not mapped. If this warning is triggered, try updating the site list from Laura's most recent version.
+
+if(any(is.na(site.list$Country))){
+  missing.countries <- site.list %>% filter(is.na(Country)) %>% pull(country.code) %>% unique()
+  error.string <- glue_collapse(missing.countries, ", ")
+  warning(glue("Country codes with no country name mapping: {error.string}\n"))
+}
+
+# The three file imports are subtly different.
+
+# There is a general problem with non-numeric entries in numerical columns. This function replaces them with NA with a warning
+
+careful.as.numeric <- function(value, subjid, colname){
+  out <- suppressWarnings(as.numeric(value))
+  if(!is.na(value) & is.na(out)){
+    warning(glue("Non-numerical value '{value}' transformed to NA for column {colname}, subject ID {subjid}"))
+  }
+  out
+}
+
+
+pcareful.as.numeric <- function(value.col, subjid, colname){
+  if(is.numeric(value.col)){
+    value.col
+  } else {
+    map2_dbl(value.col, subjid, function(x, y){
+      careful.as.numeric(x, y, colname)
+    })
+  }
+}
+
+
+##### UK data import #####
 
 if(use.uk.data){
   
-  # the UK data has some jaw-dropping differences between column formats. For a small number of radio buttons 0 is FALSE and 2 NA; for the rest 2 FALSE and 3 NA!!!
+  if(verbose) cat("Importing UK data...\n")
+  
+  # the UK data has some jaw-dropping differences between column formats. 
+  # For a small number of radio buttons 0 is FALSE and 2 NA; for the rest 2 FALSE and 3 NA!!!
+  # This function converts the former to the latter
   
   radio.button.convert <- function(x){
     map_dbl(x, function(y) {
@@ -172,18 +222,52 @@ if(use.uk.data){
     })
   }
   
+  # we can use the data dictionary file to identify columns that should be numeric and those that should be text
+
+  uk.data.dict <- read_csv(glue("{data.path}/{uk.data.dict.file}"))
+   
+  uk.column.types <- uk.data.dict %>% dplyr::select(1, 4) %>%
+    dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
+
+  uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 100000)
+
+  # Columns that should be text
+  text.columns.temp <- uk.column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
+  # some data dictionary columns are not in the data!
+  text.columns <- intersect(text.columns.temp, colnames(uk.data))
+  # don't waste time on ones that are already character, and avoid doing anything to date columns
+  text.columns <- text.columns[which(text.columns %>% map_lgl(function(x) !is.Date(uk.data %>% pull(x)) & !is.character(uk.data %>% pull(x))))]
   
-  uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 40000) %>%
-    dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
-    # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
-    dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
-    dplyr::mutate(age_estimateyears = as.numeric(age_estimateyears)) %>%
-    dplyr::mutate(apvs_weight = as.numeric(apvs_weight)) %>%
+  # Columns that should be numerical
+  nontext.columns.temp <- uk.column.types %>% filter(!(type %in% c("text", "descriptive", "notes", "file"))) %>% pull(col.name)
+  # radio buttons appear differently in the CSV. E.g. "ethnic" becomes "ethnic___1", "ethnic___2", etc
+  nontext.columns.extra <- colnames(uk.data)[which(map_lgl(colnames(uk.data), function(x) any(startsWith(x, glue("{nontext.columns.temp}___")))))]
+  nontext.columns <-intersect(colnames(uk.data), c(nontext.columns.temp, nontext.columns.extra))
+  # don't waste time on ones that are already character
+  nontext.columns <- nontext.columns[which(nontext.columns %>% map_lgl(function(x) !is.numeric(uk.data %>% pull(x))))]
+  
+  # readr warnings about parsing failure can often be dealt with by increasing guess_max
+  
+  uk.data <- uk.data %>%
+    # Columns that should be character are converted to character. 
+    # Note also that some of these _could_ be numerical (e.g. temperature measurements) but the fields are free text
+    mutate_at(text.columns, as.character) 
+  
+  # Columns that should be numeric are converted to numeric. Parse failures becomes NA. 
+  # this may actually need a for loop!
+  for(ntc in nontext.columns){
+    uk.data <- uk.data %>% mutate_at(vars(all_of(ntc)), .funs = ~pcareful.as.numeric(., subjid = subjid, colname = ntc))
+  }
+  
+  uk.data <- uk.data %>%
+    # Country can't be got from the site names
     dplyr::mutate(Country = "UK") %>%
+    # data.source is the origin of the data (UK/ROW/EOT)
     dplyr::mutate(data.source = "UK") %>%
     dplyr::mutate(site.name = redcap_data_access_group) %>%
+    # These are the three radio buttons that behave differently in the raw data
     mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert) %>%
-    # 1 is SARS-2 in ROW data but MERS in UK, and vice versa.
+    # 1 is SARS-2 in ROW data but MERS in UK, and vice versa. Converting UK to ROW format.
     mutate(corna_mbcaty = map_dbl(corna_mbcaty, function(x){
       if(is.na(x)){
         NA
@@ -193,52 +277,115 @@ if(use.uk.data){
                "2" = 1,
                x)
       }
-    })) %>%
-    mutate(invasive_prdur = as.numeric(replace(invasive_prdur, invasive_prdur=="Unknown", NA)))
+    })) 
   
 } else {
   uk.data <- NULL
 }
 
+##### EOT data import #####
+
 if(use.eot.data){
-  eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 40000) %>%
-    dplyr::mutate_at(vars(ends_with("dat")), ymd) %>%              # contains() raises flags
-    dplyr::mutate(hostdat_transfer = ymd(hostdat_transfer),
-                  erendat_2 = ymd(erendat_2),
-                  dsstdtc = ymd(dsstdtc),
-                  date = ymd(date)) %>% 
-    dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
+  
+  if(verbose) cat("Importing EOT data...\n")
+  
+  eot.data.dict <- read_csv(glue("{data.path}/{row.data.dict.file}"))
+  
+  eot.column.types <- eot.data.dict %>% dplyr::select(1, 4) %>%
+    dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
+  
+  eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 100000)
+  
+  # Columns that should be text
+  text.columns.temp <- eot.column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
+  # some data dictionary columns are not in the data!
+  text.columns <- intersect(text.columns.temp, colnames(eot.data))
+  # don't waste time on ones that are already character, and avoid doing anything to date columns
+  text.columns <- text.columns[which(text.columns %>% map_lgl(function(x) !is.Date(eot.data %>% pull(x)) & !is.character(eot.data %>% pull(x))))]
+  
+  # Columns that should be numerical
+  nontext.columns.temp <- eot.column.types %>% filter(!(type %in% c("text", "descriptive", "notes", "file"))) %>% pull(col.name)
+  # radio buttons appear differently in the CSV. E.g. "ethnic" becomes "ethnic___1", "ethnic___2", etc
+  nontext.columns.extra <- colnames(eot.data)[which(map_lgl(colnames(eot.data), function(x) any(startsWith(x, glue("{nontext.columns.temp}___")))))]
+  nontext.columns <-intersect(colnames(eot.data), c(nontext.columns.temp, nontext.columns.extra))
+  # don't waste time on ones that are already character
+  nontext.columns <- nontext.columns[which(nontext.columns %>% map_lgl(function(x) !is.numeric(eot.data %>% pull(x))))]
+  
+  # readr warnings about parsing failure can often be dealt with by increasing guess_max
+  
+  eot.data <- eot.data %>%
+    # Columns that should be character are converted to character. 
+    # Note also that some of these _could_ be numerical (e.g. temperature measurements) but the fields are free text
+    mutate_at(text.columns, as.character) 
+  
+  # Columns that should be numeric are converted to numeric. Parse failures becomes NA. 
+  # this may actually need a for loop!
+  for(ntc in nontext.columns){
+    eot.data <- eot.data %>% mutate_at(vars(all_of(ntc)), .funs = ~pcareful.as.numeric(., subjid = subjid, colname = ntc))
+  }
+  
+  eot.data <- eot.data %>%
+    # some variables have different names in different datasets
     dplyr::rename(chrincard = chroniccard_mhyn, 
                   modliv = modliver_mhyn, 
                   mildliver = mildliv_mhyn, 
                   chronichaemo_mhyn = chronhaemo_mhyn, 
                   diabetescom_mhyn = diabetiscomp_mhyn,
                   rheumatologic_mhyn = rheumatology_mhyr) %>%
+    # join in the country table
     dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
     dplyr::select(-site.number) %>%
-    add_column(agedat = NA) %>%
+    # add data source
     dplyr::mutate(data.source = "EOT")
 }else{
   eot.data <- NULL
 }
 
 
-#### Manual date correction ####
+##### ROW (ISARIC) data import #####
 
 if(use.row.data){
-  row.data <- read_csv(glue("{data.path}/{row.data.file}"), guess_max = 40000) %>% 
-    
-    mutate(daily_lbdat = replace(daily_lbdat, 306,"01/01/2020")) %>% # NOTE MANUAL DATE CORRECTION
-    
-    # some fields are all-numerical in some files but not others. But using col_types is a faff for this many columns. This is a hack for now. @todo
-    dplyr::mutate_at(vars(ends_with("orres")), as.character) %>%
-    dplyr::mutate_at(vars(ends_with("dat")), ymd) %>%              # contains() raises flags
-    dplyr::mutate(hostdat_transfer = ymd(hostdat_transfer),
-                  erendat_2 = ymd(erendat_2),
-                  dsstdtc = ymd(dsstdtc),
-                  date = ymd(date)) %>%
-    # different column names for some comorbidities
+  
+  if(verbose) cat("Importing ISARIC data...\n")
+  
+  row.data.dict <- read_csv(glue("{data.path}/{row.data.dict.file}"))
+  
+  row.column.types <- row.data.dict %>% dplyr::select(1, 4) %>%
+    dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
+  
+  row.data <- read_csv(glue("{data.path}/{row.data.file}"), guess_max = 100000)
+  
+  # Columns that should be text
+  text.columns.temp <- row.column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
+  # some data dictionary columns are not in the data!
+  text.columns <- intersect(text.columns.temp, colnames(eot.data))
+  # don't waste time on ones that are already character, and avoid doing anything to date columns
+  text.columns <- text.columns[which(text.columns %>% map_lgl(function(x) !is.Date(row.data %>% pull(x)) & !is.character(row.data %>% pull(x))))]
+  
+  # Columns that should be numerical
+  nontext.columns.temp <- row.column.types %>% filter(!(type %in% c("text", "descriptive", "notes", "file"))) %>% pull(col.name)
+  # radio buttons appear differently in the CSV. E.g. "ethnic" becomes "ethnic___1", "ethnic___2", etc
+  nontext.columns.extra <- colnames(row.data)[which(map_lgl(colnames(row.data), function(x) any(startsWith(x, glue("{nontext.columns.temp}___")))))]
+  nontext.columns <-intersect(colnames(row.data), c(nontext.columns.temp, nontext.columns.extra))
+  # don't waste time on ones that are already character
+  nontext.columns <- nontext.columns[which(nontext.columns %>% map_lgl(function(x) !is.numeric(row.data %>% pull(x))))]
+  
+  # readr warnings about parsing failure can often be dealt with by increasing guess_max
+  
+  row.data <- row.data %>%
+    # Columns that should be character are converted to character. 
+    # Note also that some of these _could_ be numerical (e.g. temperature measurements) but the fields are free text
+    mutate_at(text.columns, as.character) 
+  
+  # Columns that should be numeric are converted to numeric. Parse failures becomes NA. 
+  # this may actually need a for loop!
+  for(ntc in nontext.columns){
+    row.data <- row.data %>% mutate_at(vars(all_of(ntc)), .funs = ~pcareful.as.numeric(., subjid = subjid, colname = ntc))
+  }
+  
+  row.data <- row.data %>%
+    # some variables have different names in different datasets
     dplyr::rename(chrincard = chroniccard_mhyn, 
                   modliv = modliver_mhyn, 
                   mildliver = mildliv_mhyn, 
@@ -246,18 +393,22 @@ if(use.row.data){
                   diabetescom_mhyn = diabetiscomp_mhyn,
                   rheumatologic_mhyn = rheumatology_mhyr,
                   icu_hoendat = hoendat) %>%
+    # join in the country table
     dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
     dplyr::select(-site.number) %>%
-    add_column(agedat = NA) %>%
     dplyr::mutate(data.source = "ROW")
 } else {
   row.data <- NULL
 }
 
+# This is a function to replace dates in the future with NAs
+
 date.sanity.check <- function(date) {
   as.Date(ifelse(date > today(), as.Date(NA), date),  origin = "1970-01-01")
 }
+
+if(verbose) cat("Setting future dates to NA...\n")
 
 raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
   dplyr::mutate(dsstdat = date.sanity.check(ymd(dsstdat)),
@@ -266,13 +417,41 @@ raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
                 daily_lbdat = date.sanity.check(ymd(daily_lbdat)),
                 hostdat = date.sanity.check(ymd(hostdat)),
                 cestdat = date.sanity.check(ymd(cestdat)),
-                dsstdtc = date.sanity.check(ymd(dsstdtc))) %>%
-  mutate(daily_fio2_lborres = as.numeric(daily_fio2_lborres))
+                dsstdtc = date.sanity.check(ymd(dsstdtc))) 
 
+
+# Now, some fields need to be numerical even if the data dictionary does not think they are.
+# These are just the ones of those that we _currently use_. Others should be added as required.
+
+if(verbose) cat("Manually adjusting some fields...\n")
+
+raw.data <- raw.data %>%
+  mutate(daily_fio2_lborres = map2_dbl(subjid, daily_fio2_lborres, function(x, y) careful.as.numeric(y, x, "daily_fio2_lborres"))) %>%
+  mutate(age_estimateyears = map2_dbl(subjid, age_estimateyears, function(x, y) careful.as.numeric(y, x, "age_estimateyears"))) %>%
+  mutate(hodur = map2_dbl(subjid, hodur, function(x, y) careful.as.numeric(y, x, "hodur"))) %>%
+  mutate(invasive_prdur = map2_dbl(subjid, invasive_prdur, function(x, y) careful.as.numeric(y, x, "invasive_prdur"))) 
+
+# "RD816-0001" is actually two patients. As this is currently only the example of this, recode by hand.
+
+raw.data <- raw.data %>%
+  mutate(subjid = replace(subjid, subjid == "RD816-0001", glue("RD816-0001{c(rep('a',3), rep('b',22))}")))
 
 # Demographic data is in the first row
 
-demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
+
+if(verbose) cat("Making patient data frame...\n")
+
+demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() 
+
+# Join in a copy of all rows as the events column for each patient
+
+event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup()
+
+if(verbose) cat("Joining events tables...\n")
+
+patient.data <- demog.data %>% left_join(event.data)  %>%
+  # cut out any rows where the IDs suggest test data
+  filter(!str_detect(subjid, "[tT][eE][sS][tT]")) %>%
   # replace the fractional ages
   mutate(age_estimateyears = map_dbl(age_estimateyears, function(x){
     if(is.na(x)){
@@ -284,18 +463,13 @@ demog.data <- raw.data %>% group_by(subjid) %>% slice(1) %>% ungroup() %>%
     }
   }))
 
-# Clinical data is in subsequent rows but also _sometimes_ in the first row. So the events column still contains a copy of the first row.
-
-event.data <- raw.data %>% group_by(subjid) %>% nest() %>% dplyr::rename(events = data) %>% ungroup()
-
-patient.data <- demog.data %>% left_join(event.data)  %>%
-  filter(!str_detect(subjid, "[tT][eE][sS][tT]"))
-
 #### Comorbitities, symptoms, and treatments ####
 
 # read the data dictionary to get lists of columns for symptoms at admission, comorbidities, and treatments
 
-d.dict <- read_csv(glue("{data.path}/{data.dict.file}")) %>%
+if(verbose) cat("Making reference tables for comorbidiities, symptoms, and treatments...\n")
+
+d.dict <- uk.data.dict %>%
   dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
   dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
 
@@ -321,6 +495,8 @@ comorbidities.labels[18] <- "Other"
 
 comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
 
+# Group liver disease categories
+
 patient.data <- patient.data %>%
   mutate(liver.disease = map2_dbl(mildliver, modliv, function(mild, moderate){
     if(is.na(mild) & is.na(moderate)){
@@ -340,6 +516,8 @@ patient.data <- patient.data %>%
 
 comorbidities <- comorbidities %>% bind_rows(list(field = "liver.disease", label = "Liver disease")) %>%
   filter(field != "mildliver" & field != "modliv")
+
+# Group diabetes categories
 
 patient.data <- patient.data %>%
   mutate(diabetes = map2_dbl(diabetes_mhyn, diabetescom_mhyn, function(simple, complex){
@@ -382,7 +560,7 @@ admission.symptoms.labels[2] <- "Cough: no sputum"
 
 admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
 
-# these have not been entered coherently, replace them. Someone with a cough with sputum does not have a cough without it
+# Cough records have not been entered coherently, and are recoded to be mutually exclusive. Someone with a cough with sputum does not have a cough without it
 
 patient.data <- patient.data %>% 
   mutate(cough.cols = pmap(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
@@ -434,6 +612,8 @@ admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nospu
   bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)")) %>%
   filter(field != "cough_ceoccur_v2" & field != "coughsput_ceoccur_v2" & field !="coughhb_ceoccur_v2")
 
+# Group shortness of breath categories
+
 patient.data <- patient.data %>%
   mutate(shortness.breath = map2_dbl(shortbreath_ceoccur_v2, lowerchest_ceoccur_v2, function(adult, paed){
     if(is.na(adult) & is.na(paed)){
@@ -476,6 +656,10 @@ treatment.labels[14] <- "Other"
 
 treatments <- tibble(field = treatment.colnames, label = treatment.labels)
 
+
+
+# This function extracts a named column from the events table. If sanity.check == T it expects only one non-NA value in that column
+
 extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
   out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
   
@@ -489,6 +673,8 @@ extract.named.column.from.events <- function(events.tibble, column.name, sanity.
 }
 
 # Add new columns with more self-explanatory names as needed
+
+if(verbose) cat("Adding new columns...\n")
 
 patient.data <- patient.data %>%
   # check if symptoms, comorbidities and treatments were actually recorded
@@ -511,7 +697,7 @@ patient.data <- patient.data %>%
     }
   })) %>%
   dplyr::mutate(exit.date = ymd(exit.date)) %>%
-  # exit code is the reason for leaving the site. Unsure what "hospitalisation" means but it's yet to appear in actual data
+  # exit code is the reason for leaving the site.
   dplyr::mutate(exit.code = map2_chr(subjid, events, function(y,x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm))
     if(nrow(outcome.rows) == 0){
@@ -526,13 +712,12 @@ patient.data <- patient.data %>%
                     "6" = "unknown"))
     }
   })) %>%
-  # censorship occurs if either the patient is still in site or is moved offsite without a death or discharge code
+  # censorship occurs if the patient is still in site
   dplyr::mutate(censored = map2_lgl(subjid, events, function(y, x){
     if(x %>% pull(redcap_event_name) %>% startsWith("discharge") %>% any() %>% not()){
       # still in site
       return(TRUE)
     } else {
-      # Anything other than discharge or death is "censored"
       temp <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) 
       if(nrow(temp) == 0){
         return(TRUE)
@@ -558,7 +743,7 @@ patient.data <- patient.data %>%
     } else {
       return(y %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm)) %>% pull(dsstdtcyn))
     }
-  }))  %>%
+  })) %>%
   dplyr::mutate(outcome.date = map2_chr(outcome, events, function(x, y){
     if(!(x %in% c("discharge", "death"))){
       return(NA)
@@ -621,7 +806,7 @@ patient.data <- patient.data %>%
   dplyr::mutate(onset.date = cestdat) %>%
   # start.date is either the admission date or the date of symptom onset, whichever is _later_ - hospital cases are counted from disease onset
   dplyr::mutate(start.date = map2_chr(admission.date, onset.date, function(x,y){
-    as.character(max(x,y, na.rm = T))
+    suppressWarnings(as.character(max(x,y, na.rm = T)))
   })) %>%
   dplyr::mutate(start.date = ymd(start.date)) %>%
   dplyr::mutate(antiviral.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmyn", TRUE) )) %>%
@@ -642,7 +827,11 @@ compareNA <- function(v1,v2) {
   return(same)
 }
 
-# More complicated date wrangling (IMV, NIMV)
+###### Date wrangling ######
+
+# This is the function to return information about a patient's time on an intervention (e.g. IMV) from both daily and final forms
+
+if(verbose) cat("Wrangling dates for treatment modalities...\n")
 
 process.event.dates <- function(events.tbl, summary.status.name, daily.status.name){
   subtbl <- events.tbl %>% dplyr::select(dsstdat, daily_dsstdat, !!summary.status.name, !!daily.status.name )
@@ -703,7 +892,11 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
   list(ever = ever, start.date = start.date, end.date = end.date, first.after.date = first.after.date, multiple.periods = multiple.periods)
 }
 
+
+
+
 patient.data <- patient.data %>% 
+  # NIV
   mutate(NIMV.cols  = map(events, function(el){
     process.event.dates(el, "noninvasive_proccur", "daily_noninvasive_prtrt")
   })) %>%
@@ -713,6 +906,7 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$NIMV.cols)) } %>%
   dplyr::select(-NIMV.cols) %>%
+  # IMV
   mutate(IMV.cols  = map2(subjid, events, function(id, el){
     process.event.dates(el, "invasive_proccur", "daily_invasive_prtrt")
   })) %>%
@@ -722,6 +916,7 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$IMV.cols)) } %>%
   dplyr::select(-IMV.cols) %>%
+  # ECMO
   mutate(ECMO.cols  = map2(subjid, events, function(id, el){
     process.event.dates(el, "extracorp_prtrt", "daily_ecmo_prtrt")
   })) %>%
@@ -731,11 +926,38 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$ECMO.cols)) } %>%
   dplyr::select(-ECMO.cols) %>%
-  mutate(ICU.cols  = map2(subjid,events, function(id, el){
-    process.event.dates(el, "icu_hoterm", "daily_hoterm")$ever
+  # ICU 
+  mutate(ICU.cols  = map(events, function(el){
+    process.event.dates(el, "icu_hoterm", "daily_hoterm")
   })) %>%
-  mutate(ICU.ever = unlist(ICU.cols)) %>%
-  dplyr::select(-ICU.cols)
+  mutate(ICU.cols = map(ICU.cols, function(x){
+    names(x) <- glue("ICU.{names(x)}")
+    x
+  })) %>%
+  # RRT
+  { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
+  dplyr::select(-ICU.cols) %>% 
+  mutate(RRT.cols  = map(events, function(el){
+    process.event.dates(el, "rrt_prtrt", "daily_rrt_cmtrt")
+  })) %>%
+  mutate(RRT.cols = map(RRT.cols, function(x){
+    names(x) <- glue("RRT.{names(x)}")
+    x
+  })) %>%
+  # Inotrope
+  { bind_cols(., bind_rows(!!!.$RRT.cols)) } %>%
+  dplyr::select(-RRT.cols) %>%
+  mutate(Inotrope.cols  = map(events, function(el){
+    process.event.dates(el, "inotrop_cmtrt", "daily_inotrope_cmyn")
+  })) %>%
+  mutate(Inotrope.cols = map(Inotrope.cols, function(x){
+    names(x) <- glue("Inotrope.{names(x)}")
+    x
+  })) %>%
+  { bind_cols(., bind_rows(!!!.$Inotrope.cols)) } %>%
+  dplyr::select(-Inotrope.cols)  
+
+# O2 ever - more complex
 
 patient.data <- patient.data %>%
   mutate(O2.ever = map_lgl(events, function(x){
@@ -749,20 +971,8 @@ patient.data <- patient.data %>%
     }
   }))
 
-patient.data <- patient.data %>% 
-  mutate(ICU.cols  = map(events, function(el){
-    process.event.dates(el, "icu_hoterm", "daily_hoterm")
-  })) %>%
-  mutate(ICU.cols = map(ICU.cols, function(x){
-    names(x) <- glue("ICU.{names(x)}")
-    x
-  })) %>%
-  { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
-  dplyr::select(-ICU.cols)
-
 # ICU.start.data and ICU.end.date hae values from daily sheets but omit some 
-# values from the outcome sheet. Where available, the outcome sheet is being
-# preferred.
+# values from the outcome sheet. Where available, the outcome sheet ispreferred.
 patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) == FALSE] <- 
   patient.data$ICU.admission.date[is.na(patient.data$ICU.admission.date) == FALSE]
 patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <- 
@@ -778,27 +988,7 @@ patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <-
     unit="days"
   ))
 
-patient.data <- patient.data %>% 
-  mutate(RRT.cols  = map(events, function(el){
-    process.event.dates(el, "rrt_prtrt", "daily_rrt_cmtrt")
-  })) %>%
-  mutate(RRT.cols = map(RRT.cols, function(x){
-    names(x) <- glue("RRT.{names(x)}")
-    x
-  })) %>%
-  { bind_cols(., bind_rows(!!!.$RRT.cols)) } %>%
-  dplyr::select(-RRT.cols) %>%
-  mutate(Inotrope.cols  = map(events, function(el){
-    process.event.dates(el, "inotrop_cmtrt", "daily_inotrope_cmyn")
-  })) %>%
-  mutate(Inotrope.cols = map(Inotrope.cols, function(x){
-    names(x) <- glue("Inotrope.{names(x)}")
-    x
-  })) %>%
-  { bind_cols(., bind_rows(!!!.$Inotrope.cols)) } %>%
-  dplyr::select(-Inotrope.cols)  
-
-# calculation of time periods @todo NIMV, IMV
+###### Calculation of time periods #####
 
 patient.data <- patient.data %>%
   dplyr::mutate(NIMV.duration = map2_dbl(NIMV.end.date, NIMV.start.date, function(x,y){
@@ -859,8 +1049,9 @@ patient.data <- patient.data %>%
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
          start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
-# Resolving the tangle of COVID tests 
+##### Untangling COVID test fields #####
 
+if(verbose) cat("Untangling SARS-CoV-19 test results...\n")
 
 patient.data <- patient.data %>% 
   mutate(cov.test.result = 
@@ -875,6 +1066,7 @@ patient.data <- patient.data %>%
            map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mbtestcd")))
 
 
+# Function to check for text that looks like it means SARS-CoV-2. Lots of typos in these fields. This may catch other coronaviruses.
 
 probable.cov.freetext <- function(text){
   str_detect(text, "[sS][aA][rR][sS]") |
@@ -891,14 +1083,7 @@ probable.cov.freetext <- function(text){
     str_detect(text, "[Cc][Oo][Rr][Oo][Nn][Aa]")
 }
 
-# e <- 88
-# 
-# id <- patient.data$subjid[e]
-# anytest <- patient.data$any.test.result[e][[1]]
-# anyfreetext <- patient.data$any.freetext[e][[1]]
-# cfreetext <- patient.data$cov19.other.freetext[e]
-# cpos <- patient.data$cov19.result[e]
-# ctest <- patient.data$cov19.test[e]
+# IMPORTANT: At the moment "positive.COV19.test" refers to "evidence for a positive test". FALSE is not evidence for a negative test.
 
 patient.data <- patient.data %>%
   mutate(positive.COV19.test = pmap_lgl(list(subjid, cov.test.result, cov.test.organism, cov.other.organism.freetext, any.test.result, any.test.freetext), 
@@ -906,17 +1091,27 @@ patient.data <- patient.data %>%
                                           cpos.covlikely = probable.cov.freetext(cfreetext)
                                           anytest2 <- as.numeric(anytest)
                                           anyfreetext2 <- anyfreetext[which(!is.na(anytest))]
-                                          # if(id == "RJR05-5001") print(anyfreetext)
-                                          if((ctest  %in% c(1,2)) & ((!is.na(cpos) & cpos == 1) | (cpos == 888 & !is.na(cfreetext) & cpos.covlikely))){
-                                            # print('a')
+                                          if((ctest %in% c(1,2)) & ((!is.na(cpos) & cpos == 1) | (cpos == 888 & !is.na(cfreetext) & cpos.covlikely))){
+                                            # You have COVID if:
+                                            # 1) Your SARS-CoV-2 test result is a weak or strong positive for SARS-CoV-2
+                                            # OR 2) Your SARS-CoV-2 test result is a weak or strong positive for "another virus" but the free text says that virus is actually SARS-CoV-2(!)
                                             return(TRUE)
                                           } else if(ctest == 0 | is.na(ctest) | (ctest  %in% c(1,2) & (is.na(cpos) | cpos == 2 | (!is.na(cpos.covlikely) & !cpos.covlikely)))){
+                                            # Patients get here if:
+                                            # 1) They have a negative SARS-CoV-2 test
+                                            # OR 2) They have an NA entry for SARS-CoV-2 test result
+                                            # OR 3)They have a weak or strong positive test for SARS-CoV-2 AND
+                                            #   3A) The entry for virus species is NA 
+                                            #   OR 3B) The entry for virus species is "MERS"
+                                            #   OR 3C) The free text is missing or says that virus is not SARS-CoV-2
                                             if(length(anyfreetext) > 0){
+                                              # This examines the free text from the daily form, looking for COVID-like words
                                               otherpos.covlikely = map_lgl(anyfreetext2, probable.cov.freetext)
                                               if(any(!is.na(otherpos.covlikely) & !is.na(anytest2) & otherpos.covlikely & anytest2 == 1)){
-                                                # print("v")
+                                                # words found and the test was positive
                                                 return(TRUE)
                                               } else {
+                                                # words not found or the test was negative
                                                 return(FALSE)
                                               }
                                             }
@@ -926,7 +1121,11 @@ patient.data <- patient.data %>%
                                         }))
 
 
+# Minimal table for the unebargoed data
+
 unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, admission.date, outcome)
+
+# Data for the by-country summary
 
 countries.and.sites <-  unembargoed.data %>%
   group_by(Country, site.name) %>%
@@ -934,9 +1133,16 @@ countries.and.sites <-  unembargoed.data %>%
   dplyr::summarise(n.sites = sum(n.sites)) %>%
   filter(!is.na(Country))
 
+# Impose the embargo
+
+if(verbose) cat("Imposing the embargo...\n")
 
 patient.data <-  patient.data %>%
-  filter(dsstdat <= embargo.limit) # exclude all cases on or after embargo limit
+  filter(dsstdat <= embargo.limit) 
+
+# Save to disk
+
+if(verbose) cat("Saving to disk...\n")
 
 save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{today()}.rda"))
 
