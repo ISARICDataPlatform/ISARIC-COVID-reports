@@ -52,10 +52,12 @@ uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
 row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
 eot.data.file <- paths[[which(paths$X1 == "eot.data.file"), 2]]
 
+ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15))
+
 # Source files
 
-if(!(reprocess.data) & file.exists(glue("{code.path}/patient_data_{today()}.rda"))){
-  load(glue("{code.path}/patient_data_{today()}.rda"))
+if(!(reprocess.data) & file.exists(glue("{code.path}/patient_data_{ref.date}.rda"))){
+  load(glue("{code.path}/patient_data_{ref.date}.rda"))
 } else {
   source(glue("{code.path}/process_data.R"))
 }
@@ -63,8 +65,8 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/patient_data_{today()}.rda"
 source(glue("{code.path}/plot_functions.R"))
 
 
-if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{today()}.rda"))){
-  load(glue("{code.path}/report_input_data_{today()}.rda"))
+if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{ref.date}.rda"))){
+  load(glue("{code.path}/report_input_data_{ref.date}.rda"))
 } else {
   source(glue("{code.path}/generate_report_input.R"))
 }
