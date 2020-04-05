@@ -2,6 +2,8 @@
 
 # flags for inclusion of the three data files
 
+options(warn=1)
+
 if(verbose) cat("Setting up datasets and embargo date...\n")
 
 embargo.length <- 14
@@ -198,6 +200,36 @@ pcareful.as.numeric <- function(value.col, subjid, colname){
   }
 }
 
+# Checks for dates in the future and returns NA if they are
+
+careful.future.date <- function(value, subjid, colname){
+  if(is.na(value)) {
+    return(NA)
+  } else if(value > today()){
+    warning(glue("Future date '{as.character(value)}' transformed to NA for column {colname}, subject ID {subjid}"))
+    return(NA)
+  } else {
+    return(as.Date(value, origin = "1970-01-01"))
+  }
+}
+
+pcareful.future.date <- function(value.col, subjid, colname){
+  map2_dbl(value.col, subjid, function(x, y){
+    careful.future.date(x, y, colname)
+  })
+}
+
+# Checks for ages (strictly) between 0 and 1 and multiples by 100
+
+careful.fractional.age <- function(value, subjid, colname){
+  if(is.na(value)) {
+    return(NA)
+  } else if(0 < value & 1 > value){
+    warning(glue("Fractional age {value} transformed to {value*100} for column {colname}, subject ID {subjid}"))
+    return(100*value)
+  }
+  return(value)
+}
 
 ##### UK data import #####
 
@@ -402,22 +434,20 @@ if(use.row.data){
   row.data <- NULL
 }
 
-# This is a function to replace dates in the future with NAs
+raw.data <- bind_rows(uk.data, row.data, eot.data) 
 
-date.sanity.check <- function(date) {
-  as.Date(ifelse(date > today(), as.Date(NA), date),  origin = "1970-01-01")
-}
+##### Value adjustments #####
 
 if(verbose) cat("Setting future dates to NA...\n")
 
-raw.data <- bind_rows(uk.data, row.data, eot.data) %>%
-  dplyr::mutate(dsstdat = date.sanity.check(ymd(dsstdat)),
-                agedat = date.sanity.check(ymd(agedat)), 
-                daily_dsstdat = date.sanity.check(ymd(daily_dsstdat)), 
-                daily_lbdat = date.sanity.check(ymd(daily_lbdat)),
-                hostdat = date.sanity.check(ymd(hostdat)),
-                cestdat = date.sanity.check(ymd(cestdat)),
-                dsstdtc = date.sanity.check(ymd(dsstdtc))) 
+date.columns <- c("dsstdat", "agedat", "daily_dsstdat", "daily_lbdat", "hostdat", "cestdat", "dsstdtc")
+
+for(dc in date.columns){
+  raw.data <- raw.data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.future.date(., subjid = subjid, colname = dc))
+}
+
+raw.data <- raw.data%>%
+  mutate_at(date.columns, function(x) as.Date(x, origin = "1970-01-01"))
 
 
 # Now, some fields need to be numerical even if the data dictionary does not think they are.
@@ -436,6 +466,12 @@ raw.data <- raw.data %>%
 raw.data <- raw.data %>%
   mutate(subjid = replace(subjid, subjid == "RD816-0001", glue("RD816-0001{c(rep('a',3), rep('b',22))}")))
 
+# Replace the fractional ages
+
+raw.data <- raw.data %>%  mutate(age_estimateyears = map2_dbl(age_estimateyears, subjid, function(x, y){
+  careful.fractional.age(x, y, "age_estimateyears")
+}))
+
 # Demographic data is in the first row
 
 
@@ -451,17 +487,9 @@ if(verbose) cat("Joining events tables...\n")
 
 patient.data <- demog.data %>% left_join(event.data)  %>%
   # cut out any rows where the IDs suggest test data
-  filter(!str_detect(subjid, "[tT][eE][sS][tT]")) %>%
-  # replace the fractional ages
-  mutate(age_estimateyears = map_dbl(age_estimateyears, function(x){
-    if(is.na(x)){
-      NA
-    } else if(0 < x & 1 > x){
-      x*100
-    } else {
-      x
-    }
-  }))
+  filter(!str_detect(subjid, "[tT][eE][sS][tT]"))
+
+
 
 #### Comorbitities, symptoms, and treatments ####
 
