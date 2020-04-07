@@ -1018,7 +1018,7 @@ patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <-
 
 ###### Calculation of time periods #####
 
-patient.data <- patient.data %>%
+patient.data2 <- patient.data %>%
   dplyr::mutate(NIMV.duration = map2_dbl(NIMV.end.date, NIMV.start.date, function(x,y){
     as.numeric(difftime(x, y,  unit="days"))
   })) %>%
@@ -1042,29 +1042,29 @@ patient.data <- patient.data %>%
       NA
     }
   })) %>%
-  dplyr::mutate(admission.to.death = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
-    if(compareNA(4,x )){
+  dplyr::mutate(admission.to.death = pmap_dbl(list(exit.code, exit.date, admission.date), function(x, y, z){
+    if(!is.na(x) & x == "death"){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
       NA
     }
   })) %>%
-  dplyr::mutate(start.to.death = pmap_dbl(list(dsstdtcyn, dsstdtc, start.date), function(x, y, z){
-    if(compareNA(4,x )){
+  dplyr::mutate(start.to.death = pmap_dbl(list(exit.code, exit.date, start.date), function(x, y, z){
+    if(!is.na(x) & x == "death"){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
       NA
     }
   })) %>%
-  dplyr::mutate(admission.to.discharge = pmap_dbl(list(dsstdtcyn, dsstdtc, admission.date), function(x, y, z){
-    if(compareNA(1, x)){
+  dplyr::mutate(admission.to.discharge = pmap_dbl(list(exit.code, exit.date, admission.date), function(x, y, z){
+    if(!is.na(x) & x == "discharge"){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
       NA
     }
   })) %>%
-  dplyr::mutate(start.to.discharge = pmap_dbl(list(dsstdtcyn, dsstdtc, start.date), function(x, y, z){
-    if(compareNA(1, x)){
+  dplyr::mutate(start.to.discharge = pmap_dbl(list(exit.code, dsstdtc, start.date), function(x, y, z){
+    if(!is.na(x) & x == "discharge"){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
       NA
@@ -1172,5 +1172,5 @@ patient.data <-  patient.data %>%
 
 if(verbose) cat("Saving to disk...\n")
 
-save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date)")
+save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date)"))
 
