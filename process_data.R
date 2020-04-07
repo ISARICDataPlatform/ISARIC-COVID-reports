@@ -1172,5 +1172,5 @@ patient.data <-  patient.data %>%
 
 if(verbose) cat("Saving to disk...\n")
 
-save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date))
+save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date)")
 
