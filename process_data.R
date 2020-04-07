@@ -1018,7 +1018,7 @@ patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <-
 
 ###### Calculation of time periods #####
 
-patient.data2 <- patient.data %>%
+patient.data <- patient.data %>%
   dplyr::mutate(NIMV.duration = map2_dbl(NIMV.end.date, NIMV.start.date, function(x,y){
     as.numeric(difftime(x, y,  unit="days"))
   })) %>%
@@ -1172,5 +1172,5 @@ patient.data <-  patient.data %>%
 
 if(verbose) cat("Saving to disk...\n")
 
-save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date)"))
+save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date}.rda"))
 
