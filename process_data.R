@@ -284,8 +284,7 @@ if(use.uk.data){
   uk.data <- uk.data %>%
     # Columns that should be character are converted to character. 
     # Note also that some of these _could_ be numerical (e.g. temperature measurements) but the fields are free text
-    mutate_at(text.columns, as.character) 
-  
+    mutate_at(text.columns, as.character)
   # Columns that should be numeric are converted to numeric. Parse failures becomes NA. 
   # this may actually need a for loop!
   for(ntc in nontext.columns){
@@ -300,6 +299,8 @@ if(use.uk.data){
     dplyr::mutate(site.name = redcap_data_access_group) %>%
     # These are the three radio buttons that behave differently in the raw data
     mutate_at(c("asthma_mhyn", "modliv", "mildliver"), radio.button.convert) %>%
+    mutate(age_estimateyears = as.numeric(age_estimateyears))  %>%
+    mutate(apvs_weight = as.numeric(apvs_weight))
     # 1 is SARS-2 in ROW data but MERS in UK, and vice versa. Converting UK to ROW format.
     mutate(corna_mbcaty = map_dbl(corna_mbcaty, function(x){
       if(is.na(x)){
@@ -327,7 +328,7 @@ if(use.eot.data){
   eot.column.types <- eot.data.dict %>% dplyr::select(1, 4) %>%
     dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
   
-  eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 100000)
+  eot.data <- read_csv(glue("{data.path}/{rapid.data.file}"), guess_max = 100000)
   
   # Columns that should be text
   text.columns.temp <- eot.column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
@@ -354,17 +355,17 @@ if(use.eot.data){
   # Columns that should be numeric are converted to numeric. Parse failures becomes NA. 
   # this may actually need a for loop!
   for(ntc in nontext.columns){
-    eot.data <- eot.data %>% mutate_at(vars(all_of(ntc)), .funs = ~pcareful.as.numeric(., subjid = subjid, colname = ntc))
+    eot.data <- eot.data %>% mutate_at(vars(tidyselect::all_of(ntc)), .funs = ~pcareful.as.numeric(., subjid = subjid, colname = ntc))
   }
   
   eot.data <- eot.data %>%
     # some variables have different names in different datasets
-    dplyr::rename(chrincard = chroniccard_mhyn, 
-                  modliv = modliver_mhyn, 
-                  mildliver = mildliv_mhyn, 
-                  chronichaemo_mhyn = chronhaemo_mhyn, 
-                  diabetescom_mhyn = diabetiscomp_mhyn,
-                  rheumatologic_mhyn = rheumatology_mhyr) %>%
+    dplyr::rename(chrincard = chroniccard_mhyn) %>%
+                  #modliv = modliver_mhyn, 
+                 # mildliver = mildliv_mhyn, 
+                  #chronichaemo_mhyn = chronhaemo_mhyn, 
+                  #diabetescom_mhyn = diabetiscomp_mhyn,
+                  #rheumatologic_mhyn = rheumatology_mhyr) %>%
     # join in the country table
     dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
@@ -426,6 +427,7 @@ if(use.row.data){
                   diabetescom_mhyn = diabetiscomp_mhyn,
                   rheumatologic_mhyn = rheumatology_mhyr,
                   icu_hoendat = hoendat) %>%
+    mutate(hosttim = as.character(hosttim)) %>%
     # join in the country table
     dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
@@ -439,16 +441,65 @@ if(use.row.data){
 ## Rapid data import ###
 
 
-rapid.data <-  read_csv(glue("{data.path}/{rapid.data.file}"), guess_max = 100000)
-
-
 if(use.rapid.data){
+  row.data.dict <- read_csv(glue("{data.path}/{row.data.dict.file}"))
   rapid.data <- read_csv(glue("{data.path}/{rapid.data.file}"), guess_max = 100000)
+ #  # Select variable names in row.data.dict
+ # ind.of.interest <- which(names(rapid.data)%in%row.data.dict$`Variable / Field Name`)
+ #  # Drop columns which are not in row.data.dict
+ #  rapid.data <- rapid.data[, -ind.of.interest]
+  
+  # Columns that should be text
+  text.columns.temp <- eot.column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
+  # some data dictionary columns are not in the data!
+  text.columns <- intersect(text.columns.temp, colnames(eot.data))
+  # don't waste time on ones that are already character, and avoid doing anything to date columns
+  text.columns <- text.columns[which(text.columns %>% map_lgl(function(x) !is.Date(eot.data %>% pull(x)) & !is.character(eot.data %>% pull(x))))]
+  
+  # Columns that should be numerical
+  nontext.columns.temp <- eot.column.types %>% filter(!(type %in% c("text", "descriptive", "notes", "file"))) %>% pull(col.name)
+  # radio buttons appear differently in the CSV. E.g. "ethnic" becomes "ethnic___1", "ethnic___2", etc
+  nontext.columns.extra <- colnames(eot.data)[which(map_lgl(colnames(eot.data), function(x) any(startsWith(x, glue("{nontext.columns.temp}___")))))]
+  nontext.columns <-intersect(colnames(eot.data), c(nontext.columns.temp, nontext.columns.extra))
+  # don't waste time on ones that are already character
+  nontext.columns <- nontext.columns[which(nontext.columns %>% map_lgl(function(x) !is.numeric(eot.data %>% pull(x))))]
+  
+  # readr warnings about parsing failure can often be dealt with by increasing guess_max
+  
   rapid.data <- rapid.data %>%
-    mutate(corona_ieorres = as.numeric(corona_ieorres))
-} else {
+    # Columns that should be character are converted to character. 
+    # Note also that some of these _could_ be numerical (e.g. temperature measurements) but the fields are free text
+    mutate_at(text.columns, as.character) 
+  
+  # Columns that should be numeric are converted to numeric. Parse failures becomes NA. 
+  # this may actually need a for loop!
+  for(ntc in nontext.columns){
+    rapid.data <- rapid.data %>% mutate_at(vars(tidyselect::all_of(ntc)), .funs = ~pcareful.as.numeric(., subjid = subjid, colname = ntc))
+  }
+  
+  rapid.data <- rapid.data %>%
+    # some variables have different names in different datasets
+    dplyr::rename(chrincard = chroniccard_mhyn) %>%
+    mutate(temp_vsorres = as.character(temp_vsorres)) %>%
+    mutate(hr_vsorres = as.character(hr_vsorres)) %>%
+    mutate(rr_vsorres = as.character(rr_vsorres) )  %>%
+    mutate(sysbp_vsorres = as.character(sysbp_vsorres))  %>%
+    mutate(oxy_vsorres = as.character(oxy_vsorres)) 
+    #modliv = modliver_mhyn, 
+    # mildliver = mildliv_mhyn, 
+    #chronichaemo_mhyn = chronhaemo_mhyn, 
+    #diabetescom_mhyn = diabetiscomp_mhyn,
+    #rheumatologic_mhyn = rheumatology_mhyr) %>%
+    # join in the country table
+    #dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
+    #left_join(site.list, by = "site.number") %>%
+    #dplyr::select(-site.number) %>%
+    # add data source
+   # dplyr::mutate(data.source = "RAPID")
+}else{
   rapid.data <- NULL
 }
+
 
 
 raw.data <- bind_rows(uk.data, row.data, eot.data, rapid.data) 
