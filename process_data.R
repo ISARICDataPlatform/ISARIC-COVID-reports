@@ -822,10 +822,10 @@ patient.data <- patient.data %>%
     temp <- str_replace(temp, ",", "-")
     str_replace(temp, "70-120", "70+")
   })) %>%
-  dplyr::mutate(ICU.admission.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hostdat", TRUE)))) %>%
-  dplyr::mutate(ICU.admission.date = ymd(ICU.admission.date)) %>%
-  dplyr::mutate(ICU.discharge.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hoendat", TRUE)))) %>%
-  dplyr::mutate(ICU.discharge.date = ymd(ICU.discharge.date)) %>%
+  dplyr::mutate(ICU.start.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hostdat", TRUE)))) %>%
+  dplyr::mutate(ICU.start.date = ymd(ICU.start.date)) %>%
+  dplyr::mutate(ICU.end.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hoendat", TRUE)))) %>%
+  dplyr::mutate(ICU.end.date = ymd(ICU.end.date)) %>%
   dplyr::mutate(ICU.duration = map_dbl(events, function(x) extract.named.column.from.events(x, "hodur", TRUE))) %>%
   dplyr::mutate(IMV.duration  = map_dbl(events, function(x) extract.named.column.from.events(x, "invasive_prdur", TRUE))) %>%
   # these are just for the sake of having more self-explanatory column names
@@ -954,17 +954,18 @@ patient.data <- patient.data %>%
   })) %>%
   { bind_cols(., bind_rows(!!!.$ECMO.cols)) } %>%
   dplyr::select(-ECMO.cols) %>%
-  # ICU 
+  # ICU - we already have this information incompletely from icu_hostdat, icu_hoendat and hostdur, 
+  # so these columns are "ICU2" and we consolidate later
   mutate(ICU.cols  = map(events, function(el){
     process.event.dates(el, "icu_hoterm", "daily_hoterm")
   })) %>%
   mutate(ICU.cols = map(ICU.cols, function(x){
-    names(x) <- glue("ICU.{names(x)}")
+    names(x) <- glue("ICU2.{names(x)}")
     x
   })) %>%
-  # RRT
   { bind_cols(., bind_rows(!!!.$ICU.cols)) } %>%
   dplyr::select(-ICU.cols) %>% 
+  # RRT
   mutate(RRT.cols  = map(events, function(el){
     process.event.dates(el, "rrt_prtrt", "daily_rrt_cmtrt")
   })) %>%
@@ -1001,20 +1002,27 @@ patient.data <- patient.data %>%
 
 # ICU.start.data and ICU.end.date hae values from daily sheets but omit some 
 # values from the outcome sheet. Where available, the outcome sheet ispreferred.
-patient.data$ICU.start.date[is.na(patient.data$ICU.admission.date) == FALSE] <- 
-  patient.data$ICU.admission.date[is.na(patient.data$ICU.admission.date) == FALSE]
-patient.data$ICU.end.date[is.na(patient.data$ICU.discharge.date) == FALSE] <- 
-  patient.data$ICU.discharge.date[is.na(patient.data$ICU.discharge.date) == FALSE] 
-# Make ICU.admission.date and ICU.discharge.date match the new fields for consistency
-patient.data$ICU.admission.date <- patient.data$ICU.start.date
-patient.data$ICU.discharge.date <- patient.data$ICU.end.date
- # if we can get those from the daily forms then we can get this
+
+patient.data <- patient.data %>%
+  # ICU.ever is either ICU2.ever or non-NA icu_hoterm. At the moment, NA ICU2.evers lead to NA ICU.evers in the absence of a icu_hoterm.
+  # It's possible that they should be FALSE instead
+  mutate(ICU.ever = !is.na(ICU.start.date) | ICU2.ever) %>%
+  # mutate(ICU.ever2 = !is.na(ICU.start.date) | !(is.na(ICU2.ever)  | !ICU2.ever)) %>%
+  mutate(ICU.start.date = replace(ICU.start.date, is.na(ICU.start.date), ICU2.start.date[which(is.na(ICU.start.date))])) %>%
+  mutate(ICU.end.date = replace(ICU.end.date, is.na(ICU.end.date), ICU2.end.date[which(is.na(ICU.end.date))])) 
+  
+  
+# if we can get those from the daily forms then we can get this
 patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <- 
   as.numeric(difftime(
     patient.data$ICU.end.date[is.na(patient.data$ICU.duration) == TRUE], 
     patient.data$ICU.start.date[is.na(patient.data$ICU.duration) == TRUE],  
     unit="days"
   ))
+
+# drop the ICU2 columns
+
+patient.data2 <- patient.data %>% dplyr::select(-starts_with("ICU2"))
 
 ###### Calculation of time periods #####
 
@@ -1063,17 +1071,17 @@ patient.data <- patient.data %>%
       NA
     }
   })) %>%
-  dplyr::mutate(start.to.discharge = pmap_dbl(list(exit.code, dsstdtc, start.date), function(x, y, z){
+  dplyr::mutate(start.to.discharge = pmap_dbl(list(exit.code, exit.date, start.date), function(x, y, z){
     if(!is.na(x) & x == "discharge"){
       as.numeric(difftime(y, z,  unit="days"))
     } else {
       NA
     }
   })) %>%
-  mutate(admission.to.ICU = as.numeric(difftime(ICU.admission.date, admission.date, unit="days")),
+  mutate(admission.to.ICU = as.numeric(difftime(ICU.start.date, admission.date, unit="days")),
          admission.to.IMV = as.numeric(difftime(IMV.start.date, admission.date, unit="days")),
          admission.to.NIMV = as.numeric(difftime(NIMV.start.date, admission.date, unit="days")),
-         start.to.ICU = as.numeric(difftime(ICU.admission.date, start.date, unit="days")),
+         start.to.ICU = as.numeric(difftime(ICU.start.date, start.date, unit="days")),
          start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
          start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days"))) 
 
