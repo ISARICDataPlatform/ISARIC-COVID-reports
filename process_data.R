@@ -533,10 +533,15 @@ raw.data <- raw.data %>%
   mutate(hodur = map2_dbl(subjid, hodur, function(x, y) careful.as.numeric(y, x, "hodur"))) %>%
   mutate(invasive_prdur = map2_dbl(subjid, invasive_prdur, function(x, y) careful.as.numeric(y, x, "invasive_prdur"))) 
 
-# "RD816-0001" is actually two patients. As this is currently only the example of this, recode by hand.
+# "RD816-0001"  is actually two patients. As this is currently only the example of this, recode by hand.
+# "G405H-5002" is probably one patient with two final forms
 
 raw.data <- raw.data %>%
-  mutate(subjid = replace(subjid, subjid == "RD816-0001", glue("RD816-0001{c(rep('a',3), rep('b',22))}")))
+  mutate(subjid = replace(subjid, subjid == "RD816-0001", glue("RD816-0001{c(rep('a',3), rep('b',22))}")))  %>%
+  mutate(subjid = replace(subjid, subjid == "G405H-5002", glue("G405H-5002{c(rep('a',2), rep('b',20))}")))
+
+
+
 
 # Replace the fractional ages
 
