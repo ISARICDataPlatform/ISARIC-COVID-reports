@@ -11,10 +11,11 @@ embargo.length <- 14
 use.uk.data <- TRUE
 use.row.data <- TRUE
 use.eot.data <- TRUE
+use.rapid.data <- TRUE
 ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15))
 embargo.limit <- ref.date - embargo.length
 
-if(!use.uk.data & !use.row.data & !use.eot.data){
+if(!use.uk.data & !use.row.data & !use.eot.data & !rapid.data.file){
   stop("No data to be imported")
 }
 
@@ -434,7 +435,23 @@ if(use.row.data){
   row.data <- NULL
 }
 
-raw.data <- bind_rows(uk.data, row.data, eot.data) 
+
+## Rapid data import ###
+
+
+rapid.data <-  read_csv(glue("{data.path}/{rapid.data.file}"), guess_max = 100000)
+
+
+if(use.rapid.data){
+  rapid.data <- read_csv(glue("{data.path}/{rapid.data.file}"), guess_max = 100000)
+  rapid.data <- rapid.data %>%
+    mutate(corona_ieorres = as.numeric(corona_ieorres))
+} else {
+  rapid.data <- NULL
+}
+
+
+raw.data <- bind_rows(uk.data, row.data, eot.data, rapid.data) 
 
 ##### Value adjustments #####
 

@@ -54,6 +54,7 @@ site.list.file <- paths[[which(paths$X1 == "site.list.file"), 2]]
 uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
 row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
 eot.data.file <- paths[[which(paths$X1 == "eot.data.file"), 2]]
+rapid.data.file <- paths[[which(paths$X1 == "rapid.data.file"), 2]]
 
 ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15)) + 1
 
