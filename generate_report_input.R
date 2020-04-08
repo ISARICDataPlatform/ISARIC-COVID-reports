@@ -50,6 +50,34 @@ d.e <- function(data, datafull, ...){
   cov.19.confirmed <- summary(patient.data$positive.COV19.test)[['TRUE']]
   cov.19.suspected <- summary(patient.data$positive.COV19.test)[['FALSE']]
   
+  # Evers
+  
+  IMV.pr <- sum(data$IMV.ever=='TRUE', na.rm=T)
+  IMV.ab <- sum(data$IMV.ever=='FALSE', na.rm=T)
+  IMV.un <- N.cases -IMV.pr - IMV.ab
+  
+  
+  NIMV.pr <- sum(data$NIMV.ever=='TRUE', na.rm=T)
+  NIMV.ab <- sum(data$NIMV.ever=='FALSE', na.rm=T)
+  NIMV.un <- N.cases - NIMV.pr - NIMV.ab
+  
+  o2.pr <- sum(data$O2.ever=='TRUE', na.rm=T)
+  o2.ab <- sum(data$O2.ever=='FALSE', na.rm=T)
+  o2.un <- N.cases - o2.pr - o2.ab
+  
+  ECMO.pr <- sum(data$ECMO.ever=='TRUE', na.rm=T)
+  ECMO.ab <-  sum(data$ECMO.ever=='FALSE', na.rm=T)
+  ECMO.un <-  N.cases -  ECMO.pr -   ECMO.ab 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   # Distribution estimates - EXPECTED 
   
   # Admission to outcome
@@ -172,6 +200,7 @@ d.e <- function(data, datafull, ...){
   obs.sd.adm.outcome <- round(x_sd, 1)
   cases.full.adm.outcome <- length(adm.outcome(patient.data)$obs)
   obs.median.adm.outcome <- round(x_median, 1)
+  obs.iqr.adm.outcome <- round(IQR(x, na.rm = T), 1)
   
   # Onset to admission
   
@@ -185,6 +214,7 @@ d.e <- function(data, datafull, ...){
   obs.mean.onset.adm.upper <-  round( y_mean + 1.96*(y_sd/sqrt(length(y))), 1)
   obs.sd.onset.adm <- round(y_sd, 1)
   obs.median.onset.adm <- round(y_median, 1)
+  obs.iqr.onset.adm <- round(IQR(y, na.rm = T), 1)
   
   
   # Admission to ICU (not fitted due to low count)
@@ -344,6 +374,25 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
               cov.19.confirmed =  cov.19.confirmed,
               cov.19.suspected =  cov.19.suspected,
               
+              IMV.pr = IMV.pr,
+              IMV.ab = IMV.ab,
+              IMV.un = IMV.un,
+              
+              NIMV.pr = NIMV.pr,
+              NIMV.ab = NIMV.ab,
+              NIMV.un = NIMV.un,
+              
+              
+              o2.pr = o2.pr,
+              o2.ab = o2.ab,
+              o2.un = o2.un,
+              
+              
+              ECMO.pr = ECMO.pr,
+              ECMO.ab = ECMO.ab,
+              ECMO.un = ECMO.un,
+              
+              
               adm.to.outcome =  adm.to.outcome,            # admission to outcome
               adm.outcome.l =  adm.outcome.l,
               adm.outcome.u = adm.outcome.u,
@@ -391,13 +440,14 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
               obs.sd.adm.outcome  = obs.sd.adm.outcome,
               cases.full.adm.outcome = cases.full.adm.outcome, 
               obs.median.adm.outcome = obs.median.adm.outcome,
+              obs.iqr.adm.outcome =   obs.iqr.adm.outcome,
               
               obs.mean.onset.adm =  obs.mean.onset.adm,
               obs.mean.onset.adm.lower = obs.mean.onset.adm.lower,
               obs.mean.onset.adm.upper = obs.mean.onset.adm.upper,
               obs.sd.onset.adm = obs.sd.onset.adm,
               obs.median.onset.adm =  obs.median.onset.adm,
-              
+              obs.iqr.onset.adm =   obs.iqr.onset.adm,
               
               
               

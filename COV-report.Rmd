@@ -39,7 +39,7 @@ library(survminer)
 library(broom)
 library(tidyselect)
 
-reprocess.data <- T
+reprocess.data <- F
 verbose <- T
 
 # file locations
@@ -55,7 +55,7 @@ uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
 row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
 eot.data.file <- paths[[which(paths$X1 == "eot.data.file"), 2]]
 
-ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15))
+ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15)) + 1
 
 # Source files
 
@@ -73,6 +73,9 @@ if(!(reprocess.data) & file.exists(glue("{code.path}/report_input_data_{ref.date
 } else {
   source(glue("{code.path}/generate_report_input.R"))
 }
+
+
+
 
 
 ```
@@ -286,6 +289,7 @@ recruitment.dat.plot(unembargoed.data, today()-14)
 ```
 
 # Summary Tables
+Proportions are presented in parantheses. Proportions have been rounded to two decimal places. 
 
 ```{r child = 'markdown/summarytables.Rmd'}
 ```
