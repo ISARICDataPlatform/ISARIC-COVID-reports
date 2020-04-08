@@ -1000,7 +1000,8 @@ plot_outcome_saturations <- function(data, ...) {
     geom_col(aes(x = SpO2_admission_ra, y = Discharged, fill = "Discharged")) +
     geom_col(aes(x = SpO2_admission_ra, y = Censored, fill = "Ongoing care")) +
     geom_col(aes(x = SpO2_admission_ra, y = Died, fill = "Died")) +
-    scale_fill_brewer(palette = "Dark2", name  = "Status", drop = F) + 
+    scale_fill_brewer(palette = "Dark2", name  = "Status", drop = F, 
+                      breaks = c("Discharged", "Ongoing care", "Died")) + 
     geom_text(aes(x = SpO2_admission_ra, y = 1.1, label = Tot), size = 3) +
     geom_text(aes(x = -0, y = 1.1, label = "n ="), size = 3) +
     theme_bw() + theme(plot.margin = margin(1, 0, 0, 0, unit = "cm")) + 
@@ -1010,6 +1011,8 @@ plot_outcome_saturations <- function(data, ...) {
   
   return(p)
 }
+
+
 ######### Timeline plot ##############
 # @todo add ICU. Add IMV.
 
