@@ -958,6 +958,60 @@ treatment.upset.numbers <- function(data, ...) {
   return(df)
 }
 
+plot_outcome_saturations <- function(data, ...) {
+  # oxy_vsorresu is  1, Room air|2, Oxygen therapy|3, N/A
+  df <- patient.data  %>%
+    dplyr::select(oxy_vsorresu, oxy_vsorres, outcome)
+  # oxy_vsorres is a string
+  df$oxy_vsorres <- destring(df$oxy_vsorres, keep = "0-9.-")
+  # Drop values of SpO2 < 20%, NA SpO2, those not on room air, and those with 
+  # no outcome
+  df <- df %>%
+    filter(!is.na(oxy_vsorres)) %>%
+    filter(oxy_vsorres > 20) %>%
+    filter(oxy_vsorresu == 1) %>%
+    filter(!is.na(outcome))
+  df$SpO2_admission_ra <- 0
+  thr <- c(20, 75, 80, 85, 88, 90, 92, 94, 96, 98)
+  for (i in thr) {
+    df$SpO2_admission_ra[df$oxy_vsorres >= i] <- i
+  }
+  df$SpO2_admission_ra <- factor(
+    df$SpO2_admission_ra,
+    levels = thr,
+    labels = c("<75", "75-", "80-", "85-", "88-", "90-", "92-", "94-", "96-", "98-")
+  )
+  df$Died <- df$Discharged <- df$Censored <- 0
+  df$Died[df$outcome == "death"] <- 1
+  df$Discharged[df$outcome == "discharge"] <- 1
+  df$Censored[df$outcome == "censored"] <- 1
+  df <- df %>%
+    dplyr::select(SpO2_admission_ra, Died, Discharged, Censored) %>%
+    group_by(SpO2_admission_ra) %>%
+    summarise(Died = sum(Died), Discharged = sum(Discharged), Censored = sum(Censored)) 
+  df$Tot <- df$Died + df$Discharged + df$Censored
+  df$Died <- df$Died / df$Tot
+  df$Discharged <- df$Discharged / df$Tot
+  df$Censored <- df$Censored / df$Tot
+  df$Censored <- df$Censored + df$Died
+  df$Discharged <- df$Discharged + df$Censored
+  
+  p <- ggplot(data = df) + 
+    geom_col(aes(x = SpO2_admission_ra, y = Discharged, fill = "Discharged")) +
+    geom_col(aes(x = SpO2_admission_ra, y = Censored, fill = "Ongoing care")) +
+    geom_col(aes(x = SpO2_admission_ra, y = Died, fill = "Died")) +
+    scale_fill_brewer(palette = "Dark2", name  = "Status", drop = F, 
+                      breaks = c("Discharged", "Ongoing care", "Died")) + 
+    geom_text(aes(x = SpO2_admission_ra, y = 1.1, label = Tot), size = 3) +
+    geom_text(aes(x = -0, y = 1.1, label = "n ="), size = 3) +
+    theme_bw() + theme(plot.margin = margin(1, 0, 0, 0, unit = "cm")) + 
+    xlab("Oxygen saturation (%) in room air on admission") +
+    ylab("Proportion") + 
+    coord_cartesian(xlim = c(1, 10), ylim = c(0, 1), clip = "off")
+  
+  return(p)
+}
+
 
 ######### Timeline plot ##############
 # @todo add ICU. Add IMV.
