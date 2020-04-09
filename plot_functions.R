@@ -129,7 +129,7 @@ outcomes.by.admission.date <- function(data, ...){
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week of admission/symptom onset (2020)") +
     ylab("Cases") +
-    ylim(c(0,450)) +
+    ylim(c(0,1500)) +
     scale_x_discrete(drop = F) +
     annotate(geom = "text", label = "*", x = max(data2$epiweek) - min(data2$epiweek) + 1, 
              y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$epiweek))), size =15)
