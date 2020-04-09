@@ -125,7 +125,7 @@ Unlike the observed mean, the estimation process of the **expected mean** accoun
 | Duration of IMV            | `r round(mean(de$d.imv, na.rm=T), 1)`  | `r round(sd(de$d.imv, na.rm=T), 1)`  | `r round(median(de$d.imv, na.rm=T), 1)`  | `r round(IQR(de$d.imv, na.rm=T), 1)`  | NA                                                                 |
 |                            |                                        |                                      |                                          |                                       |                                                                    |
 | Admission to NIV           | `r round(mean(de$a.nimv, na.rm=T), 1)` | `r round(sd(de$a.nimv, na.rm=T), 1)` | `r round(median(de$a.nimv, na.rm=T), 1)` | `r round(IQR(de$a.nimv, na.rm=T), 1)` | `r de$adm.niv` (`r  de$adm.niv.l`, `r  de$adm.niv.u`)              |
-| Duration of NIV            | `r round(mean(de$d.nimv, na.rm=T), 1)` | `r round(sd(de$d.nimv, na.rm=T), 1)` | `r round(median(de$d.nimv, na.rm=T), 1)` | `r round(IQR(de$a.nimv, na.rm=T), 1)` | `r de$dur.niv` (`r  de$dur.niv.l`, `r  de$dur.niv.u`)              |
+| Duration of NIV            | `r round(mean(de$d.nimv, na.rm=T), 1)` | `r round(sd(de$d.nimv, na.rm=T), 1)` | `r round(median(de$d.nimv, na.rm=T), 1)` | `r round(IQR(de$a.nimv, na.rm=T), 1)` | NA              |
 
 
 
