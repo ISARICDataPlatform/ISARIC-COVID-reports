@@ -100,7 +100,7 @@ outcomes.by.country <- function(data, ...){
     xlab("Country") +
     ylab("Cases") + 
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    geom_text(data = data3, aes(x=Country, y= count + 35, label=count), size=4)
+    geom_text(data = data3, aes(x=Country, y= count + 75, label=count), size=4)
 }
 
 # Outcomes by epi-week
