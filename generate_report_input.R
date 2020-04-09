@@ -21,7 +21,7 @@ d.e <- function(data, datafull, ...){
   max.age <- ceiling(max(data$age_estimateyears, na.rm=T)) # maximum age
   
   transfer.outcome <- sum(summary(as.factor(patient.data$exit.code))[['transfer']],  summary(as.factor(patient.data$exit.code))[['transfer.palliative']])
-  unk.outcome <- sum(summary(as.factor(patient.data$exit.code))[['unknown']], summary(as.factor(patient.data$exit.code))[['hospitalisation']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed 
+  unk.outcome <-  summary(as.factor(patient.data$exit.code))[['hospitalisation']] # 'Hospitalisation' entries mostly mean the data collection wasn't completed 
   
   
   # ages by sex
@@ -449,10 +449,6 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
               obs.median.onset.adm =  obs.median.onset.adm,
               obs.iqr.onset.adm =   obs.iqr.onset.adm,
               
-              
-              
-              
-              
               a.icu = a.icu,
               d.icu = d.icu,
               
@@ -511,6 +507,6 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
 
 de <- d.e(patient.data, unembargoed.data)
 
-save(de, file = glue("{code.path}/report_input_data_{today()}.rda"))
+save(de, file = glue("{code.path}/report_input_data_{ref.date}.rda"))
 
 #save(de, file = glue("{code.path}/report_input_data_sa_{today()}.rda"))
