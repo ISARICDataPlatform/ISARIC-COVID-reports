@@ -1257,5 +1257,12 @@ patient.data <-  patient.data %>%
 
 if(verbose) cat("Saving to disk...\n")
 
+# Remove cases with problematic outcome code-date matches
+
+# Temporary fix! #
+
+patient.data <- patient.data[-c(which(is.na(patient.data$exit.code) & !is.na(patient.data$exit.date))), ]
+patient.data <- patient.data[-c(which(!is.na(patient.data$exit.code) & is.na(patient.data$exit.date))), ]
+
 save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date}.rda"))
 
