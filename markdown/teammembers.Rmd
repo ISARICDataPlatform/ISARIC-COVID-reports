@@ -3,6 +3,7 @@ title: "ISARIC Team Members"
 output: html_document
 ---
 
+*	All those who contributed the data, which enabled this report.
 *	Kenneth Bailie
 * Gail Carson
 * Emmanuelle A. Dankwa
@@ -16,12 +17,15 @@ output: html_document
 * Peter Horby
 * Kalynn Kennon
 * James Lee
+* Deborah Malden 
 * Laura Merson
 * Sarah Moore
+* Katherine Newell
 * Piero Olliaro
 * Daniel Plotkin
 * Mark Pritchard
 *	Clark Russell
 * Calum Semple 
 *	Louise Sigfrid
-*	All those who contributed the data, which enabled this report.
+
+
