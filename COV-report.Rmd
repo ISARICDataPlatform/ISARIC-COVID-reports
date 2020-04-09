@@ -1,10 +1,6 @@
 ---
 title: "International Severe Acute Respiratory and Emerging Infections Consortium (ISARIC)"
 output:
-  pdf_document:
-    toc: no
-    includes:
-      in_header: header.tex
   html_document:
     df_print: paged
     number_sections: yes
@@ -12,12 +8,17 @@ output:
     toc_depth: 2
     toc_float:
       collapsed: no
+  pdf_document:
+    toc: no
+    includes:
+      in_header: header.tex
 urlcolor: blue
 ---
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
+library(tidyselect)
 library(plyr)
 library(tidyverse)
 library(glue)
@@ -37,7 +38,6 @@ library(boot)
 library(survival)
 library(survminer)
 library(broom)
-library(tidyselect)
 library(taRifx)
 
 reprocess.data <- F
@@ -57,7 +57,7 @@ row.data.file <- paths[[which(paths$X1 == "row.data.file"), 2]]
 eot.data.file <- paths[[which(paths$X1 == "eot.data.file"), 2]]
 rapid.data.file <- paths[[which(paths$X1 == "rapid.data.file"), 2]]
 
-ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15)) + 1
+ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15))
 
 # Source files
 
@@ -148,7 +148,7 @@ status.by.time.after.admission(patient.data)
 ```
 
 \newpage
-**Figure 7**Patient outcomes, stratified by oxygen saturations in room air on admission.
+**Figure 7**: Patient outcomes, stratified by oxygen saturations in room air on admission.
 
 ```{r outcomebysats, echo=FALSE}
 
@@ -207,7 +207,7 @@ icu.treatment.upset(patient.data)
 
 
 \newpage
-**Figure 13** Distribution of lengths of stay for patients who were admitted to ICU: total length of stay for this group and length of stay within intensive care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+**Figure 13**: Distribution of lengths of stay for patients who were admitted to ICU: total length of stay for this group and length of stay within intensive care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r icu_los, echo=FALSE}
 icu.violin.plot(patient.data)
@@ -219,7 +219,7 @@ icu.violin.plot(patient.data)
 
 **Figure 14**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
-```{r onset.admission, out.width = '100%'}
+```{r onset.admission, out.width = '80%'}
 
 onset.adm.plot(patient.data)
 

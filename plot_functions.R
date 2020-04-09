@@ -30,6 +30,7 @@ age.pyramid <- function(data, ...){
   plot.breaks <- seq(-(ceiling(max.count/10)*10), ceiling(max.count/10)*10, by = 10)
   plot.labels <- as.character(c(rev(seq(10, ceiling(max.count/10)*10, by = 10)), 0, seq(10, ceiling(max.count/10)*10, by= 10)))
   
+  
   ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp5, y=count, fill = outcome), stat = "identity", col = "black") +
     geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
     coord_flip(clip = 'off') +
@@ -57,7 +58,8 @@ age.pyramid <- function(data, ...){
       xmax = length(levels(data2$agegp5))+1.5) +
     theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
   
-}
+
+  }
 
 # Distribution of sites by country
 
@@ -1625,7 +1627,11 @@ violin.age.func <- function(data, ...){
   data2 <- data2 %>% 
     mutate(length.of.stay = abs(round.zeros(start.to.exit)))
   
-  vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = abs(data2$length.of.stay) )
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  
+  vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = data2$length.of.stay )
   
   # remove NAs (@todo for now?)
   
@@ -1662,6 +1668,10 @@ adm.outcome <- function(data, plt = F){
     mutate(length.of.stay = map2_dbl(start.to.exit, start.to.censored, function(x,y){
       max(x, y, na.rm = T)
     }))
+  
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
   
   admit.discharge <- data2$length.of.stay
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
