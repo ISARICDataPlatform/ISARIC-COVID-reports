@@ -985,7 +985,7 @@ plot_outcome_saturations <- function(data, ...) {
   df$SpO2_admission_ra <- factor(
     df$SpO2_admission_ra,
     levels = thr,
-    labels = c("<75", "75-", "80-", "85-", "88-", "90-", "92-", "94-", "96-", "98-")
+    labels = c("<75", "75-", "80-", "85-", "88-", "90-", "92-", "94-", "96-", "98-100")
   )
   df$Died <- df$Discharged <- df$Censored <- 0
   df$Died[df$outcome == "death"] <- 1
