@@ -1346,6 +1346,7 @@ icu.violin.plot  <- function(data, ...){
   data <- get_icu_pts(data)
   # Use available data for each measure
   dur <- data$admission.to.exit
+  dur <- dur[-(which(dur<0))]  # Exclude negative times
   d <- data.frame(dur = dur)
   d$type <- 1
   
@@ -1577,12 +1578,16 @@ violin.sex.func <- function(data, ...){
   
   # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
   
+
   data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3)
   
-  data2 <- data2 %>% 
-    mutate(length.of.stay = abs(round.zeros(start.to.exit)))  %>%
+  data2 <- data2%>% 
+    mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
   
   
   vd <- tibble(Sex = data2$sex, length.of.stay = data2$length.of.stay )
