@@ -1629,10 +1629,12 @@ violin.age.func <- function(data, ...){
   data2 <- data %>% filter(!is.na(start.to.exit)) 
   
   data2 <- data2 %>% 
-    mutate(length.of.stay = abs(round.zeros(start.to.exit)))
-  
+    mutate(length.of.stay = round.zeros(start.to.exit))
   
   # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  
+  
   
   vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = data2$length.of.stay )
   
