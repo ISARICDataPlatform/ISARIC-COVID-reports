@@ -820,30 +820,39 @@ hospital.fatality.ratio <- function(data){
 treatment.upset.prep <- function(data, ...) {
   details <- subset(
     data, 
-    select = c(subjid,
-               antibiotic.any,
-               antiviral.any,
-               antifungal.any,
-               steroid.any,
-               NIMV.ever, IMV.ever, O2.ever
+    select = c(subjid, outcome,
+               antibiotic.any, antiviral.any, antifungal.any, steroid.any,
+               NIMV.ever, IMV.ever, O2.ever,
+               RRT.ever, Inotrope.ever
     )
   )
-  # Do not plot if all NA - likely just not had outcome form
-  col_from <- 2
-  col_to <- ncol(details) - 1  # -1 as O2.ever is never NA
-  details$allna <- 1
-  for (i in col_from:col_to) {
-    details$allna[is.na(details[, i]) == FALSE] <- 0
-  }
-  details <- subset(details, allna == 0)
-  # 1 is Yes, set anything else to 0 (No)
-  for (i in 2:5) {
-    details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
-  }
-  # Any O2 therapy - will include data from daily forms
+  # Do not plot if no outcome (i.e. censored) or if all treatments are NA
+  details <- details %>%
+    filter(!is.na(outcome)) %>%
+    filter(!outcome == "censored")
+  details$AllNa <- 1
+  details$AllNa[is.na(details$antibiotic.any) == FALSE | 
+                  is.na(details$antiviral.any) == FALSE | 
+                  is.na(details$antifungal.any) == FALSE | 
+                  is.na(details$steroid.any) == FALSE | 
+                  is.na(details$NIMV.ever) == FALSE | 
+                  is.na(details$IMV.ever) == FALSE | 
+                  is.na(details$O2.ever) == FALSE | 
+                  is.na(details$RRT.ever) == FALSE | 
+                  is.na(details$Inotrope.ever) == FALSE] <- 0
+  details <- details %>%
+    filter(AllNa == 0) %>%
+    dplyr::select(-AllNa, - outcome)
+  # If ventilated then had O2 therapy
   details$O2.ever[details$NIMV.ever == TRUE] <- TRUE
   details$O2.ever[details$IMV.ever == TRUE] <- TRUE
-  
+  # 1 is Yes, set anything else to 0 (No)
+  for (i in 2:10) {
+    details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
+  }
+  #Create "any antimicrobial"
+  details <- details %>%
+    mutate(any.antimicrobial = pmax(antibiotic.any, antiviral.any, antifungal.any))
   return(details)
 }
 
@@ -1305,7 +1314,9 @@ icu.treatment.upset.prep <- function(data, ...) {
 }
 
 icu.treatment.upset <- function(data, ...) {
-  details <- icu.treatment.upset.prep(data)
+  details <- data %>%
+    get_icu_pts() %>%
+    treatment.upset.prep() 
   treatments2 <- details %>%
     dplyr::select(
       subjid, 
