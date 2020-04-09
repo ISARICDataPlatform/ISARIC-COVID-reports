@@ -1633,7 +1633,6 @@ violin.age.func <- function(data, ...){
   
   
   # Exclude negative values for length of stay - indication of issue with data entry
-  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
   
   vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = data2$length.of.stay )
   
