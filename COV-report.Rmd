@@ -148,7 +148,7 @@ status.by.time.after.admission(patient.data)
 ```
 
 \newpage
-**Figure 7**Patient outcomes, stratified by oxygen saturations in room air on admission.
+**Figure 7**: Patient outcomes, stratified by oxygen saturations in room air on admission.
 
 ```{r outcomebysats, echo=FALSE}
 
