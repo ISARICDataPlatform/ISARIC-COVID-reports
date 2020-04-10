@@ -46,7 +46,7 @@ output: html_document
 **Table 2:** Prevalence of Symptoms, Comorbidities and Treatments
 
 
-The counts presented for treatments include all cases, not only cases with complete details of treatments. 
+The counts presented for treatments include all cases, not only cases with complete details of treatments (as expressed in the summary).  
 
 
 | **Symptoms**                      | **Present (%)**                                                               | **Absent (%)**                        | **Unknown (%)**                        |
