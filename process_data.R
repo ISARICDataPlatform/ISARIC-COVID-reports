@@ -488,25 +488,27 @@ if(use.rapid.data){
     rapid.data <- rapid.data %>% mutate_at(vars(tidyselect::all_of(ntc)), .funs = ~pcareful.as.numeric(., subjid = subjid, colname = ntc))
   }
   
-  # rapid.data <- rapid.data %>%
-  #   # some variables have different names in different datasets
-  #   dplyr::rename(chrincard = chroniccard_mhyn) %>%
-  #   mutate(temp_vsorres = as.character(temp_vsorres)) %>%
-  #   mutate(hr_vsorres = as.character(hr_vsorres)) %>%
-  #   mutate(rr_vsorres = as.character(rr_vsorres) )  %>%
-  #   mutate(sysbp_vsorres = as.character(sysbp_vsorres))  %>%
-  #   mutate(oxy_vsorres = as.character(oxy_vsorres)) 
-  #   #modliv = modliver_mhyn, 
-  #   # mildliver = mildliv_mhyn, 
-  #   #chronichaemo_mhyn = chronhaemo_mhyn, 
-  #   #diabetescom_mhyn = diabetiscomp_mhyn,
-  #   #rheumatologic_mhyn = rheumatology_mhyr) %>%
-  #   # join in the country table
-  #   #dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
-  #   #left_join(site.list, by = "site.number") %>%
-  #   #dplyr::select(-site.number) %>%
-  #   # add data source
-  # dplyr::mutate(data.source = "RAPID")
+  rapid.data <- rapid.data %>%
+    # some variables have different names in different datasets
+    # dplyr::rename(chrincard = chroniccard_mhyn) %>%
+    # mutate(temp_vsorres = as.character(temp_vsorres)) %>%
+    # mutate(hr_vsorres = as.character(hr_vsorres)) %>%
+    # mutate(rr_vsorres = as.character(rr_vsorres) )  %>%
+    # mutate(sysbp_vsorres = as.character(sysbp_vsorres))  %>%
+    # mutate(oxy_vsorres = as.character(oxy_vsorres))
+    dplyr::rename(chrincard = chroniccard_mhyn, 
+                  modliv = modliver_mhyn, 
+                  mildliver = mildliv_mhyn, 
+                  chronichaemo_mhyn = chronhaemo_mhyn, 
+                  diabetescom_mhyn = diabetiscomp_mhyn,
+                  rheumatologic_mhyn = rheumatology_mhyr,
+                  icu_hoendat = hoendat) %>%
+    # join in the country table
+    dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
+    left_join(site.list, by = "site.number") %>%
+    dplyr::select(-site.number) %>%
+    # add data source
+  dplyr::mutate(data.source = "RAPID")
 }else{
   rapid.data <- NULL
 }

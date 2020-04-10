@@ -41,7 +41,7 @@ library(survminer)
 library(broom)
 library(taRifx)
 
-reprocess.data <- T
+reprocess.data <- F
 verbose <- T
 
 # file locations
