@@ -523,7 +523,7 @@ for(dc in date.columns){
   raw.data <- raw.data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = T))
 }
 
-raw.data <- raw.data %>% mutate_at(vars(all_of("cestdat")), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = F))
+raw.data <- raw.data %>% mutate_at(vars(all_of("agedat")), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = F))
 
 raw.data <- raw.data%>%
   mutate_at(date.columns, function(x) as.Date(x, origin = "1970-01-01"))
