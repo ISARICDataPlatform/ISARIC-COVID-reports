@@ -1086,8 +1086,8 @@ patient.data <- patient.data %>%
   mutate(ICU.ever = !is.na(ICU.start.date) | ICU2.ever) %>%
   # mutate(ICU.ever2 = !is.na(ICU.start.date) | !(is.na(ICU2.ever)  | !ICU2.ever)) %>%
   mutate(ICU.start.date = replace(ICU.start.date, is.na(ICU.start.date), ICU2.start.date[which(is.na(ICU.start.date))])) %>%
-  mutate(ICU.end.date = replace(ICU.end.date, is.na(ICU.end.date), ICU2.end.date[which(is.na(ICU.end.date))])) 
-  
+  mutate(ICU.end.date = replace(ICU.end.date, is.na(ICU.end.date), ICU2.end.date[which(is.na(ICU.end.date))])) %>%
+  mutate(ICU.multiple.periods = ICU2.multiple.periods)
   
 # if we can get those from the daily forms then we can get this
 patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <- 
@@ -1262,7 +1262,7 @@ if(verbose) cat("Saving to disk...\n")
 # Temporary fix! #
 
 patient.data <- patient.data[-c(which(is.na(patient.data$exit.code) & !is.na(patient.data$exit.date))), ]
-patient.data <- patient.data[-c(which(!is.na(patient.data$exit.code) & is.na(patient.data$exit.date))), ]
+# patient.data <- patient.data[-c(which(!is.na(patient.data$exit.code) & is.na(patient.data$exit.date))), ]
 
 save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date}.rda"))
 
