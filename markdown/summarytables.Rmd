@@ -8,7 +8,7 @@ output: html_document
 
 
 
-| **Description**                  | **Value**                                      |
+| **Description**                  | **Value (%)**                                      |
 |------------------------------|--------------------------------------------|
 | Size of cohort               | `r de$N.cases`                            |
 |                              |                                            |
@@ -89,7 +89,6 @@ output: html_document
 | Antifungal agent              | `r de$t.dat$present[2]`  (`r round(de$t.dat$present[2]/de$N.cases, 2)`)       | `r de$t.dat$absent[2]` (`r round(de$t.dat$absent[2]/de$N.cases, 2)`)      | `r de$t.dat$unknown[2]` (`r round(de$t.dat$unknown[2]/de$N.cases, 2)`)           |
 | Antiviral agent               | `r de$t.dat$present[3]`  (`r round(de$t.dat$present[3]/de$N.cases, 2)`)       | `r de$t.dat$absent[3]` (`r round(de$t.dat$absent[3]/de$N.cases, 2)`)       | `r de$t.dat$unknown[3]` (`r round(de$t.dat$unknown[3]/de$N.cases, 2)`)          |
 | Corticosteroid agent          | `r de$t.dat$present[4]`  (`r round(de$t.dat$present[4]/de$N.cases, 2)`)       | `r de$t.dat$absent[4]` (`r round(de$t.dat$absent[4]/de$N.cases, 2)`)       | `r de$t.dat$unknown[4]` (`r round(de$t.dat$unknown[4]/de$N.cases, 2)`)           |
-| Extracorporeal support        | `r de$t.dat$present[5]`  (`r round(de$t.dat$present[5]/de$N.cases, 2)`)       | `r de$t.dat$absent[5]` (`r round(de$t.dat$absent[5]/de$N.cases, 2)`)       | `r de$t.dat$unknown[5]` (`r round(de$t.dat$unknown[5]/de$N.cases, 2)`)          |
 | Inhaled nitric oxide          | `r de$t.dat$present[6]`  (`r round(de$t.dat$present[6]/de$N.cases, 2)`)       | `r de$t.dat$absent[6]` (`r round(de$t.dat$absent[6]/de$N.cases, 2)`)       | `r de$t.dat$unknown[6]`  (`r round(de$t.dat$unknown[6]/de$N.cases, 2)`)          |
 | Inotropes / vasopressors      | `r de$t.dat$present[7]`   (`r round(de$t.dat$present[7]/de$N.cases, 2)`)      | `r de$t.dat$absent[7]` (`r round(de$t.dat$absent[7]/de$N.cases, 2)`)       | `r de$t.dat$unknown[7]`  (`r round(de$t.dat$unknown[7]/de$N.cases, 2)`)          |
 | Invasive ventilation          | `r de$IMV.pr` (`r round(de$IMV.pr/de$N.cases, 2)`)                  | `r de$IMV.ab` (`r round(de$IMV.ab/de$N.cases, 2)`)        | `r de$IMV.un` (`r round(de$IMV.un/de$N.cases, 2)`)        |
