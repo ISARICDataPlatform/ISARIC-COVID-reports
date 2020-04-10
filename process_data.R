@@ -11,7 +11,7 @@ embargo.length <- 14
 use.uk.data <- TRUE
 use.row.data <- TRUE
 use.eot.data <- TRUE
-use.rapid.data <-F
+use.rapid.data <-FALSE
 ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15))
 embargo.limit <- ref.date - embargo.length
 
@@ -445,7 +445,7 @@ if(use.row.data){
 
 
 if(use.rapid.data){
-  rapid.data.dict <- read_csv(glue("{data.path}/{row.data.dict.file}"))
+  rapid.data.dict <- read_csv(glue("{data.path}/{rapid.data.dict.file}"))
   rapid.data <- read_csv(glue("{data.path}/{rapid.data.file}"), guess_max = 100000)
   
   rapid.column.types <- rapid.data.dict %>% dplyr::select(1, 4) %>%
