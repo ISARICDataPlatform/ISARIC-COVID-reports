@@ -11,7 +11,7 @@ embargo.length <- 14
 use.uk.data <- TRUE
 use.row.data <- TRUE
 use.eot.data <- TRUE
-use.rapid.data <-FALSE
+use.rapid.data <-TRUE
 ref.date <- as.Date(substr(uk.data.file, start = 6, stop  = 15))
 embargo.limit <- ref.date - embargo.length
 
@@ -203,13 +203,13 @@ pcareful.as.numeric <- function(value.col, subjid, colname){
 
 # Checks for dates in the future and returns NA if they are
 
-careful.date.check <- function(value, subjid, colname){
+careful.date.check <- function(value, subjid, colname, check.early = F){
   if(is.na(value)) {
     return(NA)
   } else if(value > today()){
     warning(glue("Future date '{as.character(value)}' transformed to NA for column {colname}, subject ID {subjid}"))
     return(NA)
-  } else if(value < ymd("2019-01-01")){
+  } else if(value < ymd("2019-01-01") & check.early){
     warning(glue("Implausably early date '{as.character(value)}' transformed to NA for column {colname}, subject ID {subjid}"))
     return(NA)
   } else {
@@ -217,9 +217,9 @@ careful.date.check <- function(value, subjid, colname){
   }
 }
 
-pcareful.future.date <- function(value.col, subjid, colname){
+pcareful.date.check <- function(value.col, subjid, colname, check.early = F){
   map2_dbl(value.col, subjid, function(x, y){
-    careful.future.date(x, y, colname)
+    careful.date.check(x, y, colname, check.early)
   })
 }
 
@@ -259,14 +259,14 @@ if(use.uk.data){
   }
   
   # we can use the data dictionary file to identify columns that should be numeric and those that should be text
-
+  
   uk.data.dict <- read_csv(glue("{data.path}/{uk.data.dict.file}"))
-   
+  
   uk.column.types <- uk.data.dict %>% dplyr::select(1, 4) %>%
     dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
-
+  
   uk.data <- read_csv(glue("{data.path}/{uk.data.file}"), guess_max = 100000)
-
+  
   # Columns that should be text
   text.columns.temp <- uk.column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
   # some data dictionary columns are not in the data!
@@ -326,12 +326,12 @@ if(use.eot.data){
   
   if(verbose) cat("Importing EOT data...\n")
   
-  eot.data.dict <- read_csv(glue("{data.path}/{row.data.dict.file}"))
+  eot.data.dict <- read_csv(glue("{data.path}/{eot.data.dict.file}"))
   
   eot.column.types <- eot.data.dict %>% dplyr::select(1, 4) %>%
     dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
   
-  eot.data <- read_csv(glue("{data.path}/{rapid.data.file}"), guess_max = 100000)
+  eot.data <- read_csv(glue("{data.path}/{eot.data.file}"), guess_max = 100000)
   
   # Columns that should be text
   text.columns.temp <- eot.column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
@@ -364,11 +364,11 @@ if(use.eot.data){
   eot.data <- eot.data %>%
     # some variables have different names in different datasets
     dplyr::rename(chrincard = chroniccard_mhyn) %>%
-                  #modliv = modliver_mhyn, 
-                 # mildliver = mildliv_mhyn, 
-                  #chronichaemo_mhyn = chronhaemo_mhyn, 
-                  #diabetescom_mhyn = diabetiscomp_mhyn,
-                  #rheumatologic_mhyn = rheumatology_mhyr) %>%
+    #modliv = modliver_mhyn, 
+    # mildliver = mildliv_mhyn, 
+    #chronichaemo_mhyn = chronhaemo_mhyn, 
+    #diabetescom_mhyn = diabetiscomp_mhyn,
+    #rheumatologic_mhyn = rheumatology_mhyr) %>%
     # join in the country table
     dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
@@ -451,10 +451,10 @@ if(use.rapid.data){
   rapid.column.types <- rapid.data.dict %>% dplyr::select(1, 4) %>%
     dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
   
- #  # Select variable names in row.data.dict
- # ind.of.interest <- which(names(rapid.data)%in%row.data.dict$`Variable / Field Name`)
- #  # Drop columns which are not in row.data.dict
- #  rapid.data <- rapid.data[, -ind.of.interest]
+  #  # Select variable names in row.data.dict
+  # ind.of.interest <- which(names(rapid.data)%in%row.data.dict$`Variable / Field Name`)
+  #  # Drop columns which are not in row.data.dict
+  #  rapid.data <- rapid.data[, -ind.of.interest]
   
   # Columns that should be text
   text.columns.temp <- rapid.column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
@@ -502,7 +502,7 @@ if(use.rapid.data){
   #   #left_join(site.list, by = "site.number") %>%
   #   #dplyr::select(-site.number) %>%
   #   # add data source
-   # dplyr::mutate(data.source = "RAPID")
+  # dplyr::mutate(data.source = "RAPID")
 }else{
   rapid.data <- NULL
 }
@@ -515,11 +515,13 @@ raw.data <- bind_rows(uk.data, row.data, eot.data, rapid.data)
 
 if(verbose) cat("Setting future dates to NA...\n")
 
-date.columns <- c("dsstdat", "agedat", "daily_dsstdat", "daily_lbdat", "hostdat", "cestdat", "dsstdtc")
+date.columns <- c("dsstdat", "daily_dsstdat", "daily_lbdat", "hostdat", "cestdat", "dsstdtc")
 
 for(dc in date.columns){
-  raw.data <- raw.data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.future.date(., subjid = subjid, colname = dc))
+  raw.data <- raw.data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = T))
 }
+
+raw.data <- raw.data %>% mutate_at(vars(all_of("cestdat")), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = F))
 
 raw.data <- raw.data%>%
   mutate_at(date.columns, function(x) as.Date(x, origin = "1970-01-01"))
@@ -784,6 +786,8 @@ extract.named.column.from.events <- function(events.tibble, column.name, sanity.
 
 if(verbose) cat("Adding new columns...\n")
 
+print(Sys.time())
+
 patient.data <- patient.data %>%
   # check if symptoms, comorbidities and treatments were actually recorded
   dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
@@ -791,7 +795,11 @@ patient.data <- patient.data %>%
   dplyr::mutate(treatments.recorded = map_lgl(events, function(x){
     temp <- x %>% mutate(tr = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...)))))
     any(temp$tr)
-  })) %>%
+  })) 
+
+print(Sys.time())
+
+patient.data <- patient.data %>%
   # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
   dplyr::mutate(exit.date = map2_chr(subjid, events, function(y, x){
     outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsstdtc)) 
@@ -833,7 +841,11 @@ patient.data <- patient.data %>%
         return(temp %>% pull(dsterm) %>% is.na() %>% any())
       }
     }
-  })) %>%
+  })) 
+
+print(Sys.time())
+
+patient.data <- patient.data %>%  
   # outcome is death, discharge or other for transfers etc
   dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
     if(x){
@@ -878,7 +890,11 @@ patient.data <- patient.data %>%
     }
     ifelse(x=="discharge", as.character(y), NA)
   }))  %>%
-  dplyr::mutate(discharge.date = ymd(discharge.date)) %>%
+  dplyr::mutate(discharge.date = ymd(discharge.date)) 
+  
+print(Sys.time())
+
+patient.data <- patient.data %>%   
   # Consolidated age is the exact age at enrolment if this is present. Otherwise it is taken from the estimated age column. 
   dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
     if(is.na(dob)){
@@ -901,7 +917,12 @@ patient.data <- patient.data %>%
     temp <- substr(a, 2, nchar(a) -1 )
     temp <- str_replace(temp, ",", "-")
     str_replace(temp, "70-120", "70+")
-  })) %>%
+  })) 
+
+
+print(Sys.time())
+
+patient.data <- patient.data %>%  
   dplyr::mutate(ICU.start.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hostdat", TRUE)))) %>%
   dplyr::mutate(ICU.start.date = ymd(ICU.start.date)) %>%
   dplyr::mutate(ICU.end.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hoendat", TRUE)))) %>%
@@ -916,7 +937,11 @@ patient.data <- patient.data %>%
   dplyr::mutate(start.date = map2_chr(admission.date, onset.date, function(x,y){
     suppressWarnings(as.character(max(x,y, na.rm = T)))
   })) %>%
-  dplyr::mutate(start.date = ymd(start.date)) %>%
+  dplyr::mutate(start.date = ymd(start.date)) 
+  
+print(Sys.time())
+
+patient.data <- patient.data %>%  
   dplyr::mutate(antiviral.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmyn", TRUE) )) %>%
   dplyr::mutate(antiviral.Ribavirin = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___1", TRUE) )) %>%
   dplyr::mutate(antiviral.Lopinavir.Ritonvir = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___2", TRUE) )) %>%
@@ -1091,7 +1116,7 @@ patient.data <- patient.data %>%
   mutate(ICU.start.date = replace(ICU.start.date, is.na(ICU.start.date), ICU2.start.date[which(is.na(ICU.start.date))])) %>%
   mutate(ICU.end.date = replace(ICU.end.date, is.na(ICU.end.date), ICU2.end.date[which(is.na(ICU.end.date))])) %>%
   mutate(ICU.multiple.periods = ICU2.multiple.periods)
-  
+
 # if we can get those from the daily forms then we can get this
 patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <- 
   as.numeric(difftime(
