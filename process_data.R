@@ -4,6 +4,8 @@
 
 options(warn=1)
 
+one.percent.debug <- TRUE
+
 if(verbose) cat("Setting up datasets and embargo date...\n")
 
 embargo.length <- 14
@@ -523,10 +525,12 @@ for(dc in date.columns){
   raw.data <- raw.data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = T))
 }
 
-raw.data <- raw.data %>% mutate_at(vars(all_of("agedat")), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = F))
+for(dc in "agedat"){
+  raw.data <- raw.data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = F))
+}
 
 raw.data <- raw.data%>%
-  mutate_at(date.columns, function(x) as.Date(x, origin = "1970-01-01"))
+  mutate_at(c(date.columns, "agedat"), function(x) as.Date(x, origin = "1970-01-01"))
 
 
 # Now, some fields need to be numerical even if the data dictionary does not think they are.
@@ -573,6 +577,9 @@ patient.data <- demog.data %>% left_join(event.data)  %>%
   # cut out any rows where the IDs suggest test data
   filter(!str_detect(subjid, "[tT][eE][sS][tT]"))
 
+if(one.percent.debug){
+  patient.data <- patient.data %>% slice(seq(1, nrow(patient.data), by = 100))
+}
 
 
 #### Comorbitities, symptoms, and treatments ####
