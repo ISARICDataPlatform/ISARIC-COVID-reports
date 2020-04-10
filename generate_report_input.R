@@ -266,10 +266,11 @@ d.e <- function(data, datafull, ...){
   # Note, proportions of ventilation have denominator O2
   p.NIV <- paste(sprintf("%.1f", 100 * df$n.NIV / df$n.O2))
   p.In.Ven <- paste(sprintf("%.1f", 100 * df$n.IMV / df$n.O2))
+  n.o2 <- df$n.O2
   
   # ICU treatments
   df <- get_icu_pts(data) %>%
-    make.props.treats
+    make.props.treats()
   icu.n.treat <- df$N
   icu.p.abx <- paste(sprintf("%.1f", 100 * df$n.abx / df$N))
   icu.p.av <- paste(sprintf("%.1f", 100 * df$n.av / df$N))
