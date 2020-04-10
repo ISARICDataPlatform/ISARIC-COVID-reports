@@ -4,7 +4,7 @@
 
 options(warn=1)
 
-one.percent.debug <- TRUE
+one.percent.debug <- FALSE
 
 if(verbose) cat("Setting up datasets and embargo date...\n")
 
@@ -795,7 +795,7 @@ extract.named.column.from.events <- function(events.tibble, column.name, sanity.
 
 if(verbose) cat("Adding new columns...\n")
 
-print(Sys.time())
+# print(Sys.time())
 
 patient.data <- patient.data %>%
   # check if symptoms, comorbidities and treatments were actually recorded
@@ -806,7 +806,7 @@ patient.data <- patient.data %>%
     any(temp$tr)
   })) 
 
-print(Sys.time())
+# print(Sys.time())
 
 patient.data <- patient.data %>%
   # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
@@ -852,7 +852,7 @@ patient.data <- patient.data %>%
     }
   })) 
 
-print(Sys.time())
+# print(Sys.time())
 
 patient.data <- patient.data %>%  
   # outcome is death, discharge or other for transfers etc
@@ -901,7 +901,7 @@ patient.data <- patient.data %>%
   }))  %>%
   dplyr::mutate(discharge.date = ymd(discharge.date)) 
   
-print(Sys.time())
+# print(Sys.time())
 
 patient.data <- patient.data %>%   
   # Consolidated age is the exact age at enrolment if this is present. Otherwise it is taken from the estimated age column. 
@@ -929,7 +929,7 @@ patient.data <- patient.data %>%
   })) 
 
 
-print(Sys.time())
+# print(Sys.time())
 
 patient.data <- patient.data %>%  
   dplyr::mutate(ICU.start.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hostdat", TRUE)))) %>%
@@ -948,7 +948,7 @@ patient.data <- patient.data %>%
   })) %>%
   dplyr::mutate(start.date = ymd(start.date)) 
   
-print(Sys.time())
+# print(Sys.time())
 
 patient.data <- patient.data %>%  
   dplyr::mutate(antiviral.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmyn", TRUE) )) %>%

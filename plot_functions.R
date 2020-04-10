@@ -663,7 +663,7 @@ make.props.treats <- function(data, ...){
   return(data2)
 }
 
-df <- make.props.treats(patient.data)
+# df <- make.props.treats(patient.data)
 
 ## "modified KM plot" ##
 
