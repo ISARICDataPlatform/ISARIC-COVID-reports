@@ -257,10 +257,10 @@ symptoms.upset <- function(data, max.symptoms, ...){
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field)) 
   
-  n.comorb <- ncol(data2) - 1
+  n.symp <- ncol(data2) - 1
   
   data2 <- data2 %>%
-    pivot_longer(2:(n.comorb+1), names_to = "Condition", values_to = "Present") %>%
+    pivot_longer(2:(n.symp+1), names_to = "Condition", values_to = "Present") %>%
     dplyr::mutate(Present = map_lgl(Present, function(x){
       if(is.na(x)){
         NA
