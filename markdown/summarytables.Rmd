@@ -45,7 +45,11 @@ output: html_document
 
 **Table 2:** Prevalence of Symptoms, Comorbidities and Treatments
 
-| **Symptoms**                      | **Present**                                                               | **Absent**                        | **Unknown**                        |
+
+The counts presented for treatments include all cases, not only cases with complete details of treatments. 
+
+
+| **Symptoms**                      | **Present (%)**                                                               | **Absent (%)**                        | **Unknown (%)**                        |
 |-------------------------------|-------------------------------------------------------------------------------|-------------------------------|--------------------------------|
 | Abdominal pain                | `r de$s.dat$present[1]` (`r round(de$s.dat$present[1]/de$N.cases, 2)`) | `r de$s.dat$absent[1]` (`r round(de$s.dat$absent[1]/de$N.cases, 2)`)  | `r de$s.dat$unknown[1]` (`r round(de$s.dat$unknown[1]/de$N.cases, 2)`)        |
 | Bleeding                      | `r de$s.dat$present[2]` (`r round(de$s.dat$present[2]/de$N.cases, 2)`) | `r de$s.dat$absent[2]` (`r round(de$s.dat$absent[2]/de$N.cases, 2)`)       | `r de$s.dat$unknown[2]` (`r round(de$s.dat$unknown[2]/de$N.cases, 2)`)         |
@@ -112,7 +116,7 @@ Unlike the observed mean, the estimation process of the **expected mean** accoun
 
 
 
-| Time (in days)             | Mean (observed)                        | SD (observed )                       | Median (observed)                        | IQR (observed )                       | Expected mean (95% CI)                                             |
+| Time (in days)             | Mean (observed)                        | SD (observed)                       | Median (observed)                        | IQR (observed )                       | Expected mean (95% CI)                                             |
 |----------------------------|----------------------------------------|--------------------------------------|------------------------------------------|---------------------------------------|--------------------------------------------------------------------|
 | Length of hospital stay    | `r de$obs.mean.adm.outcome`            | `r de$obs.sd.adm.outcome`            | `r de$obs.median.adm.outcome`            | `r de$obs.iqr.adm.outcome`            | `r de$adm.to.outcome` (`r de$adm.outcome.l`, `r de$adm.outcome.u`) |
 | Symptom onset to admission | `r  de$obs.mean.onset.adm`             | `r de$obs.sd.onset.adm`              | `r  de$obs.median.onset.adm`             | `r de$obs.iqr.onset.adm`              | `r de$onset.to.adm` (`r de$onset.to.adm.l`, `r de$onset.to.adm.u`) |
