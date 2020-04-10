@@ -1714,7 +1714,7 @@ onset.adm <- function(data, plt = F){
   admit.discharge <- data$onset.to.admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
   admit.discharge.2 <- round.zeros(admit.discharge)
- admit.discharge.2 <- admit.discharge.2[-which(admit.discharge.2>160)]
+ # admit.discharge.2 <- admit.discharge.2[-which(admit.discharge.2>160)]
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
   
   obs <-  admit.discharge.2  # record observed values for reporting
@@ -1726,7 +1726,7 @@ onset.adm <- function(data, plt = F){
     t <- data.frame(x=admit.discharge)
     plt <- ggplot(data = t) + 
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+    
-      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),

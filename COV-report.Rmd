@@ -19,6 +19,7 @@ urlcolor: blue
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 library(tidyselect)
+library(dtplyr)
 library(plyr)
 library(tidyverse)
 library(glue)
@@ -40,7 +41,7 @@ library(survminer)
 library(broom)
 library(taRifx)
 
-reprocess.data <- F
+reprocess.data <- T
 verbose <- T
 
 # file locations
@@ -51,6 +52,7 @@ code.path <- paths[[which(paths$X1 == "code.path"), 2]]
 data.path <- paths[[which(paths$X1 == "data.path"), 2]]
 uk.data.dict.file <- paths[[which(paths$X1 == "uk.data.dict.file"), 2]]
 row.data.dict.file <- paths[[which(paths$X1 == "row.data.dict.file"), 2]]
+eot.data.dict.file <- paths[[which(paths$X1 == "eot.data.dict.file"), 2]]
 rapid.data.dict.file <- paths[[which(paths$X1 == "rapid.data.dict.file"), 2]]
 site.list.file <- paths[[which(paths$X1 == "site.list.file"), 2]]
 uk.data.file <- paths[[which(paths$X1 == "uk.data.file"), 2]]
