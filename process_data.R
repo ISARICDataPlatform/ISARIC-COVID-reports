@@ -441,10 +441,12 @@ if(use.row.data){
 }
 
 
-## Rapid data import ###
+##### Rapid data import #####
 
 
 if(use.rapid.data){
+  if(verbose) cat("Importing RAPID data...\n")
+  
   rapid.data.dict <- read_csv(glue("{data.path}/{rapid.data.dict.file}"))
   rapid.data <- read_csv(glue("{data.path}/{rapid.data.file}"), guess_max = 100000)
   
