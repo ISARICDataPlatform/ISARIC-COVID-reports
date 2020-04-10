@@ -602,6 +602,49 @@ treatment.use.plot <- function(data, ...){
   plt
 }
 
+
+# Upset plot for treatments @todo add maximum parameter?
+
+treatment.upset.prep <- function(data, ...) {
+  details <- subset(
+    data, 
+    select = c(subjid, outcome,
+               antibiotic.any, antiviral.any, antifungal.any, steroid.any,
+               NIMV.ever, IMV.ever, O2.ever,
+               RRT.ever, Inotrope.ever
+    )
+  )
+  # Do not plot if no outcome (i.e. censored) or if all treatments are NA
+  details <- details %>%
+    filter(!is.na(outcome)) %>%
+    filter(!outcome == "censored")
+  details$AllNa <- 1
+  details$AllNa[is.na(details$antibiotic.any) == FALSE | 
+                  is.na(details$antiviral.any) == FALSE | 
+                  is.na(details$antifungal.any) == FALSE | 
+                  is.na(details$steroid.any) == FALSE | 
+                  is.na(details$NIMV.ever) == FALSE | 
+                  is.na(details$IMV.ever) == FALSE | 
+                  is.na(details$O2.ever) == FALSE | 
+                  is.na(details$RRT.ever) == FALSE | 
+                  is.na(details$Inotrope.ever) == FALSE] <- 0
+  details <- details %>%
+    filter(AllNa == 0) %>%
+    dplyr::select(-AllNa, - outcome)
+  # If ventilated then had O2 therapy
+  details$O2.ever[details$NIMV.ever == TRUE] <- TRUE
+  details$O2.ever[details$IMV.ever == TRUE] <- TRUE
+  # 1 is Yes, set anything else to 0 (No)
+  for (i in 2:10) {
+    details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
+  }
+  #Create "any antimicrobial"
+  details <- details %>%
+    mutate(any.antimicrobial = pmax(antibiotic.any, antiviral.any, antifungal.any))
+  return(details)
+}
+
+
 make.props.treats <- function(data, ...){
   details <- treatment.upset.prep(data)
   details$All <- 1
@@ -787,46 +830,6 @@ hospital.fatality.ratio <- function(data){
 
 
 
-# Upset plot for treatments @todo add maximum parameter?
-
-treatment.upset.prep <- function(data, ...) {
-  details <- subset(
-    data, 
-    select = c(subjid, outcome,
-               antibiotic.any, antiviral.any, antifungal.any, steroid.any,
-               NIMV.ever, IMV.ever, O2.ever,
-               RRT.ever, Inotrope.ever
-    )
-  )
-  # Do not plot if no outcome (i.e. censored) or if all treatments are NA
-  details <- details %>%
-    filter(!is.na(outcome)) %>%
-    filter(!outcome == "censored")
-  details$AllNa <- 1
-  details$AllNa[is.na(details$antibiotic.any) == FALSE | 
-                  is.na(details$antiviral.any) == FALSE | 
-                  is.na(details$antifungal.any) == FALSE | 
-                  is.na(details$steroid.any) == FALSE | 
-                  is.na(details$NIMV.ever) == FALSE | 
-                  is.na(details$IMV.ever) == FALSE | 
-                  is.na(details$O2.ever) == FALSE | 
-                  is.na(details$RRT.ever) == FALSE | 
-                  is.na(details$Inotrope.ever) == FALSE] <- 0
-  details <- details %>%
-    filter(AllNa == 0) %>%
-    dplyr::select(-AllNa, - outcome)
-  # If ventilated then had O2 therapy
-  details$O2.ever[details$NIMV.ever == TRUE] <- TRUE
-  details$O2.ever[details$IMV.ever == TRUE] <- TRUE
-  # 1 is Yes, set anything else to 0 (No)
-  for (i in 2:10) {
-    details[, i][details[, i] != 1 | is.na(details[, i]) == TRUE] <- 0
-  }
-  #Create "any antimicrobial"
-  details <- details %>%
-    mutate(any.antimicrobial = pmax(antibiotic.any, antiviral.any, antifungal.any))
-  return(details)
-}
 
 treatment.upset <- function(data, ...) {
   details <- treatment.upset.prep(data)
