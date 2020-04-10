@@ -33,10 +33,10 @@ The symptoms on admission represent the policy for hospital admission and contai
 The mean duration for NIV is `r round(mean(de$d.nimv, na.rm=T), 1)` days (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days) -- estimated based on only those cases which have complete NIV duration records (N = `r length(de$d.nimv)`).
 
 
-`r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted at some point of their illness into intensive care unit (ICU). The observed mean duration (in days) from hospital admission to ICU is `r round(mean(de$a.icu, na.rm=T), 1)` (SD: `r round(sd(de$a.icu, na.rm=T), 1)`) -- estimated from  records on cases with complete date records on hospital admission and ICU entry (N = `r length(de$a.icu)`).
+`r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted at some point of their illness into an intensive care unit (ICU) or high dependency unit (HDU). The observed mean duration (in days) from hospital admission to ICU/HDU admission is `r round(mean(de$a.icu, na.rm=T), 1)` (SD: `r round(sd(de$a.icu, na.rm=T), 1)`) -- estimated from  records on cases with complete date records on hospital admission and ICU/HDU entry (N = `r length(de$a.icu)`).
 
 
-The duration of stay in the ICU has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days) -- estimated on only those cases with complete records for ICU duration or ICU start/end dates (N = `r length(de$d.icu)`). Of these `r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients who were admitted into ICU, `r de$N.icu.deaths` died, `r de$N.icu.censored` are still in hospital and `r de$N.icu.recoveries` have recovered and been discharged. Outcome records are unavailable for `r de$N.icu.NA` cases.
+The duration of stay in ICU/HDU has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days) -- estimated on only those cases with complete records for ICU/HDU duration or ICU/HDU start/end dates (N = `r length(de$d.icu)`). Of these `r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients who were admitted into ICU/HDU, `r de$N.icu.deaths` died, `r de$N.icu.censored` are still in hospital and `r de$N.icu.recoveries` have recovered and been discharged. Outcome records are unavailable for `r de$N.icu.NA` cases.
 
 
 `r sum(patient.data$IMV.ever == 'TRUE', na.rm = T)` patients received invasive mechanical ventilation (IMV). The mean duration from admission to receiving IMV is `r round(mean(de$a.imv, na.rm=T), 1)` days (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days) -- estimated from  records on cases with complete records on dates of hospital admission and IMV onset (N = `r length(de$a.imv)`).
@@ -46,5 +46,5 @@ The mean and SD for the duration of IMV -- estimated based on all `r length(de$d
 
 Of `r de$n.treat` patients with complete details of treatments received, `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. These treatment categories are not mutually exclusive since some patients received multiple treatments. `r de$p.o2`% of patients received some degree of oxygen supplementation: of these, `r de$p.NIV`% received NIV and `r de$p.In.Ven`% IMV.
 
-Of `r de$icu.n.treat` patients admitted into ICU with complete details of treatments, `r de$icu.p.abx`% received antibiotics and `r de$icu.p.av`% antivirals; and `r de$icu.p.o2`% received some degree of oxygen supplementation, of which `r de$icu.p.NIV`% was NIV and `r de$icu.p.In.Ven`% IMV.
+Of `r de$icu.n.treat` patients admitted into ICU/HDU with complete details of treatments, `r de$icu.p.abx`% received antibiotics and `r de$icu.p.av`% antivirals; and `r de$icu.p.o2`% received some degree of oxygen supplementation, of which `r de$icu.p.NIV`% was NIV and `r de$icu.p.In.Ven`% IMV.
 
