@@ -312,11 +312,11 @@ d.e <- function(data, datafull, ...){
   icu.p.In.Ven <- paste(sprintf("%.1f", 100 * icu.n.In.Ven / icu.n.o2))
   # Putcomes for ICU patient
   icu.d <- get_icu_pts(data)
-N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
+  N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
   N.icu.deaths <- summary(as.factor(icu.d$outcome))[[2]]    # deaths-count
   N.icu.recoveries <- summary(as.factor(icu.d$outcome))[[3]]   # recoveries -count
   N.icu.NA <- summary(as.factor(icu.d$outcome))[[4]]      # ICU NA
-    # outcomes 
+  # outcomes 
   
   # Symptoms 
   
@@ -332,9 +332,9 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
   
   # Cough
   
-  cough_pre <- summary(as.factor(patient.data$cough))[[2]]
-  cough_abs <- summary(as.factor(patient.data$cough))[[1]]
-  cough_unk <- summary(as.factor(patient.data$cough))[[3]]
+  cough_pre <- patient.data %>% filter(cough.any == 1) %>% nrow()
+  cough_abs <- patient.data %>% filter(cough.any == 2) %>% nrow()
+  cough_unk <- patient.data %>% filter(is.na(cough.any)) %>% nrow()
   
   # p-value
   
@@ -429,7 +429,7 @@ N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
               # dur.imv.l =dur.imv.l,
               # dur.imv.u =dur.imv.u,
               # 
-
+              
               # sd.onset.to.adm = sd.onset.to.adm,
               # sd.onset.to.adm.lower  = sd.onset.to.adm.lower ,
               # sd.onset.to.adm.upper = sd.onset.to.adm.upper,
