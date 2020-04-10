@@ -1714,7 +1714,7 @@ onset.adm <- function(data, plt = F){
   admit.discharge <- data$onset.to.admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
   admit.discharge.2 <- round.zeros(admit.discharge)
- admit.discharge.2 <- admit.discharge.2[-which(admit.discharge.2>160)]
+ # admit.discharge.2 <- admit.discharge.2[-which(admit.discharge.2>160)]
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
   
   obs <-  admit.discharge.2  # record observed values for reporting
