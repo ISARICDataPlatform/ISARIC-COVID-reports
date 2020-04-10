@@ -69,15 +69,6 @@ d.e <- function(data, datafull, ...){
   ECMO.ab <-  sum(data$ECMO.ever=='FALSE', na.rm=T)
   ECMO.un <-  N.cases -  ECMO.pr -   ECMO.ab 
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
   # Distribution estimates - EXPECTED 
   
   # Admission to outcome
