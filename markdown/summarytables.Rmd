@@ -22,7 +22,7 @@ output: html_document
 | Recovered (discharged alive) | `r de$N.recoveries` (`r round(de$N.recoveries/de$N.cases, 2)`)                          |
 | Still in hospital            | `r de$N.censored` (`r round(de$N.censored/de$N.cases, 2)`)                            |
 | Tranferred to another facility|  `r de$transfer.outcome` (`r round(de$transfer.outcome/de$N.cases, 2)`)                      |
-| Unknown                         | `r de$unk.outcome` (`r round(de$unk.outcome/de$N.cases, 2)`
+| Unknown                         | `r de$unk.outcome` (`r round(de$unk.outcome/de$N.cases, 2)`)
 |                               |                                           |
 | **By COVID-19 status**                           |                                  |
 |  Positive (laboratory-confirmed)   |       `r de$cov.19.confirmed` (`r round(as.numeric(de$cov.19.confirmed)/de$N.cases, 2)`)                            |
@@ -85,7 +85,7 @@ output: html_document
 | Other risk factors            | `r de$c.dat$present[13]` (`r round(de$c.dat$present[13]/de$N.cases, 2)`)      | `r de$c.dat$absent[13]` (`r round(de$c.dat$absent[13]/de$N.cases, 2)`)       | `r de$c.dat$unknown[13]`  (`r round(de$c.dat$unknown[13]/de$N.cases, 2)`)      |
 |                               |                                |                               |                                |
 | **Treatment**                     |                                |                               |                                |
-| Antibiotic agent              | `r de$t.dat$present[1]` (`r round(de$t.dat$present[1]/de$N.cases, 2)`)        | `r de$t.dat$absent[1]` (`r round(de$IMV.ab/de$N.cases, 2)`)   | `r de$t.dat$unknown[1]` (`r round(de$t.dat$unknown[1]/de$N.cases, 2)`)        |
+| Antibiotic agent              | `r de$t.dat$present[1]` (`r round(de$t.dat$present[1]/de$N.cases, 2)`)        | `r de$t.dat$absent[1]` (`r round(de$t.dat$absent[1]/de$N.cases, 2)`)   | `r de$t.dat$unknown[1]` (`r round(de$t.dat$unknown[1]/de$N.cases, 2)`)        |
 | Antifungal agent              | `r de$t.dat$present[2]`  (`r round(de$t.dat$present[2]/de$N.cases, 2)`)       | `r de$t.dat$absent[2]` (`r round(de$t.dat$absent[2]/de$N.cases, 2)`)      | `r de$t.dat$unknown[2]` (`r round(de$t.dat$unknown[2]/de$N.cases, 2)`)           |
 | Antiviral agent               | `r de$t.dat$present[3]`  (`r round(de$t.dat$present[3]/de$N.cases, 2)`)       | `r de$t.dat$absent[3]` (`r round(de$t.dat$absent[3]/de$N.cases, 2)`)       | `r de$t.dat$unknown[3]` (`r round(de$t.dat$unknown[3]/de$N.cases, 2)`)          |
 | Corticosteroid agent          | `r de$t.dat$present[4]`  (`r round(de$t.dat$present[4]/de$N.cases, 2)`)       | `r de$t.dat$absent[4]` (`r round(de$t.dat$absent[4]/de$N.cases, 2)`)       | `r de$t.dat$unknown[4]` (`r round(de$t.dat$unknown[4]/de$N.cases, 2)`)           |
