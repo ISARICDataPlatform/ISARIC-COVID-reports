@@ -203,11 +203,14 @@ pcareful.as.numeric <- function(value.col, subjid, colname){
 
 # Checks for dates in the future and returns NA if they are
 
-careful.future.date <- function(value, subjid, colname){
+careful.date.check <- function(value, subjid, colname){
   if(is.na(value)) {
     return(NA)
   } else if(value > today()){
     warning(glue("Future date '{as.character(value)}' transformed to NA for column {colname}, subject ID {subjid}"))
+    return(NA)
+  } else if(value < ymd("2019-01-01")){
+    warning(glue("Implausably early date '{as.character(value)}' transformed to NA for column {colname}, subject ID {subjid}"))
     return(NA)
   } else {
     return(as.Date(value, origin = "1970-01-01"))
