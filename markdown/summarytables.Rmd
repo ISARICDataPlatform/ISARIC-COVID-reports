@@ -93,6 +93,7 @@ The counts presented for treatments include all cases, not only cases with compl
 | Antifungal agent              | `r de$t.dat$present[2]`  (`r round(de$t.dat$present[2]/de$N.cases, 2)`)       | `r de$t.dat$absent[2]` (`r round(de$t.dat$absent[2]/de$N.cases, 2)`)      | `r de$t.dat$unknown[2]` (`r round(de$t.dat$unknown[2]/de$N.cases, 2)`)           |
 | Antiviral agent               | `r de$t.dat$present[3]`  (`r round(de$t.dat$present[3]/de$N.cases, 2)`)       | `r de$t.dat$absent[3]` (`r round(de$t.dat$absent[3]/de$N.cases, 2)`)       | `r de$t.dat$unknown[3]` (`r round(de$t.dat$unknown[3]/de$N.cases, 2)`)          |
 | Corticosteroid agent          | `r de$t.dat$present[4]`  (`r round(de$t.dat$present[4]/de$N.cases, 2)`)       | `r de$t.dat$absent[4]` (`r round(de$t.dat$absent[4]/de$N.cases, 2)`)       | `r de$t.dat$unknown[4]` (`r round(de$t.dat$unknown[4]/de$N.cases, 2)`)           |
+| Extracorporeal membrane oxygenation (ECMO) | `r de$ECMO.pr`  (`r round(de$ECMO.pr/de$N.cases, 2)`)| `r de$ECMO.ab` (`r round(de$ECMO.ab/de$N.cases, 2)`) | `r de$ECMO.un` (`r round(de$ECMO.un/de$N.cases, 2)`)|
 | Inhaled nitric oxide          | `r de$t.dat$present[6]`  (`r round(de$t.dat$present[6]/de$N.cases, 2)`)       | `r de$t.dat$absent[6]` (`r round(de$t.dat$absent[6]/de$N.cases, 2)`)       | `r de$t.dat$unknown[6]`  (`r round(de$t.dat$unknown[6]/de$N.cases, 2)`)          |
 | Inotropes / vasopressors      | `r de$t.dat$present[7]`   (`r round(de$t.dat$present[7]/de$N.cases, 2)`)      | `r de$t.dat$absent[7]` (`r round(de$t.dat$absent[7]/de$N.cases, 2)`)       | `r de$t.dat$unknown[7]`  (`r round(de$t.dat$unknown[7]/de$N.cases, 2)`)          |
 | Invasive ventilation          | `r de$IMV.pr` (`r round(de$IMV.pr/de$N.cases, 2)`)                  | `r de$IMV.ab` (`r round(de$IMV.ab/de$N.cases, 2)`)        | `r de$IMV.un` (`r round(de$IMV.un/de$N.cases, 2)`)        |
@@ -102,7 +103,6 @@ The counts presented for treatments include all cases, not only cases with compl
 | Renal replacement therapy     | `r de$t.dat$present[13]`  (`r round(de$t.dat$present[13]/de$N.cases, 2)`)      | `r de$t.dat$absent[13]` (`r round(de$t.dat$absent[13]/de$N.cases, 2)`)      | `r de$t.dat$unknown[13]` (`r round(de$t.dat$unknown[13]/de$N.cases, 2)`)         |
 | Tracheostomy inserted         | `r de$t.dat$present[14]`  (`r round(de$t.dat$present[14]/de$N.cases, 2)`)      | `r de$t.dat$absent[14]` (`r round(de$t.dat$absent[14]/de$N.cases, 2)`)      | `r de$t.dat$unknown[14]` (`r round(de$t.dat$unknown[14]/de$N.cases, 2)`)          |
 | Other                         | `r de$t.dat$present[10]`  (`r round(de$t.dat$present[10]/de$N.cases, 2)`)      | `r de$t.dat$absent[10]` (`r round(de$t.dat$absent[10]/de$N.cases, 2)`)      | `r de$t.dat$unknown[10]` (`r round(de$t.dat$unknown[10]/de$N.cases, 2)`)        |
-| Extracorporeal membrane oxygenation (ECMO) | `r de$ECMO.pr`  (`r round(de$ECMO.pr/de$N.cases, 2)`)| `r de$ECMO.ab` (`r round(de$ECMO.ab/de$N.cases, 2)`) | `r de$ECMO.un` (`r round(de$ECMO.un/de$N.cases, 2)`)|
 
 <br /><br /><br />
 
