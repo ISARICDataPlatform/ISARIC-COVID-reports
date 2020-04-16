@@ -637,7 +637,7 @@ comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.la
 
 # Add pregnancy to the list
 
-comorbidities <- bind_rows(comorbidities, tibble(field = "prengnancy", label = "Pregnancy"))
+comorbidities <- bind_rows(comorbidities, tibble(field = "pregnancy", label = "Pregnancy"))
 
 # recode pregnancy for the sake of the denominator
 
