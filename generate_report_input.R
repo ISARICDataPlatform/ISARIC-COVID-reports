@@ -260,6 +260,17 @@ d.e <- function(data, datafull, ...){
   cfr.lower <-round(casefat2(data)$lcfr, 2)
   cfr.upper <-  round(casefat2(data)$ucfr, 2)
   
+  # CFR for ICU/non-ICU
+  
+ cfr.icu <-  icu.cfr.func(data)$cfr.icu
+ cfr.icu.l <- icu.cfr.func(data)$cfr.icu.l
+ cfr.icu.u <- icu.cfr.func(data)$cfr.icu.u
+ 
+ cfr.non.icu <-  icu.cfr.func(data)$cfr.non.icu
+ cfr.non.icu.l <- icu.cfr.func(data)$cfr.non.icu.l
+ cfr.non.icu.u <- icu.cfr.func(data)$cfr.non.icu.u
+
+  
   
   # HFR
   db <- hospital.fatality.ratio(data)$db
@@ -446,6 +457,16 @@ d.e <- function(data, datafull, ...){
               cfr = cfr,
               cfr.lower = cfr.lower,
               cfr.upper = cfr.upper,
+              
+              
+              cfr.icu = cfr.icu,
+              cfr.icu.l = cfr.icu.l,
+              cfr.icu.u = cfr.icu.u,
+              
+              
+              cfr.non.icu = cfr.non.icu,
+              cfr.non.icu.l = cfr.non.icu.l,
+              cfr.non.icu.u = cfr.non.icu.u, 
               
               hfr = hfr,
               hfr.lower = hfr.lower,
