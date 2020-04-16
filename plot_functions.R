@@ -1115,7 +1115,7 @@ status.by.time.after.admission <- function(data, ...){
   n.days <- ncol(complete.timeline) - 1
   
   complete.timeline.2 <- complete.timeline %>%
-    pivot_longer(1:n.days, names_to = "day", values_to = "status") %>%
+    pivot_longer(all_of(1:n.days), names_to = "day", values_to = "status") %>%
     dplyr::select(subjid, day, status) %>%
     dplyr::mutate(day = map_dbl(day, function(x) as.numeric(str_split_fixed(x, "_", 2)[2]))) %>%
     dplyr::mutate(status = factor(status, levels = c("discharge", "transfer","unknown", "Censored", "Ward", "ICU", "death"))) %>%
