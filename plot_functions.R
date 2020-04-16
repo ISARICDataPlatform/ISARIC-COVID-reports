@@ -387,6 +387,46 @@ symptom.prev.calc <- function(data){
 }
 
 
+symptom.heatmap <- function(data){
+  
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(admission.symptoms$field)) %>%
+    group_by_at(vars(one_of(admission.symptoms$field))) %>%
+    summarise_at(vars(one_of(admission.symptoms$field)), sum, na.rm = T)
+  
+  combinations.tibble <- tibble(x = rep(admission.symptoms$field, length(admission.symptoms$field)),
+                                y = rep(admission.symptoms$field, each = length(admission.symptoms$field))) %>%
+    filter(x < y) %>%
+    mutate(denominator = map2_dbl(x,y,function(x1,y1){
+      data2 %>% filter(!is.na(get(x1)) & !is.na(get(y1))) %>% nrow()
+      
+    }),
+    numerator = map2_dbl(x,y,function(x1,y1){
+      data2 %>% filter(get(x1) == 1 & get(y1) == 1) %>% nrow()
+      
+    })) %>%
+    mutate(prop = numerator/denominator) %>%
+    left_join(admission.symptoms, by=c("x" = "field"), suffix = c(".x", ".y")) %>%
+    left_join(admission.symptoms, by=c("y" = "field"), suffix = c(".x", ".y")) %>%
+    mutate(temp.label.x = pmin(label.x, label.y), temp.label.y = pmax(label.x, label.y)) %>%
+    dplyr::select(temp.label.x, temp.label.y, prop) %>%
+    rename(label.x = temp.label.x, label.y = temp.label.y)
+  
+  ggplot(combinations.tibble) + 
+    geom_tile(aes(x=label.x, y=label.y, fill=prop)) + 
+    scale_fill_viridis(option = "inferno", name = "Proportion\nof patients") +
+    theme_bw() +
+    scale_x_discrete(position = "top") +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(), 
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.x.top = element_text(angle = 90, hjust = 0, vjust = 0.5)) +
+    coord_fixed()
+
+}
+
+
 symptom.prevalence.plot <- function(data, ...){
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field)) 
@@ -411,16 +451,25 @@ symptom.prevalence.plot <- function(data, ...){
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
     left_join(admission.symptoms, by = c("Condition" = "field")) %>%
     dplyr::select(-Condition) %>%
+    dplyr::mutate(Absent = Total - Present) %>%
     dplyr::mutate(prop.yes = Present/Total) %>%
     dplyr::mutate(prop.no = 1-prop.yes) %>%
     arrange(prop.yes) %>%
     dplyr::mutate(Condition = as_factor(label)) %>%
-    pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
-    dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
-    filter(label != "Other")
-  
+    dplyr::select(Condition, Present, Absent) %>%
+    pivot_longer(c(Present, Absent), names_to = "affected", values_to = "Count") %>%
+    dplyr::mutate(affected = map_lgl(affected, function(x) x == "Present")) %>%
+    filter(Condition != "Other") %>%
+    group_by(Condition) %>%
+    mutate(total = sum(Count)) %>%
+    ungroup() %>%
+    mutate(Proportion = Count/total) %>%
+    mutate(label = glue("{Count}/{total}")) %>%
+    dplyr::select(-total)
+
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -487,17 +536,25 @@ comorbidity.prevalence.plot <- function(data, ...){
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
     left_join(comorbidities, by = c("Condition" = "field")) %>%
     dplyr::select(-Condition) %>%
+    dplyr::mutate(Absent = Total - Present) %>%
     dplyr::mutate(prop.yes = Present/Total) %>%
     dplyr::mutate(prop.no = 1-prop.yes) %>%
     arrange(prop.yes) %>%
     dplyr::mutate(Condition = as_factor(label)) %>%
-    pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
-    dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
-    filter(label != "Other")
-  
+    dplyr::select(Condition, Present, Absent) %>%
+    pivot_longer(c(Present, Absent), names_to = "affected", values_to = "Count") %>%
+    dplyr::mutate(affected = map_lgl(affected, function(x) x == "Present")) %>%
+    filter(Condition != "Other") %>%
+    group_by(Condition) %>%
+    mutate(total = sum(Count)) %>%
+    ungroup() %>%
+    mutate(Proportion = Count/total) %>%
+    mutate(label = glue("{Count}/{total}")) %>%
+    dplyr::select(-total)
   
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -584,15 +641,23 @@ treatment.use.plot <- function(data, ...){
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
     left_join(treatments, by = c("Treatment" = "field")) %>%
     dplyr::select(-Treatment) %>%
+    dplyr::mutate(Absent = Total - Present) %>%
     dplyr::mutate(prop.yes = Present/Total) %>%
     dplyr::mutate(prop.no = 1-prop.yes) %>%
     arrange(prop.yes) %>%
-    dplyr::mutate(Condition = as_factor(label)) %>%
-    pivot_longer(c(prop.yes, prop.no), names_to = "treated", values_to = "Proportion") %>%
-    dplyr::mutate(affected = map_lgl(treated, function(x) x == "prop.yes")) 
+    dplyr::mutate(Treatment = as_factor(label)) %>%
+    pivot_longer(c(Present, Absent), names_to = "treated", values_to = "Count") %>%
+    dplyr::mutate(affected = map_lgl(treated, function(x) x == "Present"))  %>%
+    group_by(Treatment) %>%
+    mutate(total = sum(Count)) %>%
+    ungroup() %>%
+    mutate(Proportion = Count/total) %>%
+    mutate(label = glue("{Count}/{total}")) %>%
+    dplyr::select(-total)
   
   plt<-  ggplot(data2) + 
-    geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    geom_col(aes(x = Treatment, y = Proportion, fill = affected), col = "black") +
+    geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
