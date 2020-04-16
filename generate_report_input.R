@@ -21,7 +21,7 @@ d.e <- function(data, datafull, ...){
   max.age <- ceiling(max(data$age_estimateyears, na.rm=T)) # maximum age
   
   transfer.outcome <- sum(summary(as.factor(data$exit.code))[['transfer']],  summary(as.factor(data$exit.code))[['transfer.palliative']])
-  unk.outcome <-  summary(as.factor(data$exit.code))[['hospitalisation']] # 'Hospitalisation' entries mostly mean the data collection wasn't completed 
+  unk.outcome <-  sum(summary(as.factor(data$exit.code))[['hospitalisation']], summary(as.factor(data$exit.code))[['unknown']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed 
   
   
   # ages by sex
@@ -42,13 +42,23 @@ d.e <- function(data, datafull, ...){
   N.recoveries <- summary(as.factor(data$outcome))[[3]]   # recoveries -count
   N.outcomes <- N.deaths+N.recoveries         # outcomes-count (deaths+recoveries)
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
-  N.healthworkers <- summary(as.factor(patient.data$healthwork_erterm))[[1]]
+  N.healthworkers <- summary(as.factor(data$healthwork_erterm))[[1]]
+  
+  
+  
+  # Outcome by age and sex
+  
+  age.out.tab <- table( data$agegp10, data$outcome)
+  sex.out.tab <- table(data$sex, data$outcome)
+  
+  age.out.tab2 <-  table( data$agegp10, data$exit.code)
+  sex.out.tab2 <- table(data$sex, data$exit.code)
   
   
   # COV status
   
-  cov.19.confirmed <- summary(patient.data$positive.COV19.test)[['TRUE']]
-  cov.19.suspected <- summary(patient.data$positive.COV19.test)[['FALSE']]
+  cov.19.confirmed <- summary(data$positive.COV19.test)[['TRUE']]
+  cov.19.suspected <- summary(data$positive.COV19.test)[['FALSE']]
   
   # Evers
   
@@ -341,6 +351,12 @@ d.e <- function(data, datafull, ...){
               
               cov.19.confirmed =  cov.19.confirmed,
               cov.19.suspected =  cov.19.suspected,
+              
+              age.out.tab = age.out.tab,
+              age.out.tab2 = age.out.tab2,
+              
+              sex.out.tab = sex.out.tab,
+              sex.out.tab2 = sex.out.tab2,
               
               IMV.pr = IMV.pr,
               IMV.ab = IMV.ab,
