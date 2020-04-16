@@ -635,6 +635,24 @@ comorbidities.labels[18] <- "Other"
 
 comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
 
+# Add pregnancy to the list
+
+comorbidities <- bind_rows(comorbidities, tibble(field = "prengnancy", label = "Pregnancy"))
+
+# recode pregnancy for the sake of the denominator
+
+patient.data <- patient.data %>%
+  mutate(pregnancy = map_dbl(pregyn_rptestcd, function(x){
+    if(x == 999){
+      2
+    } else if(x == 998) {
+      3
+    } else {
+      x
+    }
+  }))
+
+
 # Group liver disease categories
 
 patient.data <- patient.data %>%
