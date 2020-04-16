@@ -27,7 +27,11 @@ age.pyramid <- function(data, ...){
   
   max.count = data2 %>% group_by(agegp5, sex) %>% dplyr::summarise(sac = sum(abs(count))) %>% pull(sac) %>% max()
   
-  tick.increment <- 50
+  order.of.magnitude <- ceiling(log10(max.count))
+  
+  if(as.numeric(substr(as.character(max.count), 1, 1)) > 5){
+    tick.increment <- 10^()
+  }
   
   plot.breaks <- seq(-(ceiling(max.count/tick.increment)*tick.increment), ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)
   plot.labels <- as.character(c(rev(seq(tick.increment, ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)), 
