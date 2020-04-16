@@ -497,16 +497,16 @@ if(use.rapid.data){
     # mutate(sysbp_vsorres = as.character(sysbp_vsorres))  %>%
     # mutate(oxy_vsorres = as.character(oxy_vsorres))
     dplyr::rename(chrincard = chroniccard_mhyn, 
-                  modliv = modliver_mhyn, 
-                  mildliver = mildliv_mhyn, 
-                  chronichaemo_mhyn = chronhaemo_mhyn, 
-                  diabetescom_mhyn = diabetiscomp_mhyn,
-                  rheumatologic_mhyn = rheumatology_mhyr,
-                  icu_hoendat = hoendat) %>%
+                  # modliv = modliver_mhyn, 
+                  # mildliver = mildliv_mhyn, 
+                  # chronichaemo_mhyn = chronhaemo_mhyn, 
+                  # diabetescom_mhyn = diabetiscomp_mhyn,
+                  # rheumatologic_mhyn = rheumatology_mhyr,
+                  icu_hoendat = overall_icu_hoendat) %>%
     # join in the country table
     dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
-    dplyr::select(-site.number) %>%
+    dplyr::select(-site.number) 
     # add data source
   dplyr::mutate(data.source = "RAPID")
 }else{
@@ -515,7 +515,7 @@ if(use.rapid.data){
 
 
 
-raw.data <- bind_rows(uk.data, row.data, eot.data, rapid.data) 
+raw.data <- lazy_dt(bind_rows(uk.data, row.data, eot.data, rapid.data))
 
 ##### Value adjustments #####
 
@@ -619,9 +619,11 @@ comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.la
 # Group liver disease categories
 
 patient.data <- patient.data %>%
-  mutate(liver.disease = map2_dbl(mildliver, modliv, function(mild, moderate){
-    if(is.na(mild) & is.na(moderate)){
+  mutate(liver.disease = pmap_dbl(list(mildliver, modliv, liver_mhyn), function(mild, moderate, any){
+    if(is.na(mild) & is.na(moderate) & is.na(any)){
       NA
+    } else if(!is.na(any)){
+      any
     } else if(is.na(mild)){
       moderate
     } else if(is.na(moderate)){
@@ -641,9 +643,12 @@ comorbidities <- comorbidities %>% bind_rows(list(field = "liver.disease", label
 # Group diabetes categories
 
 patient.data <- patient.data %>%
-  mutate(diabetes = map2_dbl(diabetes_mhyn, diabetescom_mhyn, function(simple, complex){
-    if(is.na(simple) & is.na(complex)){
+  mutate(diabetes = pmap_dbl(list(diabetes_mhyn, diabetescom_mhyn, diabetes_mhyn), function(simple, complex, any){
+    if(is.na(simple) & is.na(complex) & is.na(any)){
       NA
+    } else if(!is.na(any)){
+      # any is from RAPID currently and should not overlap with the others
+      any
     } else if(is.na(simple)){
       complex
     } else if(is.na(complex)){
