@@ -80,12 +80,14 @@ sites.by.country <- function(data, ...){
     dplyr::summarise(n.sites = sum(n.sites)) %>%
     filter(!is.na(Country))
   
+  nudge <- max(data2$n.sites)/40
   
   ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
     theme_bw() +
     xlab("Country") +
-    ylab("Sites") + theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    geom_text(aes(x=Country, y=n.sites + 6, label=n.sites), size=4)
+    ylab("Sites") +
+    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+    geom_text(aes(x=Country, y=n.sites + nudge, label=n.sites), size=4)
 }
 
 # Distribution of patients and outcomes by country
@@ -100,13 +102,15 @@ outcomes.by.country <- function(data, ...){
     group_by(Country) %>%
     summarise(count = n())
   
+  nudge <- max(data3$count)/40
+  
   ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     xlab("Country") +
     ylab("Cases") + 
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    geom_text(data = data3, aes(x=Country, y= count + 75, label=count), size=4)
+    geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=4)
 }
 
 # Outcomes by epi-week
