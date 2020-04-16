@@ -637,7 +637,7 @@ comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.la
 
 # Add pregnancy to the list
 
-comorbidities <- bind_rows(comorbidities, tibble(field = "prengnancy", label = "Pregnancy"))
+comorbidities <- bind_rows(comorbidities, tibble(field = "pregnancy", label = "Pregnancy"))
 
 # recode pregnancy for the sake of the denominator
 
@@ -829,6 +829,63 @@ if(verbose) cat("Adding new columns...\n")
 
 # print(Sys.time())
 
+patient.data <- patient.data %>%   
+  # Consolidated age is the exact age at enrolment if this is present. Otherwise it is taken from the estimated age column. 
+  dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
+    if(is.na(dob)){
+      ageest
+    } else {
+      floor(decimal_date(doa) - decimal_date(dob))
+    }
+  })) %>%
+  # Age groups in five and ten year incerements
+  dplyr::mutate(agegp5 = cut(consolidated.age, c(seq(0,90,by = 5),120), right = FALSE)) %>%
+  dplyr::mutate(agegp5 = fct_relabel(agegp5, function(a){
+    # make nicer labels
+    temp <- substr(a, 2, nchar(a) -1 )
+    newlabels <- map_chr(temp, function(x){
+      components <- as.numeric(str_split_fixed(x, ",", Inf))
+      components[2] <- components[2] - 1
+      paste(components, collapse = "-")
+    }) 
+    str_replace(newlabels, "90-119", "90+")
+  })) %>%
+  dplyr::mutate(agegp10 = cut(consolidated.age, c(seq(0,70,by = 10),120), right = FALSE)) %>%
+  dplyr::mutate(agegp10 = fct_relabel(agegp10, function(a){
+    # make nicer labels
+    temp <- substr(a, 2, nchar(a) -1 )
+    newlabels <- map_chr(temp, function(x){
+      components <- as.numeric(str_split_fixed(x, ",", Inf))
+      components[2] <- components[2] - 1
+      paste(components, collapse = "-")
+    }) 
+    str_replace(newlabels, "70-119", "70+")
+  })) 
+
+patient.data <- patient.data %>%
+  mutate(pregnancy = pmap_dbl(list(pregyn_rptestcd, sex, consolidated.age), function(preg, sx, age){
+    if(is.na(preg)){
+      # use the same rules as the UK data dictionary
+      if(!is.na(sx) & sx == 1){
+        2
+      } else if(!is.na(age) & (age < 12 | age > 55)){
+        2
+      } else {
+        3
+      }
+    } else if(preg == 999){
+      2
+    } else if(preg == 998) {
+      3
+    } else {
+      preg
+    }
+  }))
+
+
+
+# print(Sys.time())
+
 patient.data <- patient.data %>%
   # check if symptoms, comorbidities and treatments were actually recorded
   dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
@@ -933,61 +990,6 @@ patient.data <- patient.data %>%
     ifelse(x=="discharge", as.character(y), NA)
   }))  %>%
   dplyr::mutate(discharge.date = ymd(discharge.date)) 
-
-# print(Sys.time())
-
-patient.data <- patient.data %>%   
-  # Consolidated age is the exact age at enrolment if this is present. Otherwise it is taken from the estimated age column. 
-  dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
-    if(is.na(dob)){
-      ageest
-    } else {
-      floor(decimal_date(doa) - decimal_date(dob))
-    }
-  })) %>%
-  # Age groups in five and ten year incerements
-  dplyr::mutate(agegp5 = cut(consolidated.age, c(seq(0,90,by = 5),120), right = FALSE)) %>%
-  dplyr::mutate(agegp5 = fct_relabel(agegp5, function(a){
-    # make nicer labels
-    temp <- substr(a, 2, nchar(a) -1 )
-    newlabels <- map_chr(temp, function(x){
-      components <- as.numeric(str_split_fixed(x, ",", Inf))
-      components[2] <- components[2] - 1
-      paste(components, collapse = "-")
-    }) 
-    str_replace(newlabels, "90-119", "90+")
-  })) %>%
-  dplyr::mutate(agegp10 = cut(consolidated.age, c(seq(0,70,by = 10),120), right = FALSE)) %>%
-  dplyr::mutate(agegp10 = fct_relabel(agegp10, function(a){
-    # make nicer labels
-    temp <- substr(a, 2, nchar(a) -1 )
-    newlabels <- map_chr(temp, function(x){
-      components <- as.numeric(str_split_fixed(x, ",", Inf))
-      components[2] <- components[2] - 1
-      paste(components, collapse = "-")
-    }) 
-    str_replace(newlabels, "70-119", "70+")
-  })) 
-
-patient.data <- patient.data %>%
-  mutate(pregnancy = pmap_dbl(list(pregyn_rptestcd, sex, consolidated.age), function(preg, sx, age){
-    if(is.na(preg)){
-      # use the same rules as the UK data dictionary
-      if(!is.na(sx) & sx == 1){
-        2
-      } else if(!is.na(age) & (age < 12 | age > 55)){
-        2
-      } else {
-        3
-      }
-    } else if(preg == 999){
-      2
-    } else if(preg == 998) {
-      3
-    } else {
-      x
-    }
-  }))
 
 
 
