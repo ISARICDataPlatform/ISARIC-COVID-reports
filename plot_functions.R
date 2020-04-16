@@ -469,7 +469,7 @@ symptom.prevalence.plot <- function(data, ...){
 
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
-    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01)+
+    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -554,7 +554,7 @@ comorbidity.prevalence.plot <- function(data, ...){
   
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
-    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01)+
+    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -657,7 +657,7 @@ treatment.use.plot <- function(data, ...){
   
   plt<-  ggplot(data2) + 
     geom_col(aes(x = Treatment, y = Proportion, fill = affected), col = "black") +
-    geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01)+
+    geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
