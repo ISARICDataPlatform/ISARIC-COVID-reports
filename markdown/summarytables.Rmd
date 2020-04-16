@@ -8,7 +8,7 @@ output: html_document
 
 
 
-| **Description**                  | **Value (%)**                                      |
+| **Description**                  | **Value**                                      |
 |------------------------------|--------------------------------------------|
 | Size of cohort               | `r de$N.cases`                            |
 |                              |                                            |
@@ -40,16 +40,41 @@ output: html_document
 | Unknown                      | `r summary(patient.data$agegp10)[[9]]` (`r round(summary(patient.data$agegp10)[[9]]/de$N.cases, 2)`)              |
                         
 
+
+**Table 2:** Outcome by age and sex
+
+| Variable                            | Still in hospital                                                            | Death                                                                     | Discharge                                                                      | Transferred                                                                                          | Unknown                                                                                                |
+|-------------------------------------|------------------------------------------------------------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| Age                                 |                                                                              |                                                                           |                                                                                |                                                                                                      |                                                                                                        |
+| `r levels(patient.data$agegp10)[1]` | ` r de$age.out.tab[1,1]`  (`r round(de$age.out.tab[1,1]/ de$N.censored, 2)`) | `r de$age.out.tab[1,2]` (`r round(de$age.out.tab[1,2]/ de$N.deaths, 2)`) | ` r de$age.out.tab[1,3]` (`r round(de$age.out.tab[1,3]/ de$N.recoveries, 2)`)  | `r sum(de$age.out.tab2[1, 4:5])` (`r round( sum(de$age.out.tab2[1, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$age.out.tab2[1, c(3,6)])` (`r round( sum(de$age.out.tab2[1, c(3,6)])/ de$unk.outcome, 2)` )  |
+| `r levels(patient.data$agegp10)[2]` | ` r de$age.out.tab[2,1]` (`r round(de$age.out.tab[2,1]/ de$N.censored, 2)`)  | `r de$age.out.tab[2,2]` (`r round(de$age.out.tab[2,2]/ de$N.deaths, 2)`) | ` r de$age.out.tab[2,3]` (`r round(de$age.out.tab[2,3]/ de$N.recoveries, 2)`)  | `r sum(de$age.out.tab2[2, 4:5])` (`r round( sum(de$age.out.tab2[2, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$age.out.tab2[2, c(3,6)])` (`r round( sum(de$age.out.tab2[2, c(3,6)])/ de$unk.outcome, 2)` )  |
+| `r levels(patient.data$agegp10)[3]` | ` r de$age.out.tab[3,1]` (`r round(de$age.out.tab[3,1]/ de$N.censored, 2)`)  | `r de$age.out.tab[3,2]` (`r round(de$age.out.tab[3,2]/ de$N.deaths, 2)`) | ` r de$age.out.tab[3,3]` (`r round(de$age.out.tab[3,3]/ de$N.recoveries, 2)`)  | `r sum(de$age.out.tab2[3, 4:5])` (`r round( sum(de$age.out.tab2[3, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$age.out.tab2[3, c(3,6)])` (`r round( sum(de$age.out.tab2[3, c(3,6)])/ de$unk.outcome, 2)` )  |
+| `r levels(patient.data$agegp10)[4]` | ` r de$age.out.tab[4,1]`  (`r round(de$age.out.tab[4,1]/ de$N.censored, 2)`) | `r de$age.out.tab[4,2]` (`r round(de$age.out.tab[4,2]/ de$N.deaths, 2)`) | ` r de$age.out.tab[4,3]` (`r round(de$age.out.tab[4,3]/ de$N.recoveries, 2)`)  | `r sum(de$age.out.tab2[4, 4:5])` (`r round( sum(de$age.out.tab2[4, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$age.out.tab2[4, c(3,6)])` (`r round( sum(de$age.out.tab2[4, c(3,6)])/ de$unk.outcome, 2)` )  |
+| `r levels(patient.data$agegp10)[5]` | ` r de$age.out.tab[5,1]` (`r round(de$age.out.tab[5,1]/ de$N.censored, 2)`)  | `r de$age.out.tab[5,2]` (`r round(de$age.out.tab[5,2]/ de$N.deaths, 2)`) | ` r de$age.out.tab[5,3]` (`r round(de$age.out.tab[5,3]/ de$N.recoveries, 2)`)  | `r sum(de$age.out.tab2[5, 4:5])` (`r round( sum(de$age.out.tab2[5, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$age.out.tab2[5, c(3,6)])` (`r round( sum(de$age.out.tab2[5, c(3,6)])/ de$unk.outcome, 2)` )  |
+| `r levels(patient.data$agegp10)[6]` | ` r de$age.out.tab[6,1]` (`r round(de$age.out.tab[6,1]/ de$N.censored, 2)`)  | `r de$age.out.tab[6,2]` (`r round(de$age.out.tab[6,2]/ de$N.deaths, 2)`) | ` r de$age.out.tab[6,3]` (`r round(de$age.out.tab[6,3]/ de$N.recoveries, 2)`)  | `r sum(de$age.out.tab2[6, 4:5])` (`r round( sum(de$age.out.tab2[6, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$age.out.tab2[6, c(3,6)])` (`r round( sum(de$age.out.tab2[6, c(3,6)])/ de$unk.outcome, 2)` )  |
+| `r levels(patient.data$agegp10)[7]` | ` r de$age.out.tab[7,1]`  (`r round(de$age.out.tab[7,1]/ de$N.censored, 2)`) | `r de$age.out.tab[7,2]` (`r round(de$age.out.tab[7,2]/ de$N.deaths, 2)`) | ` r de$age.out.tab[7,3]` (`r round(de$age.out.tab[7,3]/ de$N.recoveries, 2)`)  | `r sum(de$age.out.tab2[7, 4:5])` (`r round( sum(de$age.out.tab2[7, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$age.out.tab2[7,c(3,6)])` (`r round( sum(de$age.out.tab2[7, c(3,6)])/ de$unk.outcome, 2)` )   |
+| `r levels(patient.data$agegp10)[8]` | ` r de$age.out.tab[8,1]`  (`r round(de$age.out.tab[8,1]/ de$N.censored, 2)`) | `r de$age.out.tab[8,2]` (`r round(de$age.out.tab[8,2]/ de$N.deaths, 2)`) | ` r de$age.out.tab[8,3]`  (`r round(de$age.out.tab[8,3]/ de$N.recoveries, 2)`) | `r sum(de$age.out.tab2[8, 4:5])` (`r round( sum(de$age.out.tab2[8, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$age.out.tab2[8, c(3,6)])` (`r round( sum(de$age.out.tab2[8, c(3,6)])/ de$unk.outcome, 2)` )  |
+|                                     |                                                                              |                                                                           |                                                                                |                                                                                                      |                                                                                                        |
+| Sex                                 |                                                                              |                                                                           |                                                                                |                                                                                                      |                                                                                                        |
+| Male                                | ` r de$sex.out.tab[1,1]`  (`r round(de$sex.out.tab[1,1]/ de$N.censored, 2)`) | ` r de$sex.out.tab[1,2]` (`r round(de$sex.out.tab[1,2]/ de$N.deaths, 2)`) | ` r de$sex.out.tab[1,3]`  (`r round(de$sex.out.tab[1,3]/ de$N.recoveries, 2)`) | `r sum(de$sex.out.tab2[1, 4:5])` (`r round( sum(de$sex.out.tab2[1, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$sex.out.tab2[1, c(3,6)])`  (`r round( sum(de$sex.out.tab2[1, c(3,6)])/ de$unk.outcome, 2)` ) |
+| Female                              | ` r de$sex.out.tab[2,1]`  (`r round(de$sex.out.tab[2,1]/ de$N.censored, 2)`) | ` r de$sex.out.tab[2,2]` (`r round(de$sex.out.tab[2,2]/ de$N.deaths, 2)`) | ` r de$sex.out.tab[2,3]` (`r round(de$sex.out.tab[2,3]/ de$N.recoveries, 2)`)  | `r sum(de$sex.out.tab2[2, 4:5])` (`r round( sum(de$sex.out.tab2[2, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$sex.out.tab2[2, c(3,6)])` (`r round( sum(de$sex.out.tab2[2, c(3,6)])/ de$unk.outcome, 2)` )  |
+| Unknown                             | ` r de$sex.out.tab[3,1]` (`r round(de$sex.out.tab[3,1]/ de$N.censored, 2)`)  | ` r de$sex.out.tab[3,2]` (`r round(de$sex.out.tab[3,2]/ de$N.deaths, 2)`) | ` r de$sex.out.tab[3,3]` (`r round(de$sex.out.tab[3,3]/ de$N.recoveries, 2)`)  | `r sum(de$sex.out.tab2[3, 4:5])` (`r round( sum(de$sex.out.tab2[3, 4:5])/ de$transfer.outcome, 2)` ) | `r sum(de$sex.out.tab2[3, c(3,6)])` (`r round( sum(de$sex.out.tab2[3, c(3,6)])/ de$unk.outcome, 2)` )  |
+
+
+
+
+
+
 <br /><br /><br />
 
 
-**Table 2:** Prevalence of Symptoms, Comorbidities and Treatments
+**Table 3:** Prevalence of Symptoms, Comorbidities and Treatments
 
 
 The counts presented for treatments include all cases, not only cases with complete details of treatments (as expressed in the summary).  
 
 
-| **Symptoms**                      | **Present (%)**                                                               | **Absent (%)**                        | **Unknown (%)**                        |
+| **Symptoms**                      | **Present**                                                               | **Absent**                        | **Unknown**                        |
 |-------------------------------|-------------------------------------------------------------------------------|-------------------------------|--------------------------------|
 | Abdominal pain                | `r de$s.dat$present[1]` (`r round(de$s.dat$present[1]/de$N.cases, 2)`) | `r de$s.dat$absent[1]` (`r round(de$s.dat$absent[1]/de$N.cases, 2)`)  | `r de$s.dat$unknown[1]` (`r round(de$s.dat$unknown[1]/de$N.cases, 2)`)        |
 | Bleeding                      | `r de$s.dat$present[2]` (`r round(de$s.dat$present[2]/de$N.cases, 2)`) | `r de$s.dat$absent[2]` (`r round(de$s.dat$absent[2]/de$N.cases, 2)`)       | `r de$s.dat$unknown[2]` (`r round(de$s.dat$unknown[2]/de$N.cases, 2)`)         |
@@ -109,7 +134,7 @@ The counts presented for treatments include all cases, not only cases with compl
 \newpage
 
 
-**Table 3:** Key time variables.
+**Table 4:** Key time variables.
 
 Unlike the observed mean, the estimation process of the **expected mean** accounts for all cases, irrespective of whether an outcome has been observed. The expected mean is 'NA' for those variables for which parameter estimation could not be performed, due to the high proportion of unobserved end dates. The interquartile range is abbbreviated 'IQR'. 
 

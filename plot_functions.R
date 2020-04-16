@@ -1546,6 +1546,30 @@ casefat2 <-  function(data, conf=0.95){
 
 
 
+# Calcualate cfr for ICU and non-ICU cases 
+
+icu.cfr.func <- function(data){
+
+icu.cases <- data %>% filter(ICU.ever == 'TRUE')
+
+non.icu.cases <- data %>% filter(is.na(ICU.ever) | ICU.ever == 'FALSE')
+
+cfr.icu.list <- casefat2(icu.cases)
+cfr.icu <- cfr.icu.list$cfr
+cfr.icu.l <- cfr.icu.list$lcfr
+cfr.icu.u <- cfr.icu.list$ucfr
+
+cfr.non.icu.list <- casefat2(non.icu.cases)
+cfr.non.icu <- cfr.non.icu.list$cfr
+cfr.non.icu.l <- cfr.non.icu.list$lcfr
+cfr.non.icu.u <- cfr.non.icu.list$ucfr
+
+return(list(cfr.icu = cfr.icu, cfr.icu.l = cfr.icu.l, cfr.icu.u = cfr.icu.u, cfr.non.icu = cfr.non.icu, cfr.non.icu.l = cfr.non.icu.l, 
+            cfr.non.icu.u = cfr.non.icu.u ))
+
+}
+
+
 ########### Distribution plots ############
 
 
@@ -1603,6 +1627,121 @@ violin.sex.func <- function(data, ...){
 }
 
 
+### Violin sex plots by outcomes ###
+
+violin.sex.func.discharge <- function(data, ...){
+  
+  # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
+  
+  
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3)%>% filter(outcome == 'discharge') 
+  
+  
+  data2 <- data2%>% 
+    mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
+    mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
+    mutate(sex = factor(sex, levels = c("Male", "Female")))
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  
+  
+  vd <- tibble(Sex = data2$sex, length.of.stay = data2$length.of.stay )
+  
+  # by sex
+  
+  plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
+    geom_violin(trim=TRUE)+ 
+    geom_boxplot(width=0.1, fill="white")  +
+    scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
+    labs(title=" ", x="Sex", y = "Length of hospital stay") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12) 
+    ) +  #+ ylim(0, max(length(vd$length.of.stay)))
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(plt)
+}
+
+
+violin.sex.func.death <- function(data, ...){
+  
+  # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
+  
+  
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3)%>% filter(outcome == 'death') 
+  
+  
+  data2 <- data2%>% 
+    mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
+    mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
+    mutate(sex = factor(sex, levels = c("Male", "Female")))
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  
+  
+  vd <- tibble(Sex = data2$sex, length.of.stay = data2$length.of.stay )
+  
+  # by sex
+  
+  plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
+    geom_violin(trim=TRUE)+ 
+    geom_boxplot(width=0.1, fill="white")  +
+    scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
+    labs(title=" ", x="Sex", y = "Length of hospital stay") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12) 
+    ) +  #+ ylim(0, max(length(vd$length.of.stay)))
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(plt)
+}
+
+
+violin.sex.func.hospital <- function(data, ...){
+  
+  # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
+  
+  
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3)%>% filter(outcome == 'censored') 
+  
+  
+  data2 <- data2%>% 
+    mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
+    mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
+    mutate(sex = factor(sex, levels = c("Male", "Female")))
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  
+  
+  vd <- tibble(Sex = data2$sex, length.of.stay = data2$length.of.stay )
+  
+  # by sex
+  
+  plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) + 
+    geom_violin(trim=TRUE)+ 
+    geom_boxplot(width=0.1, fill="white")  +
+    scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
+    labs(title=" ", x="Sex", y = "Length of hospital stay") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12) 
+    ) +  #+ ylim(0, max(length(vd$length.of.stay)))
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(plt)
+}
+
 
 ### Violin age ####
 
@@ -1612,7 +1751,7 @@ violin.age.func <- function(data, ...){
   
   # Analysis to be run on only entries with start.to.exit entries
   
-  data2 <- data %>% filter(!is.na(start.to.exit)) 
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) 
   
   data2 <- data2 %>% 
     mutate(length.of.stay = round.zeros(start.to.exit))
@@ -1624,9 +1763,6 @@ violin.age.func <- function(data, ...){
   
   vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = data2$length.of.stay )
   
-  # remove NAs (@todo for now?)
-  
-  vdx <- vdx %>% filter(!is.na(Age))
   
   plt <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
     geom_violin(trim=F)+ geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
@@ -1645,6 +1781,121 @@ violin.age.func <- function(data, ...){
   return(plt)
   
 }
+
+
+
+### Violin age plots by outcomes ###
+
+
+violin.age.func.discharge <- function(data, ...){
+  
+  # Analysis to be run on only entries with start.to.exit entries
+  
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(outcome == 'discharge')
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = round.zeros(start.to.exit))
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  
+  
+  
+  vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = data2$length.of.stay )
+  
+  # remove NAs (@todo for now?)
+  
+ # vdx <- vdx %>% filter(!is.na(Age))
+  
+  plt <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
+    geom_violin(trim=F)+ geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    labs(title="  ", x="Age group", y = "Length of hospital stay") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
+    scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
+    scale_x_discrete(drop = F) +
+    ylim(c(0,40)) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(plt)
+  
+}
+
+
+
+violin.age.func.death <- function(data, ...){
+  
+  # Analysis to be run on only entries with start.to.exit entries
+  
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(outcome == "death")
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = round.zeros(start.to.exit))
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  
+
+  vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = data2$length.of.stay )
+  
+  plt <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
+    geom_violin(trim=F)+ geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    labs(title="  ", x="Age group", y = "Length of hospital stay") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
+    scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
+    scale_x_discrete(drop = F) +
+    ylim(c(0,40)) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(plt)
+  
+}
+
+
+
+violin.age.func.hospital <- function(data, ...){
+  
+  # Analysis to be run on only entries with start.to.exit entries
+  
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(outcome == "censored")
+  
+  data2 <- data2 %>% 
+    mutate(length.of.stay = round.zeros(start.to.exit))
+  
+  # Exclude negative values for length of stay - indication of issue with data entry
+  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  
+  
+  vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = data2$length.of.stay )
+  
+  plt <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) + 
+    geom_violin(trim=F)+ geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    labs(title="  ", x="Age group", y = "Length of hospital stay") + 
+    theme(
+      plot.title = element_text( size=14, face="bold", hjust = 0.5),
+      axis.title.x = element_text( size=12),
+      axis.title.y = element_text( size=12)
+    ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
+    scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
+    scale_x_discrete(drop = F) +
+    ylim(c(0,40)) +
+    theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                          colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+  
+  return(plt)
+  
+}
+
+
 
 
 
