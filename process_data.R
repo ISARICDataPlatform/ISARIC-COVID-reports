@@ -641,18 +641,6 @@ comorbidities <- bind_rows(comorbidities, tibble(field = "prengnancy", label = "
 
 # recode pregnancy for the sake of the denominator
 
-patient.data <- patient.data %>%
-  mutate(pregnancy = map_dbl(pregyn_rptestcd, function(x){
-    if(x == 999){
-      2
-    } else if(x == 998) {
-      3
-    } else {
-      x
-    }
-  }))
-
-
 # Group liver disease categories
 
 patient.data <- patient.data %>%
@@ -945,7 +933,7 @@ patient.data <- patient.data %>%
     ifelse(x=="discharge", as.character(y), NA)
   }))  %>%
   dplyr::mutate(discharge.date = ymd(discharge.date)) 
-  
+
 # print(Sys.time())
 
 patient.data <- patient.data %>%   
@@ -981,6 +969,27 @@ patient.data <- patient.data %>%
     str_replace(newlabels, "70-119", "70+")
   })) 
 
+patient.data <- patient.data %>%
+  mutate(pregnancy = pmap_dbl(list(pregyn_rptestcd, sex, consolidated.age), function(preg, sx, age){
+    if(is.na(preg)){
+      # use the same rules as the UK data dictionary
+      if(!is.na(sx) & sx == 1){
+        2
+      } else if(!is.na(age) & (age < 12 | age > 55)){
+        2
+      } else {
+        3
+      }
+    } else if(preg == 999){
+      2
+    } else if(preg == 998) {
+      3
+    } else {
+      x
+    }
+  }))
+
+
 
 # print(Sys.time())
 
@@ -1000,7 +1009,7 @@ patient.data <- patient.data %>%
     suppressWarnings(as.character(max(x,y, na.rm = T)))
   })) %>%
   dplyr::mutate(start.date = ymd(start.date)) 
-  
+
 # print(Sys.time())
 
 patient.data <- patient.data %>%  
