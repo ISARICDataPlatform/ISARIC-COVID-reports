@@ -579,9 +579,28 @@ patient.data <- demog.data %>% left_join(event.data)  %>%
   # cut out any rows where the IDs suggest test data
   filter(!str_detect(subjid, "[tT][eE][sS][tT]"))
 
+if(verbose) cat("Identifying duplicate IDs...\n")
+
+patient.data <- patient.data %>%
+  mutate(multiple.exit.rows  = map2_lgl(subjid, events, function(y,x){
+    outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm))
+    nrow(outcome.rows) > 1
+  })) 
+
+for(probable.duplicate.id in patient.data %>% filter(multiple.exit.rows) %>% pull(subjid)){
+  warning(glue("Probable duplicate patient ID {probable.duplicate.id}. Ignoring this ID.\n"))
+}
+
+patient.data <- patient.data %>%
+  filter(!multiple.exit.rows) %>%
+  dplyr::select(-multiple.exit.rows)
+
+
 if(one.percent.debug){
   patient.data <- patient.data %>% slice(seq(1, nrow(patient.data), by = 100))
 }
+
+
 
 
 #### Comorbitities, symptoms, and treatments ####
@@ -815,6 +834,7 @@ patient.data <- patient.data %>%
 
 # print(Sys.time())
 
+
 patient.data <- patient.data %>%
   # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
   dplyr::mutate(exit.date = map2_chr(subjid, events, function(y, x){
@@ -924,20 +944,23 @@ patient.data <- patient.data %>%
   dplyr::mutate(agegp5 = fct_relabel(agegp5, function(a){
     # make nicer labels
     temp <- substr(a, 2, nchar(a) -1 )
-    components <- as.numeric(str_split_fixed(temp, ",", Inf))
-    components[2] <- components[2] - 1
-    
-    temp <- paste(components, collapse = "-")
-    str_replace(temp, "90-119", "90+")
+    newlabels <- map_chr(temp, function(x){
+      components <- as.numeric(str_split_fixed(x, ",", Inf))
+      components[2] <- components[2] - 1
+      paste(components, collapse = "-")
+    }) 
+    str_replace(newlabels, "90-119", "90+")
   })) %>%
   dplyr::mutate(agegp10 = cut(consolidated.age, c(seq(0,70,by = 10),120), right = FALSE)) %>%
   dplyr::mutate(agegp10 = fct_relabel(agegp10, function(a){
     # make nicer labels
     temp <- substr(a, 2, nchar(a) -1 )
-    components <- as.numeric(str_split_fixed(temp, 2, Inf))
-    components[2] <- components[2] - 1
-    temp <- str_replace(temp, ",", "-")
-    str_replace(temp, "70-119", "70+")
+    newlabels <- map_chr(temp, function(x){
+      components <- as.numeric(str_split_fixed(x, ",", Inf))
+      components[2] <- components[2] - 1
+      paste(components, collapse = "-")
+    }) 
+    str_replace(newlabels, "70-119", "70+")
   })) 
 
 
