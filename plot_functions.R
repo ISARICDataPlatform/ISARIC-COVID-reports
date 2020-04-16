@@ -27,7 +27,13 @@ age.pyramid <- function(data, ...){
   
   max.count = data2 %>% group_by(agegp5, sex) %>% dplyr::summarise(sac = sum(abs(count))) %>% pull(sac) %>% max()
   
-  tick.increment <- 50
+  order.of.magnitude <- ceiling(log10(max.count))
+  
+  if(as.numeric(substr(as.character(max.count), 1, 1)) > 5){
+    tick.increment <- 10^(order.of.magnitude-1)
+  } else {
+    tick.increment <- 10^(order.of.magnitude-1)/2
+  }
   
   plot.breaks <- seq(-(ceiling(max.count/tick.increment)*tick.increment), ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)
   plot.labels <- as.character(c(rev(seq(tick.increment, ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)), 
@@ -74,12 +80,14 @@ sites.by.country <- function(data, ...){
     dplyr::summarise(n.sites = sum(n.sites)) %>%
     filter(!is.na(Country))
   
+  nudge <- max(data2$n.sites)/40
   
   ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
     theme_bw() +
     xlab("Country") +
-    ylab("Sites") + theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    geom_text(aes(x=Country, y=n.sites + 6, label=n.sites), size=4)
+    ylab("Sites") +
+    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+    geom_text(aes(x=Country, y=n.sites + nudge, label=n.sites), size=4)
 }
 
 # Distribution of patients and outcomes by country
@@ -94,13 +102,15 @@ outcomes.by.country <- function(data, ...){
     group_by(Country) %>%
     summarise(count = n())
   
+  nudge <- max(data3$count)/40
+  
   ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     xlab("Country") +
     ylab("Cases") + 
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    geom_text(data = data3, aes(x=Country, y= count + 75, label=count), size=4)
+    geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=4)
 }
 
 # Outcomes by epi-week
@@ -123,13 +133,15 @@ outcomes.by.admission.date <- function(data, ...){
   data2 <- data2 %>% 
     mutate(two.digit.epiweek = factor(two.digit.epiweek, levels = ew.labels))
   
+  peak.cases <- data2 %>% group_by(two.digit.epiweek) %>% dplyr::summarise(count = n()) %>% pull(count) %>% max()
+  
   ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week of admission/symptom onset (2020)") +
     ylab("Cases") +
-    ylim(c(0,1500)) +
+    ylim(c(0,peak.cases)) +
     scale_x_discrete(drop = F) +
     annotate(geom = "text", label = "*", x = max(data2$epiweek) - min(data2$epiweek) + 1, 
              y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$epiweek))), size =15)
@@ -387,6 +399,46 @@ symptom.prev.calc <- function(data){
 }
 
 
+symptom.heatmap <- function(data){
+  
+  data2 <- data %>%
+    dplyr::select(subjid, one_of(admission.symptoms$field)) %>%
+    group_by_at(vars(one_of(admission.symptoms$field))) %>%
+    summarise_at(vars(one_of(admission.symptoms$field)), sum, na.rm = T)
+  
+  combinations.tibble <- tibble(x = rep(admission.symptoms$field, length(admission.symptoms$field)),
+                                y = rep(admission.symptoms$field, each = length(admission.symptoms$field))) %>%
+    filter(x < y) %>%
+    mutate(denominator = map2_dbl(x,y,function(x1,y1){
+      data2 %>% filter(!is.na(get(x1)) & !is.na(get(y1))) %>% nrow()
+      
+    }),
+    numerator = map2_dbl(x,y,function(x1,y1){
+      data2 %>% filter(get(x1) == 1 & get(y1) == 1) %>% nrow()
+      
+    })) %>%
+    mutate(prop = numerator/denominator) %>%
+    left_join(admission.symptoms, by=c("x" = "field"), suffix = c(".x", ".y")) %>%
+    left_join(admission.symptoms, by=c("y" = "field"), suffix = c(".x", ".y")) %>%
+    mutate(temp.label.x = pmin(label.x, label.y), temp.label.y = pmax(label.x, label.y)) %>%
+    dplyr::select(temp.label.x, temp.label.y, prop) %>%
+    rename(label.x = temp.label.x, label.y = temp.label.y)
+  
+  ggplot(combinations.tibble) + 
+    geom_tile(aes(x=label.x, y=label.y, fill=prop)) + 
+    scale_fill_viridis(option = "inferno", name = "Proportion\nof patients") +
+    theme_bw() +
+    scale_x_discrete(position = "top") +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(), 
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          axis.text.x.top = element_text(angle = 90, hjust = 0, vjust = 0.5)) +
+    coord_fixed()
+
+}
+
+
 symptom.prevalence.plot <- function(data, ...){
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field)) 
@@ -411,16 +463,25 @@ symptom.prevalence.plot <- function(data, ...){
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
     left_join(admission.symptoms, by = c("Condition" = "field")) %>%
     dplyr::select(-Condition) %>%
+    dplyr::mutate(Absent = Total - Present) %>%
     dplyr::mutate(prop.yes = Present/Total) %>%
     dplyr::mutate(prop.no = 1-prop.yes) %>%
     arrange(prop.yes) %>%
     dplyr::mutate(Condition = as_factor(label)) %>%
-    pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
-    dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
-    filter(label != "Other")
-  
+    dplyr::select(Condition, Present, Absent) %>%
+    pivot_longer(c(Present, Absent), names_to = "affected", values_to = "Count") %>%
+    dplyr::mutate(affected = map_lgl(affected, function(x) x == "Present")) %>%
+    filter(Condition != "Other") %>%
+    group_by(Condition) %>%
+    mutate(total = sum(Count)) %>%
+    ungroup() %>%
+    mutate(Proportion = Count/total) %>%
+    mutate(label = glue("{Count}/{total}")) %>%
+    dplyr::select(-total)
+
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -487,17 +548,25 @@ comorbidity.prevalence.plot <- function(data, ...){
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
     left_join(comorbidities, by = c("Condition" = "field")) %>%
     dplyr::select(-Condition) %>%
+    dplyr::mutate(Absent = Total - Present) %>%
     dplyr::mutate(prop.yes = Present/Total) %>%
     dplyr::mutate(prop.no = 1-prop.yes) %>%
     arrange(prop.yes) %>%
     dplyr::mutate(Condition = as_factor(label)) %>%
-    pivot_longer(c(prop.yes, prop.no), names_to = "affected", values_to = "Proportion") %>%
-    dplyr::mutate(affected = map_lgl(affected, function(x) x == "prop.yes")) %>%
-    filter(label != "Other")
-  
+    dplyr::select(Condition, Present, Absent) %>%
+    pivot_longer(c(Present, Absent), names_to = "affected", values_to = "Count") %>%
+    dplyr::mutate(affected = map_lgl(affected, function(x) x == "Present")) %>%
+    filter(Condition != "Other") %>%
+    group_by(Condition) %>%
+    mutate(total = sum(Count)) %>%
+    ungroup() %>%
+    mutate(Proportion = Count/total) %>%
+    mutate(label = glue("{Count}/{total}")) %>%
+    dplyr::select(-total)
   
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -584,15 +653,23 @@ treatment.use.plot <- function(data, ...){
     dplyr::summarise(Total = n(), Present = sum(Present, na.rm = T)) %>%
     left_join(treatments, by = c("Treatment" = "field")) %>%
     dplyr::select(-Treatment) %>%
+    dplyr::mutate(Absent = Total - Present) %>%
     dplyr::mutate(prop.yes = Present/Total) %>%
     dplyr::mutate(prop.no = 1-prop.yes) %>%
     arrange(prop.yes) %>%
-    dplyr::mutate(Condition = as_factor(label)) %>%
-    pivot_longer(c(prop.yes, prop.no), names_to = "treated", values_to = "Proportion") %>%
-    dplyr::mutate(affected = map_lgl(treated, function(x) x == "prop.yes")) 
+    dplyr::mutate(Treatment = as_factor(label)) %>%
+    pivot_longer(c(Present, Absent), names_to = "treated", values_to = "Count") %>%
+    dplyr::mutate(affected = map_lgl(treated, function(x) x == "Present"))  %>%
+    group_by(Treatment) %>%
+    mutate(total = sum(Count)) %>%
+    ungroup() %>%
+    mutate(Proportion = Count/total) %>%
+    mutate(label = glue("{Count}/{total}")) %>%
+    dplyr::select(-total)
   
   plt<-  ggplot(data2) + 
-    geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    geom_col(aes(x = Treatment, y = Proportion, fill = affected), col = "black") +
+    geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
