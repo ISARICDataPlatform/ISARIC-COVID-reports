@@ -30,7 +30,9 @@ age.pyramid <- function(data, ...){
   order.of.magnitude <- ceiling(log10(max.count))
   
   if(as.numeric(substr(as.character(max.count), 1, 1)) > 5){
-    tick.increment <- 10^()
+    tick.increment <- 10^(order.of.magnitude-1)
+  } else {
+    tick.increment <- 10^(order.of.magnitude-1)/2
   }
   
   plot.breaks <- seq(-(ceiling(max.count/tick.increment)*tick.increment), ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)
@@ -127,13 +129,15 @@ outcomes.by.admission.date <- function(data, ...){
   data2 <- data2 %>% 
     mutate(two.digit.epiweek = factor(two.digit.epiweek, levels = ew.labels))
   
+  peak.cases <- data2 %>% group_by(two.digit.epiweek) %>% dplyr::summarise(count = n()) %>% pull(count) %>% max()
+  
   ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week of admission/symptom onset (2020)") +
     ylab("Cases") +
-    ylim(c(0,1500)) +
+    ylim(c(0,peak.cases)) +
     scale_x_discrete(drop = F) +
     annotate(geom = "text", label = "*", x = max(data2$epiweek) - min(data2$epiweek) + 1, 
              y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$epiweek))), size =15)
