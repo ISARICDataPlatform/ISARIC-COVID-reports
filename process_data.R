@@ -506,16 +506,16 @@ if(use.rapid.data){
     # join in the country table
     dplyr::mutate(site.number = map_chr(redcap_data_access_group, function(x) substr(x, 1, 3))) %>%
     left_join(site.list, by = "site.number") %>%
-    dplyr::select(-site.number) 
+    dplyr::select(-site.number) %>%
     # add data source
-  dplyr::mutate(data.source = "RAPID")
+    dplyr::mutate(data.source = "RAPID")
 }else{
   rapid.data <- NULL
 }
 
 
 
-raw.data <- lazy_dt(bind_rows(uk.data, row.data, eot.data, rapid.data))
+raw.data <- bind_rows(uk.data, row.data, eot.data, rapid.data)
 
 ##### Value adjustments #####
 
@@ -531,7 +531,7 @@ for(dc in "agedat"){
   raw.data <- raw.data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(., subjid = subjid, colname = dc, check.early = F))
 }
 
-raw.data <- raw.data%>%
+raw.data <- raw.data %>%
   mutate_at(c(date.columns, "agedat"), function(x) as.Date(x, origin = "1970-01-01"))
 
 
@@ -924,15 +924,20 @@ patient.data <- patient.data %>%
   dplyr::mutate(agegp5 = fct_relabel(agegp5, function(a){
     # make nicer labels
     temp <- substr(a, 2, nchar(a) -1 )
-    temp <- str_replace(temp, ",", "-")
-    str_replace(temp, "90-120", "90+")
+    components <- as.numeric(str_split_fixed(temp, ",", Inf))
+    components[2] <- components[2] - 1
+    
+    temp <- paste(components, collapse = "-")
+    str_replace(temp, "90-119", "90+")
   })) %>%
   dplyr::mutate(agegp10 = cut(consolidated.age, c(seq(0,70,by = 10),120), right = FALSE)) %>%
   dplyr::mutate(agegp10 = fct_relabel(agegp10, function(a){
     # make nicer labels
     temp <- substr(a, 2, nchar(a) -1 )
+    components <- as.numeric(str_split_fixed(temp, 2, Inf))
+    components[2] <- components[2] - 1
     temp <- str_replace(temp, ",", "-")
-    str_replace(temp, "70-120", "70+")
+    str_replace(temp, "70-119", "70+")
   })) 
 
 
@@ -1289,6 +1294,11 @@ countries.and.sites <-  unembargoed.data %>%
   dplyr::summarise(n.sites = 1) %>%
   dplyr::summarise(n.sites = sum(n.sites)) %>%
   filter(!is.na(Country))
+
+# Back to tibble
+
+patient.data2 <- patient.data %>%
+  as_tibble()
 
 # Impose the embargo
 
