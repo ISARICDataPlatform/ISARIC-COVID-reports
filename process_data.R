@@ -877,6 +877,8 @@ patient.data <- patient.data %>%
       2
     } else if(preg == 998) {
       3
+    } else if(preg == 0){
+      2
     } else {
       preg
     }
