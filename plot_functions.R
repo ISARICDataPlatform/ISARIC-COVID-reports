@@ -1,7 +1,7 @@
 ##### GRAPH FUNCTIONS ##### 
 
 
-# Age pyramid
+##### Age pyramid ####
 
 age.pyramid <- function(data, ...){
   
@@ -399,7 +399,7 @@ symptom.prev.calc <- function(data){
 }
 
 
-symptom.heatmap <- function(data){
+symptom.heatmap <- function(data, ...){
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field)) %>%
@@ -426,7 +426,7 @@ symptom.heatmap <- function(data){
   
   ggplot(combinations.tibble) + 
     geom_tile(aes(x=label.x, y=label.y, fill=prop)) + 
-    scale_fill_viridis(option = "inferno", name = "Proportion\nof patients") +
+    scale_fill_gradient(low = "white", high =  "deepskyblue3", name = "Proportion\nof patients") +
     theme_bw() +
     scale_x_discrete(position = "top") +
     theme(panel.grid.major = element_blank(), 
@@ -481,7 +481,7 @@ symptom.prevalence.plot <- function(data, ...){
 
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
-    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
+    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -566,7 +566,7 @@ comorbidity.prevalence.plot <- function(data, ...){
   
   plt <- ggplot(data2) + 
     geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
-    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
+    geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -669,7 +669,7 @@ treatment.use.plot <- function(data, ...){
   
   plt<-  ggplot(data2) + 
     geom_col(aes(x = Treatment, y = Proportion, fill = affected), col = "black") +
-    geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2.5)+
+    geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
     theme_bw() + 
     coord_flip() + 
     ylim(0, 1) +
@@ -1123,7 +1123,7 @@ status.by.time.after.admission <- function(data, ...){
     mutate(last.date = pmax(hospital.end, ICU.end, censored.date, na.rm = T))
   
   overall.start <- 0
-  overall.end <- max(timings.wrangle$hospital.end, na.rm = T)
+  overall.end <- quantile(timings.wrangle$hospital.end, 0.99, na.rm = T)
   
   # this generates a table of the status of every patient on every day
   
