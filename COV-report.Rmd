@@ -106,7 +106,7 @@ age.pyramid(patient.data)
 
 ```
 \newpage
-**Figure 2**: Top: Frequency of symptoms seen at admission amongst COVID-19 patients. Bars are annotated with a fraction representing the number of patients presenting with this symptom over the number of patients for whom presence or absence of this symptom was recorded. Middle: The distribution of combinations of the four most common symptoms, amongst all patients for whom these data were recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining symptoms in the top plot. Heatmap for prevalance of pairwise combinations of symptoms. Fill colour reflects the proportion of patients reporting presence of both symptoms amongst those with recorded presence or absence of both.
+**Figure 2**: Top: Frequency of symptoms seen at admission amongst COVID-19 patients. Bars are annotated with a fraction representing the number of patients presenting with this symptom over the number of patients for whom presence or absence of this symptom was recorded. Middle: The distribution of combinations of the four most common symptoms, amongst all patients for whom these data were recorded. Filled and empty circles below the x-axis indicate the presence or absence of each comorbidity. The "Any other" category contains all remaining symptoms in the top plot. Bottom: Heatmap for prevalance of pairwise combinations of symptoms. Fill colour reflects the proportion of patients reporting presence of both symptoms amongst those with recorded presence or absence of both.
 
 
 ```{r symptomcombos, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
