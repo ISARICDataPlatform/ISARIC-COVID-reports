@@ -71,7 +71,7 @@ age.pyramid <- function(data, ...){
 
   }
 
-# Distribution of sites by country
+##### Distribution of sites by country #####
 
 sites.by.country <- function(data, ...){
   data2 <- data %>%
@@ -80,7 +80,7 @@ sites.by.country <- function(data, ...){
     dplyr::summarise(n.sites = sum(n.sites)) %>%
     filter(!is.na(Country))
   
-  nudge <- max(data2$n.sites)/40
+  nudge <- max(data2$n.sites)/30
   
   ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
     theme_bw() +
@@ -90,7 +90,7 @@ sites.by.country <- function(data, ...){
     geom_text(aes(x=Country, y=n.sites + nudge, label=n.sites), size=4)
 }
 
-# Distribution of patients and outcomes by country
+##### Distribution of patients and outcomes by country #####
 
 outcomes.by.country <- function(data, ...){
   data2 <- data %>%
@@ -102,7 +102,7 @@ outcomes.by.country <- function(data, ...){
     group_by(Country) %>%
     summarise(count = n())
   
-  nudge <- max(data3$count)/40
+  nudge <- max(data3$count)/30
   
   ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
     theme_bw() +
@@ -113,7 +113,7 @@ outcomes.by.country <- function(data, ...){
     geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=4)
 }
 
-# Outcomes by epi-week
+##### Outcomes by epi-week #####
 
 outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
@@ -147,7 +147,9 @@ outcomes.by.admission.date <- function(data, ...){
              y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$epiweek))), size =15)
 }
 
-# Comorbidities upset plot (max.comorbidities is the n to list; this will be the n most frequent)
+##### Comorbidities upset plot #####
+
+# (max.comorbidities is the n to list; this will be the n most frequent)
 
 comorbidities.upset <- function(data, max.comorbidities, ...){
   
@@ -258,7 +260,9 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
     scale_x_upset() 
 }
 
-# Symptoms upset plot (max.symptoms is the n to list; this will be the n most frequent)
+##### Symptoms upset plot #####
+
+# (max.symptoms is the n to list; this will be the n most frequent)
 
 
 symptoms.upset <- function(data, max.symptoms, ...){
@@ -368,7 +372,7 @@ symptoms.upset <- function(data, max.symptoms, ...){
     scale_x_upset() 
 }
 
-# Prevalence of symptoms
+##### Prevalence of symptoms #####
 
 symptom.prev.calc <- function(data){
   data2 <- data %>%
@@ -398,6 +402,7 @@ symptom.prev.calc <- function(data){
   
 }
 
+##### Prevalence of symptoms heatmap #####
 
 symptom.heatmap <- function(data, ...){
   
@@ -1077,6 +1082,23 @@ plot_outcome_saturations <- function(data, ...) {
     coord_cartesian(xlim = c(1, 10), ylim = c(0, 1), clip = "off")
   
   return(p)
+}
+
+plot_nosocomial <- function(data, ...){
+  data2 <- data %>% 
+    filter(!is.na(admission.date) & !is.na(onset.date)) %>% 
+    dplyr::select(subjid, onset.date, admission.date) %>% 
+    mutate(at.07.days = onset.date >= admission.date + 7, at.14.days = onset.date >= admission.date + 14) %>% 
+    pivot_longer(4:5) %>% 
+    group_by(name) %>% 
+    summarise(perc = sum(value)/n())
+  
+  ggplot(data2) + 
+    geom_col(aes(name, perc*100), fill = "orange3", col = "black") +
+    scale_x_discrete(labels = c("At least 7 days", "At least 14 days"), name = "Time of symptom onset after admission") +
+    ylab("Percentage of patients") +
+    theme_bw()
+  
 }
 
 
