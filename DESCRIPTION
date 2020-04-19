@@ -1,0 +1,17 @@
+Package: ISARIC.COVID.reports
+Title: Generation of COVID-19 reports from REDCAP clinical data
+Version: 0.1.0
+Authors@R: 
+    person(given = "First",
+           family = "Last",
+           role = c("aut", "cre"),
+           email = "first.last@example.com",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: What the package does (one paragraph).
+Imports: binom, boot, broom, fitdistrplus, knitr, ggupset, glue, grid, lubridate, magrittr, plyr, rmarkdown, sf, survival, survminer, taRifx, tidyselect, tidyverse, viridis
+License: `use_mit_license()`, `use_gpl3_license()` or friends to
+    pick a license
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.0
