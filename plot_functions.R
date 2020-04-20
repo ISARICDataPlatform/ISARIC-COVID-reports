@@ -411,9 +411,10 @@ symptom.heatmap <- function(data, ...){
     group_by_at(vars(one_of(admission.symptoms$field))) %>%
     summarise_at(vars(one_of(admission.symptoms$field)), sum, na.rm = T)
 
+
   combinations.tibble <- tibble(x = rep(admission.symptoms$field, length(admission.symptoms$field)),
                                 y = rep(admission.symptoms$field, each = length(admission.symptoms$field))) %>%
-    filter(x < y) %>%
+    filter(x != y) %>%
     mutate(denominator = map2_dbl(x,y,function(x1,y1){
       data2 %>% filter(!is.na(get(x1)) & !is.na(get(y1))) %>% nrow()
 
@@ -424,21 +425,42 @@ symptom.heatmap <- function(data, ...){
     })) %>%
     mutate(prop = numerator/denominator) %>%
     left_join(admission.symptoms, by=c("x" = "field"), suffix = c(".x", ".y")) %>%
-    left_join(admission.symptoms, by=c("y" = "field"), suffix = c(".x", ".y")) %>%
-    mutate(temp.label.x = pmin(label.x, label.y), temp.label.y = pmax(label.x, label.y)) %>%
-    dplyr::select(temp.label.x, temp.label.y, prop) %>%
-    rename(label.x = temp.label.x, label.y = temp.label.y)
+    left_join(admission.symptoms, by=c("y" = "field"), suffix = c(".x", ".y")) #%>%
+    # mutate(temp.label.x = pmin(label.x, label.y), temp.label.y = pmax(label.x, label.y)) %>%
+    # dplyr::select(temp.label.x, temp.label.y, prop) %>%
+    # rename(label.x = temp.label.x, label.y = temp.label.y)
 
-  ggplot(combinations.tibble) +
+  ct1 <- combinations.tibble %>%
+    mutate(rec.prop = 1/prop) %>%
+    mutate(rec.prop = replace(rec.prop, rec.prop == Inf, 1+max(1/combinations.tibble$prop[which(combinations.tibble$prop != 0)]))) %>%
+    dplyr::select(label.x,label.y,rec.prop) %>%
+    pivot_wider(names_from = "label.y", values_from = "rec.prop")
+  # no idea why this is NA
+  ct1[24,2] <- ct1[1,25]
+
+
+  ct1dist <- as.dist(ct1[,2:ncol(ct1)], diag = T)
+
+  fct.levels <- labels(ct1dist)[order.dendrogram(as.dendrogram(hclust(ct1dist)))]
+
+  combinations.tibble.2 <- combinations.tibble %>%
+    mutate(label.x = factor(label.x,  levels = fct.levels)) %>%
+    mutate(label.y = factor(label.y,  levels = rev(fct.levels))) %>%
+    mutate(order.x = map_dbl(label.x, function(lx) which(fct.levels == lx))) %>%
+    mutate(order.y = map_dbl(label.y, function(ly) which(fct.levels == ly))) %>%
+    filter(order.x <= order.y)
+
+
+
+  ggplot(combinations.tibble.2) +
     geom_tile(aes(x=label.x, y=label.y, fill=prop)) +
     scale_fill_gradient(low = "white", high =  "deepskyblue3", name = "Proportion\nof patients") +
     theme_bw() +
-    scale_x_discrete(position = "top") +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           axis.title.x=element_blank(),
           axis.title.y=element_blank(),
-          axis.text.x.top = element_text(angle = 90, hjust = 0, vjust = 0.5)) +
+          axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
     coord_fixed()
 
 }
