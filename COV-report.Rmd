@@ -173,7 +173,7 @@ outcomes.by.admission.date(patient.data)
 
 # Treatment
 
-**Figure 8**: Treatments used. This only includes patients where this information was recorded.
+**Figure 8**: Treatments used. This only includes patients for whom this information was recorded.
 
 ```{r treatment1, echo=FALSE}
 treatment.use.plot(patient.data)
@@ -191,9 +191,7 @@ treatment.upset(patient.data)
 
 # Intensive Care and High Dependency Unit Treatments
 
-These figures include only the `r de$icu.n.treat` ICU/HDU patients with complete details of treatments.
-
-**Figure 10**: Treatments used. 
+**Figure 10**: Treatments used amongst patients admitted to the ICU. This only includes patients for whom this information was recorded.
 
 
 ```{r treatment.icu, echo=FALSE}
