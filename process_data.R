@@ -4,8 +4,6 @@
 
 options(warn=1)
 
-one.percent.debug <- FALSE
-
 if(verbose) cat("Setting up datasets and embargo date...\n")
 
 embargo.length <- 14
@@ -517,6 +515,13 @@ if(use.rapid.data){
 
 raw.data <- bind_rows(uk.data, row.data, eot.data, rapid.data)
 
+required.columns <- read_csv("/Users/mdhall/ISARIC-COVID-dashboard/required_columns.csv")
+
+# do it like this to preserve column order
+
+raw.data <- raw.data %>% dplyr::select(-setdiff(colnames(raw.data), required.columns$report.column.name) )
+
+
 ##### Value adjustments #####
 
 if(verbose) cat("Setting future dates to NA...\n")
@@ -584,12 +589,6 @@ for(probable.duplicate.id in patient.data %>% filter(multiple.exit.rows) %>% pul
 patient.data <- patient.data %>%
   filter(!multiple.exit.rows) %>%
   dplyr::select(-multiple.exit.rows)
-
-
-if(one.percent.debug){
-  patient.data <- patient.data %>% slice(seq(1, nrow(patient.data), by = 100))
-}
-
 
 
 
@@ -1019,12 +1018,6 @@ patient.data <- patient.data %>%
   dplyr::mutate(antifungal.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antifung_cmyn", TRUE) )) %>%
   dplyr::mutate(steroid.any = map_dbl(events, function(x) extract.named.column.from.events(x, "corticost_cmyn", TRUE) ))
 
-compareNA <- function(v1,v2) {
-  same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
-  same[is.na(same)] <- FALSE
-  return(same)
-}
-
 ###### Date wrangling ######
 
 # This is the function to return information about a patient's time on an intervention (e.g. IMV) from both daily and final forms
@@ -1161,7 +1154,7 @@ patient.data <- patient.data %>%
 patient.data <- patient.data %>%
   mutate(O2.ever = map_lgl(events, function(x){
 
-    x2 <- x %>% filter(!is.na(daily_fio2_lborres) | !is.na(daily_nasaloxy_cmtrt) | !is.na(x$daily_nasaloxy_cmtrt))
+    x2 <- x %>% filter(!is.na(daily_fio2_lborres) | !is.na(daily_nasaloxy_cmtrt) | !is.na(daily_nasaloxy_cmtrt))
     if(nrow(x2) == 0){
       NA
     } else {
@@ -1361,6 +1354,10 @@ if(verbose) cat("Saving to disk...\n")
 
 patient.data <- patient.data[-c(which(is.na(patient.data$exit.code) & !is.na(patient.data$exit.date))), ]
 # patient.data <- patient.data[-c(which(!is.na(patient.data$exit.code) & is.na(patient.data$exit.date))), ]
+
+# Detach the events table
+
+patient.data <- patient.data %>% dplyr::select(-events)
 
 save(unembargoed.data, patient.data, countries.and.sites, admission.symptoms, comorbidities, embargo.limit, treatments, file = glue("{code.path}/patient_data_{ref.date}.rda"))
 
