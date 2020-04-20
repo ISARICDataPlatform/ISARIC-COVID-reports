@@ -41,7 +41,7 @@ library(survminer)
 library(broom)
 library(taRifx)
 
-reprocess.data <- FALSE
+reprocess.data <- TRUE
 verbose <- TRUE
 
 # file locations
@@ -170,19 +170,10 @@ outcomes.by.admission.date(patient.data)
 ```
 
 \newpage
-**Figure 8**: Proportion of patients with symptom onset dates more than seven and more than fourteen days after hospital admission, suggesting possible nosocomial infection.
-
-```{r nosocomial, echo=FALSE, out.width= "50%", fig.height=6}
-
-plot_nosocomial(patient.data)
-
-```
-
-\newpage
 
 # Treatment
 
-**Figure 9**: Treatments used. This only includes patients where this information was recorded.
+**Figure 8**: Treatments used. This only includes patients where this information was recorded.
 
 ```{r treatment1, echo=FALSE}
 treatment.use.plot(patient.data)
@@ -190,7 +181,7 @@ treatment.use.plot(patient.data)
 
 \newpage
 
-**Figure 10**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients with completed hospital stay and recorded treatment data. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
+**Figure 9**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients with completed hospital stay and recorded treatment data. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)
@@ -202,7 +193,7 @@ treatment.upset(patient.data)
 
 These figures include only the `r de$icu.n.treat` ICU/HDU patients with complete details of treatments.
 
-**Figure 11**: Treatments used. 
+**Figure 10**: Treatments used. 
 
 
 ```{r treatment.icu, echo=FALSE}
@@ -212,7 +203,7 @@ treatment.use.plot.icu(patient.data)
 
 \newpage
 
-**Figure 12**: The distribution of combinations of treatments administered during ICU/HDU stay. Filled and empty circles below the x-axis indicate treatments that were and were not administered respectively.
+**Figure 11**: The distribution of combinations of treatments administered during ICU/HDU stay. Filled and empty circles below the x-axis indicate treatments that were and were not administered respectively.
 <!-- The distribution of combinations of treatments administered during  hospital stay for patients who were admitted to an Intensive Care Unit . Filled and empty circles below the x-axis indicate treatments that were and were not administered. -->
 
 ```{r treatment2.icu, echo=FALSE}
@@ -221,7 +212,7 @@ icu.treatment.upset(patient.data)
 
 
 \newpage
-**Figure 13**: Distribution of lengths of stay for patients who were admitted to ICU/HDU: total length of stay for this group and length of stay within intensive care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+**Figure 12**: Distribution of lengths of stay for patients who were admitted to ICU/HDU: total length of stay for this group and length of stay within intensive care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r icu_los, echo=FALSE}
 icu.violin.plot(patient.data)
@@ -231,7 +222,7 @@ icu.violin.plot(patient.data)
 
 # Statistical Analysis
 
-**Figure 14**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
+**Figure 13**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
 ```{r onset.admission, out.width = '80%'}
 
@@ -241,7 +232,7 @@ onset.adm.plot(patient.data)
 
 \newpage
 
-**Figure 15**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
+**Figure 14**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 
 ```{r  adm.outcome, out.width = '80%'}
@@ -252,7 +243,7 @@ adm.outcome.plot(patient.data)
 
 \newpage
 
-**Figure 16**: Nonparametric probabilities of death (red curve) and recovery (green curve) over time. The black line indicates the case fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 15**: Nonparametric probabilities of death (red curve) and recovery (green curve) over time. The black line indicates the case fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -265,7 +256,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 17**: Number of sites per country.
+**Figure 16**: Number of sites per country.
 
 ```{r recruitment1, echo=FALSE}
 
@@ -275,7 +266,7 @@ sites.by.country(unembargoed.data)
 
 \newpage
 
-**Figure 18**: Distribution of patients by country and outcome
+**Figure 17**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
@@ -288,7 +279,7 @@ outcomes.by.country(patient.data)
 
 # Recruitment
 
-**Figure 19**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The first dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included. The second black line is the exclusion date for next week's report.
+**Figure 18**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The first dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included. The second black line is the exclusion date for next week's report.
 
 ``` {r recruitmentbyoutcome, echo=FALSE}
 
