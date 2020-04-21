@@ -199,7 +199,7 @@ d.e <- function(data, datafull, ...){
   obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
   obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
   obs.sd.adm.outcome <- round(x_sd, 1)
-  cases.full.adm.outcome <- length(adm.outcome(patient.data)$obs)
+  cases.full.adm.outcome <- length(x)
   obs.median.adm.outcome <- round(x_median, 1)
   obs.iqr.adm.outcome <- round(IQR(x, na.rm = T), 1)
   
@@ -307,23 +307,42 @@ d.e <- function(data, datafull, ...){
   N.icu.NA <- summary(as.factor(icu.d$outcome))[[4]]      # ICU NA
   # outcomes 
   
-  # Symptoms 
+  # Cough
   
-  s.dat <- symptom.prev.calc(data)
+  cough_pre <- data %>% filter(cough.any == 1) %>% nrow()
+  cough_abs <- data %>% filter(cough.any == 2) %>% nrow()
+  cough_unk <- data %>% filter(is.na(cough.any)) %>% nrow()
+  combined_cough <- data.frame(Condition = 'cough_combined', present = as.character(cough_pre),
+                               absent = as.character(cough_abs), unknown = as.character(cough_unk), label = 'Cough' )
+  
+  
+
+  
+  # Symptoms 
+  # Remove cough row & add combined cough variable
+  s.dat <- rbind(symptom.prev.calc(data)%>% filter(!grepl("Cough", label)), combined_cough)
+  s.dat <- s.dat[order(-as.numeric(s.dat$present)), ] 
+  
   
   # Comorbidities
   
   c.dat <- comorb.prev.calc(data)
+  c.dat <- c.dat[order(-as.numeric(c.dat$present)), ] 
   
   # Treatments
   
-  t.dat <- treatment.use.calc(data)
+  oxy.treatments <- data.frame(Condition = c('ecmo', 'imv', 'niv', 'o2'),
+                               present = c(ECMO.pr,IMV.pr, NIMV.pr, o2.pr),
+                               absent = c(ECMO.ab,IMV.ab, NIMV.ab, o2.ab),
+                               unknown = c(ECMO.un,IMV.un, NIMV.un, o2.un),
+                               label = c('Extracorporeal membrane oxygenation (ECMO)',
+                                         'Invasive ventilation',
+                                         'Non-invasive ventilation',
+                                         'Oxygen therapy'))
   
-  # Cough
-  
-  cough_pre <- patient.data %>% filter(cough.any == 1) %>% nrow()
-  cough_abs <- patient.data %>% filter(cough.any == 2) %>% nrow()
-  cough_unk <- patient.data %>% filter(is.na(cough.any)) %>% nrow()
+  t.dat <- rbind(treatment.use.calc(data)%>% filter(!grepl("vasive|support|Oxygen", label)), oxy.treatments)
+  t.dat <- t.dat[order(-as.numeric(t.dat$present)), ] 
+ 
   
   # p-value
   
@@ -368,24 +387,24 @@ d.e <- function(data, datafull, ...){
               
               sex.out.tab = sex.out.tab,
               sex.out.tab2 = sex.out.tab2,
-              
-              IMV.pr = IMV.pr,
-              IMV.ab = IMV.ab,
-              IMV.un = IMV.un,
-              
-              NIMV.pr = NIMV.pr,
-              NIMV.ab = NIMV.ab,
-              NIMV.un = NIMV.un,
-              
-              
-              o2.pr = o2.pr,
-              o2.ab = o2.ab,
-              o2.un = o2.un,
-              
-              
-              ECMO.pr = ECMO.pr,
-              ECMO.ab = ECMO.ab,
-              ECMO.un = ECMO.un,
+              # 
+              # IMV.pr = IMV.pr,
+              # IMV.ab = IMV.ab,
+              # IMV.un = IMV.un,
+              # 
+              # NIMV.pr = NIMV.pr,
+              # NIMV.ab = NIMV.ab,
+              # NIMV.un = NIMV.un,
+              # 
+              # 
+              # o2.pr = o2.pr,
+              # o2.ab = o2.ab,
+              # o2.un = o2.un,
+              # 
+              # 
+              # ECMO.pr = ECMO.pr,
+              # ECMO.ab = ECMO.ab,
+              # ECMO.un = ECMO.un,
               
               
               adm.to.outcome =  adm.to.outcome,            # admission to outcome
@@ -497,11 +516,11 @@ d.e <- function(data, datafull, ...){
               
               s.dat = s.dat,
               c.dat = c.dat,
-              t.dat = t.dat,
+              t.dat = t.dat
               
-              cough_pre = cough_pre,
-              cough_abs = cough_abs,
-              cough_unk = cough_unk
+              # cough_pre = cough_pre,
+              # cough_abs = cough_abs,
+              # cough_unk = cough_unk
               
               
               #surv.sum = surv.sum
