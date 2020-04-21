@@ -1154,7 +1154,9 @@ patient.data <- patient.data %>%
 patient.data <- patient.data %>%
   mutate(O2.ever = map_lgl(events, function(x){
 
+
     x2 <- x %>% filter(!is.na(daily_fio2_lborres) | !is.na(daily_nasaloxy_cmtrt) | !is.na(daily_nasaloxy_cmtrt))
+
     if(nrow(x2) == 0){
       NA
     } else {
