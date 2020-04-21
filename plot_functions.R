@@ -96,21 +96,56 @@ outcomes.by.country <- function(data, ...){
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
-    filter(!is.na(Country))
+    filter(!is.na(Country)) %>%
+    mutate(uk = ifelse(Country == "UK", "UK", "Rest of world")) %>%
+    group_by(Country, outcome, uk) %>%
+    summarise(count = n()) %>%
+    ungroup()
 
-  data3 <- data2 %>%
+
+  data3 <- data %>%
+    filter(!is.na(outcome)) %>%
+    dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
+    filter(!is.na(Country)) %>%
     group_by(Country) %>%
-    summarise(count = n())
+    summarise(count = n()) %>%
+    mutate(uk = ifelse(Country == "UK", "UK", "Rest of world")) %>%
+    group_by(uk) %>%
+    mutate(nudge = max(count)/30) %>%
+    ungroup()
 
-  nudge <- max(data3$count)/30
 
-  ggplot(data2) + geom_bar(aes(x = Country, fill = outcome), col = "black") +
+
+  plot1 <- ggplot() +
+    geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=4) +
+    geom_col(data = data2, aes(x = Country, y=count,  fill = outcome), col = "black") +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
-    xlab("Country") +
-    ylab("Cases") +
+    facet_wrap (~ uk, scales = "free") +
+    # xlab("Country") +
+    # ylab("Cases") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=4)
+    scale_x_discrete(expand = c(0, 1)) +
+    scale_y_continuous(expand = c(0, 1))
+
+  gp <- ggplotGrob(plot1)
+
+  # optional: take a look at the grob object's layout
+  gtable::gtable_show_layout(gp)
+
+  # get gtable columns corresponding to the facets (5 & 9, in this case)
+  facet.columns <- gp$layout$l[grepl("panel", gp$layout$name)]
+
+  # get the number of unique x-axis values per facet (1 & 3, in this case)
+  x.var <- sapply(ggplot_build(plot1)$layout$panel_scales_x,
+                  function(l) length(l$range$range))
+
+  # change the relative widths of the facet columns based on
+  # how many unique x-axis values are in each facet
+  gp$widths[facet.columns] <- gp$widths[facet.columns] * x.var
+
+  # plot result
+  grid::grid.draw(gp)
 }
 
 ##### Outcomes by epi-week #####
