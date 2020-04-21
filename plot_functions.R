@@ -543,7 +543,8 @@ comorb.prev.calc <- function(data){
       }
     })) %>%
     group_by(Condition) %>%
-    dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
+    dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown")) %>%
+    dplyr::left_join(comorbidities, by = c("Condition" = "field"))
 
   return(data3)
 
@@ -640,7 +641,8 @@ treatment.use.calc <- function(data){
       }
     })) %>%
     group_by(Condition) %>%
-    dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown"))
+    dplyr::summarise(present = sum(Present == "present"), absent = sum(Present == "absent"), unknown = sum(Present == "unknown")) %>%
+    dplyr::left_join(treatments, by = c("Condition" = "field"))
 
   return(data3)
 }
