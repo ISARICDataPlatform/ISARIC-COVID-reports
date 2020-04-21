@@ -2445,7 +2445,321 @@ dur.imv.plot <- function(data,...){
 }
 
 
+### Functions for admission observations / results etc.
 
+plot.by.age.make.zeroandone <- function(var, ...) {
+  var[var == 2] <- 0
+  var[var == 3] <- NA
+  
+  return(var)
+  
+}
+
+plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 250, ...) {
+  summ <- data %>%
+    add_column(a = var) %>%
+    filter(!is.na(a)) %>%
+    group_by(AgeGrp) %>%
+    dplyr::summarise(
+      All = sum(All, na.rm = TRUE), 
+      v = sum(a, na.rm = TRUE)
+    )
+  d <- binom.confint(summ$v, summ$All, conf.level = .95, method = "exact")
+  d$X <- summ$AgeGrp
+  d$lbl <- paste(d$x, d$n, sep = "/\n", collapse = NULL)
+  d$size <- d$n / sz
+  xlabs <- c(
+    "<20", 
+    "20-", 
+    "30-", 
+    "40-",
+    "50-",
+    "60-", 
+    "70-",
+    expression(phantom(x) >= 80)
+  )
+  pts <- geom_point(
+    data = d,
+    aes(x = d$X, y = mean),
+    shape = "square",
+    size = d$size,
+    colour = "navy"
+  )
+  lines <- geom_linerange(
+    data = d,
+    aes(x = X, ymin = lower, ymax = upper),
+    colour = "#000000", 
+    show.legend = FALSE
+  )
+  xa <- scale_x_discrete(    
+    name = "Age group (years)",
+    labels = xlabs
+  )
+  ya <- scale_y_continuous(
+    name = name,
+    limits = c(0, ymax + .05)
+  )
+  lbls <- geom_text(
+    data = d,
+    aes(x = X, y = ymax, label = lbl),
+    size = 2
+  )
+  p <- ggplot() +
+    pts +
+    lines +
+    lbls +
+    xa + ya +
+    theme_bw() 
+  
+  return(p)
+  
+}
+
+plot.by.age.grouping <- function(data, ...) {
+  age.c <- (data$start.date - data$agedat) / 365.25 %>%
+    round(0)
+  data$Age <- data$age_estimateyears
+  data$Age[is.na(data$age_estimateyears) == TRUE] <-
+    age.c[is.na(data$age_estimateyears) == TRUE]
+  data <- data %>%
+    dplyr::select(-age_estimateyears, -agedat, -start.date, -agegp10) %>%
+    filter(!is.na(Age))
+  data$AgeGrp <- 0
+  thr <- c(0, 20, 30, 40, 50, 60, 70, 80, 999)
+  for (i in thr) data$AgeGrp[data$Age >= i] <- i
+  data$AgeGrp[is.na(data$Age) == TRUE] <- 999
+  data$AgeGrp <- factor(
+    data$AgeGrp,
+    levels = thr,
+    labels = c("<20", "20-", "30-", "40-","50-","60-", "70-", ">=80", "NR")
+  ) 
+  
+  return(data)
+  
+}
+
+
+plot.comorb.by.age <- function(data, ...) {
+  df <- data %>%
+    dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
+                  asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn, 
+                  diabetes_mhyn, diabetescom_mhyn, dementia_mhyn, smoking_mhyn, 
+                  start.to.exit, sex
+    ) 
+  df <- plot.by.age.grouping(df)
+  for (i in 2:9) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+  df$All <- 1
+  df$DM <- pmax(df$diabetes_mhyn, df$diabetescom_mhyn, na.rm = TRUE)
+  
+  pa <- plot.prop.by.age(df, df$asthma_mhyn, 
+                         "Proportion with\nasthma", ymax = .4)
+  pb <- plot.prop.by.age(df, df$malignantneo_mhyn, 
+                         "Proportion with\nmalignancy", ymax = .4)
+  pc <- plot.prop.by.age(df, df$aidshiv_mhyn, 
+                         "Proportion with\nHIV", ymax = .4)
+  pd <- plot.prop.by.age(df, df$obesity_mhyn, 
+                         "Proportion with\nobesity", ymax = .4)
+  pe <- plot.prop.by.age(df, df$DM, 
+                         "Proportion with\ndiabetes mellitus", ymax = .4)
+  pf <- plot.prop.by.age(df, df$dementia_mhyn, 
+                         "Proportion with\ndementia", ymax = .4)
+  pg <- plot.prop.by.age(df, df$smoking_mhyn, 
+                         "Proportion who\nsmoke", ymax = .4)
+  
+  p <- grid.arrange(pa, pb, pc, pd, pe, pf, pg, ncol = 3)
+  
+  return(p)
+  
+}
+
+plot.sx.by.age <- function(data, ...) {
+  df <- data %>%
+    dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
+                  one_of(admission.symptoms$field), start.to.exit, sex
+    ) 
+  df <- plot.by.age.grouping(df)
+  for (i in 2:25) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+  df$All <- 1
+  df$Cough <- pmax(df$cough.bloodysputum, df$cough.nosputum, df$cough.sputum, 
+                   na.rm = TRUE)
+  df$GI <- pmax(df$abdopain_ceoccur_v2, df$vomit_ceoccur_v2, 
+                df$diarrhoea_ceoccur_v2, na.rm = TRUE)
+  
+  pa <- plot.prop.by.age(df, df$fever_ceoccur_v2, "Fever")
+  pb <- plot.prop.by.age(df, df$Cough, "Cough")
+  pc <- plot.prop.by.age(df, df$shortness.breath, "Shortness of breath")
+  pd <- plot.prop.by.age(df, df$confusion_ceoccur_v2, "Confusion")
+  pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal symptoms")
+  
+  p <- grid.arrange(pa, pb, pc, pd, pe, ncol = 3)
+  
+  return(p)
+  
+}
+
+plot.bw.by.age <- function(data, var, name, ...) {
+  summ <- data %>%
+    add_column(v = var) %>%
+    filter(!is.na(v)) %>%
+    filter(!is.na(AgeGrp)) %>%
+    group_by(AgeGrp) %>%
+    mutate(lq = quantile(v, .25, na.rm = TRUE)) %>%
+    mutate(uq = quantile(v, .75, na.rm = TRUE)) %>%
+    mutate(iqr = uq - lq) %>%
+    mutate(droplow = lq - 1.5 * iqr) %>%
+    mutate(drophigh = uq + 1.5 * iqr) %>%
+    filter(v > droplow) %>%
+    filter(v < drophigh) 
+  N <- paste("N = ", nrow(summ), sep = "", collapse = NULL)
+  
+  xlabs <- c(
+    "<20", 
+    "20-", 
+    "30-", 
+    "40-",
+    "50-",
+    "60-", 
+    "70-",
+    expression(phantom(x) >= 80)
+  )
+  xa <- scale_x_discrete(    
+    name = "Age group (years)",
+    labels = xlabs
+  )
+  ya <- scale_y_continuous(
+    name = name
+  )
+  p <- ggplot(data = summ, aes(AgeGrp, v)) +
+    geom_boxplot(outlier.shape = NA) +
+    xa + ya +
+    theme_bw() +
+    labs(title = N)
+  
+  return(p)
+  
+}
+
+
+plot.signs.by.age <- function(data, ...) {
+  df <- data %>%
+    dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
+                  rr_vsorres, oxy_vsorresu, oxy_vsorres, hr_vsorres, 
+                  sysbp_vsorres, temp_vsorres, temp_vsorresu, start.to.exit, 
+                  sex
+    ) 
+  df <- plot.by.age.grouping(df)
+  df$RR <- as.numeric(df$rr_vsorres)
+  df$SpO2_roomair <- as.numeric(df$oxy_vsorres)
+  df$SpO2_roomair[df$oxy_vsorresu != 1] <- NA
+  df$HR <- as.numeric(df$hr_vsorres)
+  df$SBP <- as.numeric(df$sysbp_vsorres)
+  df$Temp <- as.numeric(df$temp_vsorres)
+  # In case anyone goes Fahrenheit
+  if (max(df$temp_vsorresu, na.rm = TRUE) >= 2) {
+    df$temp_vsorresu[is.na(df$temp_vsorresu) == TRUE] <- 0
+    df$Temp[df$temp_vsorresu == 2 & is.na(df$Temp) == FALSE] <- 
+      (df$Temp[df$temp_vsorresu == 2 & is.na(df$Temp) == FALSE] - 32) * 5 / 9
+  }
+  df$SpO2_roomair[df$SpO2_roomair < 0 | df$SpO2_roomair > 100] <- NA
+  
+  pa_name <- expression("Respiratory rate " ("min." ^ -1))
+  pa <- plot.bw.by.age(df, df$RR, pa_name)
+  pb_name <- expression("O" [2] * " saturation in room air (%)")
+  pb <- plot.bw.by.age(df, df$SpO2_roomair, pb_name)
+  pc_name <- expression("Heart rate " ("min." ^ -1))
+  pc <- plot.bw.by.age(df, df$HR, pc_name)
+  pd <- plot.bw.by.age(df, df$SBP, "Systolic blood pressure (mmHg)")
+  pe_name <- expression("Temperature " (degree*C))
+  pe <- plot.bw.by.age(df, df$Temp, pe_name)
+  
+  p <- grid.arrange(pa, pb, pc, pd, pe, ncol = 3)
+  
+  return(p)
+  
+}
+
+plot.blood.results.by.age <- function(data, ...) {
+  # Use a loop to collect data to avoid problems of data too large to process
+  for (i in 1:nrow(data)) {
+    p <- data$events[i][[1]] %>%
+      dplyr::select(dsstdat, daily_crp_lborres, 
+                    daily_bun_lborres, daily_bun_lborresu,
+                    daily_wbc_lborres, daily_wbc_lborresu, daily_aptt_lborres,
+                    daily_pt_lborres, daily_lymp_lborres, daily_neutro_lborres,
+                    ddimer_lborres, daily_alt_lborres, daily_bil_lborres,
+                    daily_bil_lborresu, daily_ast_lborres
+      ) %>%
+      add_column(
+        subjid = data$subjid[i],
+        age_estimateyears = data$age_estimateyears[i],
+        agedat = data$agedat[i],
+        start.date = data$start.date[i],
+        agegp10 = data$agegp10[i],
+      ) %>%
+      filter(dsstdat <= start.date + 1)
+    if (i == 1) {
+      df <- p
+    } else {
+      df <- bind_rows(df, p)
+    }
+  }
+  df <- plot.by.age.grouping(df)
+  #Make numeric and convert units
+  df$CRP <- as.numeric(df$daily_crp_lborres)
+  df$Urea <- as.numeric(df$daily_bun_lborres)
+  # df$Urea[df$daily_bun_lborresu == 2 & is.na(df$Urea) == FALSE] includes some
+  # lines where df$Urea = NA. Why?
+  df$uc <- 1
+  df$uc[df$daily_bun_lborresu != 2] <- 0
+  df$uc[is.na(df$Urea) == TRUE] <- 0
+  df$Urea[df$uc == 1] <- .1665 * df$Urea[df$uc == 1]
+  # Units for WCC are equivalent
+  df$WCC <- as.numeric(df$daily_wbc_lborres)
+  df$APTT <- as.numeric(df$daily_aptt_lborres)
+  df$PT <- as.numeric(df$daily_pt_lborres)
+  df$Lcyte <- as.numeric(df$daily_lymp_lborres)
+  df$Neut <- as.numeric(df$daily_neutro_lborres)
+  df$Ddimer <- as.numeric(df$ddimer_lborres) 
+  df$Bili <- as.numeric(df$daily_bil_lborres)
+  #df$Bili[df$daily_bil_lborresu == 2 & is.na(df$Bili) == FALSE] includes NA ??
+  df$bc <- 1
+  df$bc[df$daily_bil_lborresu != 2] <- 0
+  df$bc[is.na(df$Bili) == TRUE] <- 0
+  df$Bili[df$bc == 1] <- df$Bili[df$bc == 1] * 17.1
+  df$ALT <- as.numeric(df$daily_alt_lborres)
+  df$AST <- as.numeric(df$daily_ast_lborres)
+  
+  # WCC, lcyte, neut all vary over orders of magnitude
+  df$WCC[df$WCC > 100 & is.na(df$WCC) == FALSE] <- 
+    df$WCC[df$WCC > 100 & is.na(df$WCC) == FALSE] / 1000
+  df$Lcyte[df$Lcyte > 100 & is.na(df$Lcyte) == FALSE] <- 
+    df$Lcyte[df$Lcyte > 100 & is.na(df$Lcyte) == FALSE] / 1000 
+  df$Neut[df$Neut > 100 & is.na(df$Neut) == FALSE] <- 
+    df$Neut[df$Neut > 100 & is.na(df$Neut) == FALSE] / 1000 
+  
+  pa_name <- expression("White cell count " (10 ^ 9 * " /L"))
+  pa <- plot.bw.by.age(df, df$WCC, pa_name)
+  pb_name <- expression("Lymphocytes " (10 ^ 9 * " /L"))
+  pb <- plot.bw.by.age(df, df$Lcyte, pb_name)
+  pc_name <- expression("Neutrophils " (10 ^ 9 * " /L"))
+  pc <- plot.bw.by.age(df, df$Neut, pc_name)
+  pd <- plot.bw.by.age(df, df$Urea, "Urea (mmol/L)")
+  pe <- plot.bw.by.age(df, df$CRP, "CRP (mg/L)")
+  pf <- plot.bw.by.age(df, df$PT, "Prothrombin time (s)")
+  pg <- plot.bw.by.age(df, df$APTT, "APTT (s)")
+  # To include D-dimer when enough data              
+  #  ph <- plot.bw.by.age(df, df$Ddimer, "D-dimer (mg/L)")
+  pj_name <- expression("Bilirubin (" * mu * "mol/L)")
+  pj <- plot.bw.by.age(df, df$Bili, pj_name)
+  pl <- plot.bw.by.age(df, df$ALT, "ALT (units/L)")
+  
+  # Omit AST as N much lower than for ALT
+  
+  p <- grid.arrange(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 3)
+  
+  return(p)
+  
+}
 
 ######### Survival plot ######
 
