@@ -128,16 +128,48 @@ comorbidities.upset(patient.data, 4)
 ```
 
 \newpage
+# Variables by age
+
+**Figure 4**: Comorbidities stratified by age group. Numbers on the plot show the number with the comorbidity and the number in the age group (numbers are not displayed if <5). Denominators vary between plots due to data completeness. 
+
+```{r comorbbyage, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
+plot.comorb.by.age(patient.data)
+
+```
+
+**Figure 5**: Symptoms recorded at hospital presentation stratified by age group. Numbers on the plot show the number reporting the symptoms and the number in the age group (numbers are not displayed if <5). Denominators vary between plots due to data completeness. 
+
+```{r sxbyage, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
+plot.sx.by.age(patient.data)
+
+```
+
+**Figure 6**: Box and whisker plots for observations at hospital presentation stratified by age group. Outliers are omitted.  N is the number of individuals included in the plot (this varies between plots due to data completeness).
+
+```{r signsbyage, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
+plot.signs.by.age(patient.data)
+
+```
+
+**Figure 7**: Box and whisker plots for laboratory results within 24 hours of hospital presentation stratified by age group. Outliers are omitted.  N is the number of individuals included in the plot (this varies between plots due to data completeness).
+ALT, Alanine transaminase; APTT, Activated partial thromboplastin time; CRP, C-reactive protein
+
+```{r signsbyage, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
+plot.blood.results.by.age(patient.data)
+
+```
+
+\newpage
 # Hospital stays and outcomes
 
-**Figure 4**: Distribution of length of hospital stay, according to sex. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+**Figure 8**: Distribution of length of hospital stay, according to sex. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r  stay.by.sex, out.width= "80%"}
 
 violin.sex.func(patient.data)
 ```
 
-**Figure 5**: Distribution of length of hospital stay, according to patient age group. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+**Figure 9**: Distribution of length of hospital stay, according to patient age group. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r  stay.by.age, out.width= "80%"}
 
@@ -145,7 +177,7 @@ violin.age.func(patient.data)
 ```
 
 \newpage
-**Figure 6**: The distribution of patient status by number of days after admission. Patients with "Unknown" status have left the site at the time of report but have unknown outcomes due to missing data. Patients still on site at the time of report appear in the ongoing "ongoing care" for days which are in the future at that time. (For example, a patient admitted 7 days before the date of report and still on site at report would be categorised as "ongoing care" for days 8 and later.) The black line marks the end of 14 days; due to the cut-off, only a small number of patients appear in the "ongoing care" category left of this line.
+**Figure 10**: The distribution of patient status by number of days after admission. Patients with "Unknown" status have left the site at the time of report but have unknown outcomes due to missing data. Patients still on site at the time of report appear in the ongoing "ongoing care" for days which are in the future at that time. (For example, a patient admitted 7 days before the date of report and still on site at report would be categorised as "ongoing care" for days 8 and later.) The black line marks the end of 14 days; due to the cut-off, only a small number of patients appear in the "ongoing care" category left of this line.
 
 ```{r  timeline, out.width= "100%"}
 
@@ -162,7 +194,7 @@ status.by.time.after.admission(patient.data)
 ```
 
 \newpage
-**Figure 7**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset). The rightmost bar, marked with an asterisk, represents an incomplete week (due to the 14-day cutoff).
+**Figure 11**: Patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset). The rightmost bar, marked with an asterisk, represents an incomplete week (due to the 14-day cutoff).
 
 ```{r recruitment3, echo=FALSE}
 
@@ -174,7 +206,7 @@ outcomes.by.admission.date(patient.data)
 
 # Treatment
 
-**Figure 8**: Treatments used. This only includes patients for whom this information was recorded.
+**Figure 12**: Treatments used. This only includes patients for whom this information was recorded.
 
 ```{r treatment1, echo=FALSE}
 treatment.use.plot(patient.data)
@@ -182,7 +214,7 @@ treatment.use.plot(patient.data)
 
 \newpage
 
-**Figure 9**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients with completed hospital stay and recorded treatment data. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
+**Figure 13**: The distribution of combinations of antimicrobial treatments and steroids administered during hospital stay, across all patients with completed hospital stay and recorded treatment data. Filled and empty circles below the x-axis indicate treatments that were and were not administered.
 
 ```{r treatment2, echo=FALSE}
 treatment.upset(patient.data)
@@ -192,7 +224,7 @@ treatment.upset(patient.data)
 
 # Intensive Care and High Dependency Unit Treatments
 
-**Figure 10**: Treatments used amongst patients admitted to the ICU. This only includes patients for whom this information was recorded.
+**Figure 14**: Treatments used amongst patients admitted to the ICU. This only includes patients for whom this information was recorded.
 
 
 ```{r treatment.icu, echo=FALSE}
@@ -202,7 +234,7 @@ treatment.use.plot.icu(patient.data)
 
 \newpage
 
-**Figure 11**: The distribution of combinations of treatments administered during ICU/HDU stay. Filled and empty circles below the x-axis indicate treatments that were and were not administered respectively.
+**Figure 15**: The distribution of combinations of treatments administered during ICU/HDU stay. Filled and empty circles below the x-axis indicate treatments that were and were not administered respectively.
 <!-- The distribution of combinations of treatments administered during  hospital stay for patients who were admitted to an Intensive Care Unit . Filled and empty circles below the x-axis indicate treatments that were and were not administered. -->
 
 ```{r treatment2.icu, echo=FALSE}
@@ -211,7 +243,7 @@ icu.treatment.upset(patient.data)
 
 
 \newpage
-**Figure 12**: Distribution of lengths of stay for patients who were admitted to ICU/HDU: total length of stay for this group and length of stay within intensive care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
+**Figure 16**: Distribution of lengths of stay for patients who were admitted to ICU/HDU: total length of stay for this group and length of stay within intensive care. This only includes cases with reported completed stays. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r icu_los, echo=FALSE}
 icu.violin.plot(patient.data)
@@ -221,7 +253,7 @@ icu.violin.plot(patient.data)
 
 # Statistical Analysis
 
-**Figure 13**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
+**Figure 17**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
 ```{r onset.admission, out.width = '80%'}
 
@@ -231,7 +263,7 @@ onset.adm.plot(patient.data)
 
 \newpage
 
-**Figure 14**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
+**Figure 18**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 
 ```{r  adm.outcome, out.width = '80%'}
@@ -242,7 +274,7 @@ adm.outcome.plot(patient.data)
 
 \newpage
 
-**Figure 15**: Nonparametric probabilities of death (red curve) and recovery (green curve) over time. The black line indicates the case fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
+**Figure 19**: Nonparametric probabilities of death (red curve) and recovery (green curve) over time. The black line indicates the case fatality ratio (black). The method used here considers all cases, irrespective of whether an outcome has been observed. For a completed epidemic, the curves for death and recovery meet. Estimates were derived using a nonparametric Kaplan-Meier–based method proposed by Ghani *et al.* (2005).
 
 
 ```{r outcomelines}
@@ -255,7 +287,7 @@ modified.km.plot(patient.data)
 
 # Country Comparisons
 
-**Figure 16**: Number of sites per country.
+**Figure 20**: Number of sites per country.
 
 ```{r recruitment1, echo=FALSE}
 
@@ -265,7 +297,7 @@ sites.by.country(unembargoed.data)
 
 \newpage
 
-**Figure 17**: Distribution of patients by country and outcome
+**Figure 21**: Distribution of patients by country and outcome
 
 ```{r recruitment2, echo=FALSE}
 
@@ -278,7 +310,7 @@ outcomes.by.country(patient.data)
 
 # Recruitment
 
-**Figure 18**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The first dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included. The second black line is the exclusion date for next week's report.
+**Figure 22**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The first dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included. The second black line is the exclusion date for next week's report.
 
 ``` {r recruitmentbyoutcome, echo=FALSE}
 
