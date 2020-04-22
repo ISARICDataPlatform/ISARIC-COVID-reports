@@ -3,8 +3,14 @@ data.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data
 data.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
 column.table.file <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
 site.list.file <- "/Users/mdhall/ISARIC.COVID.reports/site_list.csv"
+verbose <- TRUE
+ref.date <- today()
+embargo.length <- 0
+message.out.file <- "messages.csv"
+source.name <- "test"
 
-import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", 14, verbose = TRUE)
+
+import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
 
 import.and.process.data <- function(data.file,
                                     data.dict.file,
@@ -56,7 +62,6 @@ import.and.process.data <- function(data.file,
 
   if(verbose) cat("Joining events tables...\n")
 
-
   patient.data <- demog.data %>% left_join(event.data)
 
   patient.data <- patient.data %>%
@@ -95,6 +100,24 @@ import.and.process.data <- function(data.file,
   patient.data.output <- process.data(patient.data, cst.reference, ref.date - embargo.length, verbose)
 
   patient.data.output
+
+}
+
+generate.report <- function(patient.data.output, file.name){
+  patient.data <- patient.data.output$detailed.data
+  unembargoed.data <- patient.data.output$unembargoed.data
+  countries.and.sites <- patient.data.output$countries.and.sites
+
+  admission.symptoms <- cst.reference %>% filter(type == "symptom")
+  comorbidities <- cst.reference %>% filter(type == "comorbidity")
+  treatments <- cst.reference %>% filter(type == "treatment")
+
+
+
+  de <- d.e(patient.data, unembargoed.data)
+
+
+  rmarkdown::render('COV-report.Rmd',output_file='test.pdf')
 
 }
 
@@ -407,6 +430,50 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
 
   bind_rows(comorbidities, admission.symptoms, treatments)
 }
+pre.nest.sanity.checks <- function(data, message.output.file = NULL, verbose = FALSE){
+  if(verbose) cat("Setting future dates to NA...\n")
+
+  date.columns <- c("dsstdat", "daily_dsstdat", "daily_lbdat", "hostdat", "cestdat", "dsstdtc")
+
+  for(dc in date.columns){
+    data <- data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(.,
+                                                                              subjid = subjid,
+                                                                              colname = dc,
+                                                                              check.early = TRUE,
+                                                                              message.out.file = message.output.file))
+  }
+
+  for(dc in "agedat"){
+    data <- data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(.,
+                                                                              subjid = subjid,
+                                                                              colname = dc,
+                                                                              check.early = FALSE,
+                                                                              message.out.file = message.output.file))
+  }
+
+  data <- data %>%
+    mutate_at(c(date.columns, "agedat"), function(x) as.Date(x, origin = "1970-01-01"))
+
+
+  # Now, some fields need to be numerical even if the data dictionary does not think they are.
+  # These are just the ones of those that we _currently use_. Others should be added as required.
+
+  if(verbose) cat("Manually adjusting some fields...\n")
+
+  data <- data %>%
+    mutate(daily_fio2_lborres = map2_dbl(subjid, daily_fio2_lborres, function(x, y) careful.as.numeric(y, x, "daily_fio2_lborres", message.output.file))) %>%
+    mutate(age_estimateyears = map2_dbl(subjid, age_estimateyears, function(x, y) careful.as.numeric(y, x, "age_estimateyears", message.output.file))) %>%
+    mutate(hodur = map2_dbl(subjid, hodur, function(x, y) careful.as.numeric(y, x, "hodur", message.output.file))) %>%
+    mutate(invasive_prdur = map2_dbl(subjid, invasive_prdur, function(x, y) careful.as.numeric(y, x, "invasive_prdur", message.output.file)))
+
+  # Replace the fractional ages
+
+  data <- data %>%  mutate(age_estimateyears = map2_dbl(age_estimateyears, subjid, function(x, y){
+    careful.fractional.age(x, y, "age_estimateyears", message.output.file)
+  }))
+
+  data
+}
 
 
 process.data <- function(data,
@@ -417,7 +484,7 @@ process.data <- function(data,
 
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
-  treatments %>% filter(type == "treatment")
+  treatments <- cst.reference %>% filter(type == "treatment")
 
   patient.data <- data
 
@@ -531,14 +598,6 @@ process.data <- function(data,
       }
     }))
 
-  patient.data <- patient.data %>%
-    # check if symptoms, comorbidities and treatments were actually recorded
-    dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
-    dplyr::mutate(comorbidities.recorded = pmap_lgl(list(!!!rlang::parse_exprs(comorbidities$field)), ~any(!is.na(c(...))))) %>%
-    dplyr::mutate(treatments.recorded = map_lgl(events, function(x){
-      temp <- x %>% mutate(tr = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...)))))
-      any(temp$tr)
-    }))
 
   # Add new columns with more self-explanatory names as needed
 
@@ -598,6 +657,16 @@ process.data <- function(data,
         preg
       }
     }))
+
+  patient.data <- patient.data %>%
+    # check if symptoms, comorbidities and treatments were actually recorded
+    dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
+    dplyr::mutate(comorbidities.recorded = pmap_lgl(list(!!!rlang::parse_exprs(comorbidities$field)), ~any(!is.na(c(...))))) %>%
+    dplyr::mutate(treatments.recorded = map_lgl(events, function(x){
+      temp <- x %>% mutate(tr = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...)))))
+      any(temp$tr)
+    }))
+
 
   patient.data <- patient.data %>%
     # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
@@ -885,7 +954,7 @@ process.data <- function(data,
 
   # drop the ICU2 columns
 
-  patient.data2 <- patient.data %>% dplyr::select(-starts_with("ICU2"))
+  patient.data <- patient.data %>% dplyr::select(-starts_with("ICU2"))
 
   ###### Calculation of time periods #####
 
@@ -1032,14 +1101,10 @@ process.data <- function(data,
     dplyr::summarise(n.sites = sum(n.sites)) %>%
     filter(!is.na(Country))
 
-  # Back to tibble
-
-  patient.data2 <- patient.data %>%
-    as_tibble()
-
   # Impose the embargo
 
   if(verbose) cat("Imposing the embargo...\n")
+
 
   patient.data <-  patient.data %>%
     filter(dsstdat <= embargo.limit)
@@ -1050,58 +1115,13 @@ process.data <- function(data,
 
   # Temporary fix! #
 
-  patient.data <- patient.data[-c(which(is.na(patient.data$exit.code) & !is.na(patient.data$exit.date))), ]
-  # patient.data <- patient.data[-c(which(!is.na(patient.data$exit.code) & is.na(patient.data$exit.date))), ]
+  patient.data<- patient.data %>% filter(!(is.na(exit.code) & !is.na(exit.date)))
 
   # Detach the events table
 
-  patient.data <- patient.data %>% dplyr::select(-events)
+  # patient.data <- patient.data %>% dplyr::select(-events)
 
-  list(unembargoed.data = unembargoed.data, detailed.data = patient.data)
+  list(unembargoed.data = unembargoed.data, detailed.data = patient.data, countries.and.sites = countries.and.sites)
 
 }
 
-pre.nest.sanity.checks <- function(data, message.output.file = NULL, verbose = FALSE){
-  if(verbose) cat("Setting future dates to NA...\n")
-
-  date.columns <- c("dsstdat", "daily_dsstdat", "daily_lbdat", "hostdat", "cestdat", "dsstdtc")
-
-  for(dc in date.columns){
-    data <- data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(.,
-                                                                              subjid = subjid,
-                                                                              colname = dc,
-                                                                              check.early = TRUE,
-                                                                              message.out.file = message.output.file))
-  }
-
-  for(dc in "agedat"){
-    data <- data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(.,
-                                                                              subjid = subjid,
-                                                                              colname = dc,
-                                                                              check.early = FALSE,
-                                                                              message.out.file = message.output.file))
-  }
-
-  data <- data %>%
-    mutate_at(c(date.columns, "agedat"), function(x) as.Date(x, origin = "1970-01-01"))
-
-
-  # Now, some fields need to be numerical even if the data dictionary does not think they are.
-  # These are just the ones of those that we _currently use_. Others should be added as required.
-
-  if(verbose) cat("Manually adjusting some fields...\n")
-
-  data <- data %>%
-    mutate(daily_fio2_lborres = map2_dbl(subjid, daily_fio2_lborres, function(x, y) careful.as.numeric(y, x, "daily_fio2_lborres", message.output.file))) %>%
-    mutate(age_estimateyears = map2_dbl(subjid, age_estimateyears, function(x, y) careful.as.numeric(y, x, "age_estimateyears", message.output.file))) %>%
-    mutate(hodur = map2_dbl(subjid, hodur, function(x, y) careful.as.numeric(y, x, "hodur", message.output.file))) %>%
-    mutate(invasive_prdur = map2_dbl(subjid, invasive_prdur, function(x, y) careful.as.numeric(y, x, "invasive_prdur", message.output.file)))
-
-  # Replace the fractional ages
-
-  data <- data %>%  mutate(age_estimateyears = map2_dbl(age_estimateyears, subjid, function(x, y){
-    careful.fractional.age(x, y, "age_estimateyears", message.output.file)
-  }))
-
-  data
-}
