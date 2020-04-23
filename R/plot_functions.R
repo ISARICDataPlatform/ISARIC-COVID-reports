@@ -178,7 +178,7 @@ outcomes.by.country <- function(data, ...){
 #' The variables of \code{data} containing the date and outcome information of patients should be named "start.date" and "outcome" respectively.
 #' The variable "outcome" should be a factor with levels 'discharge', 'censored' and 'death'; in this case, 'censored' patients are those for whom clinical care is ongoing.
 
-outcomes.by.admission.date <- function(data, ...){
+outcomes.by.admission.date <- function(data, embargo.limit, ...){
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored", "death"))) %>%
@@ -227,7 +227,7 @@ outcomes.by.admission.date <- function(data, ...){
 #'
 #'  @examples
 #' comorbidities.upset(data = patient.data, max.comorbidities = 4)
-comorbidities.upset <- function(data, max.comorbidities, ...){
+comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
   # (max.comorbidities is the n to list; this will be the n most frequent)
   # just the comorbidity columns
 
@@ -352,7 +352,7 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
 #'
 #' @examples
 #' symptoms.upset(data = patient.data, max.symptoms = 4)
-symptoms.upset <- function(data, max.symptoms, ...){
+symptoms.upset <- function(data, max.symptoms, admission.symptoms, ...){
   # (max.symptoms is the n to list; this will be the n most frequent)
 
   # just the symptom columns
@@ -462,7 +462,7 @@ symptoms.upset <- function(data, max.symptoms, ...){
 #' @export
 #' @keywords internal
 
-symptom.prev.calc <- function(data){
+symptom.prev.calc <- function(data, admission.symptoms){
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field))
 
@@ -499,7 +499,7 @@ symptom.prev.calc <- function(data){
 #' @param data Output of \code{\link{process_data}}.
 #'
 #' @return  Heatmap showing the proportion of patients for each pairwise combination of symptoms.
-symptom.heatmap <- function(data, ...){
+symptom.heatmap <- function(data, admission.symptoms, ...){
 
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field))
@@ -589,7 +589,7 @@ symptom.heatmap <- function(data, ...){
 #' @return  Barplot showing the proportion of patients reporting each symptom.
 #' Bars are annotated with a fraction representing the number of patients presenting with a symptom
 #' over the number of patients for whom presence or absence of that symptom was recorded.
-symptom.prevalence.plot <- function(data, ...){
+symptom.prevalence.plot <- function(data, admission.symptoms, ...){
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field))
 
@@ -647,7 +647,7 @@ symptom.prevalence.plot <- function(data, ...){
 #' @keywords internal
 
 
-comorb.prev.calc <- function(data){
+comorb.prev.calc <- function(data, comorbidities){
 
   data2 <- data %>%
     dplyr::select(subjid, one_of(comorbidities$field))
@@ -691,7 +691,7 @@ comorb.prev.calc <- function(data){
 #' @return  Barplot showing the proportion of patients reporting each symptom.
 #' Bars are annotated with a fraction representing the number of patients reporting a comorbidity
 #' over the number of patients for whom presence or absence of that comorbidity was recorded.
-comorbidity.prevalence.plot <- function(data, ...){
+comorbidity.prevalence.plot <- function(data, comorbidities, ...){
 
   data2 <- data %>%
     dplyr::select(subjid, one_of(comorbidities$field))
@@ -752,7 +752,7 @@ comorbidity.prevalence.plot <- function(data, ...){
 #' @keywords internal
 
 
-treatment.use.calc <- function(data){
+treatment.use.calc <- function(data, treatments){
 
   treatment.columns <- map(1:nrow(data), function(i){
     data$events[i][[1]] %>%
@@ -806,7 +806,7 @@ treatment.use.calc <- function(data){
 #' @return  Barplot showing the proportion of patients given each treatment.
 #' Bars are annotated with a fraction representing the number of patients given a treatment
 #' over the number of patients for whom presence or absence of that treatment was recorded.
-treatment.use.plot <- function(data, ...){
+treatment.use.plot <- function(data, treatments, ...){
 
   treatment.columns <- map(1:nrow(data), function(i){
     data$events[i][[1]] %>%
@@ -955,7 +955,7 @@ make.props.treats <- function(data, ...){
 #' A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griﬃn, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).
 #' Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, *American Journal of Epidemiology*, **162**(5), 479 - 486.
 #' [doi:10.1093/aje/kwi230](doi:10.1093/aje/kwi230).
-modified.km.plot <- function(data, ...) {
+modified.km.plot <- function(data, embargo.limit, ...) {
 
 
   # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
@@ -963,10 +963,10 @@ modified.km.plot <- function(data, ...) {
   # Exclude rows which no entries for length of stay
 
   # c$pstate is cumulative incidence function for each endpoint
-  c <- casefat2(data)$c
+  c <- casefat2(data, embargo.limit)$c
   Fd <- c$pstate[,which(c$states=="death")] # death
   Fr <- c$pstate[,which(c$states=="discharge")] # recovery
-  cfr <- casefat2(data)$cfr
+  cfr <- casefat2(data, embargo.limit)$cfr
 
 
   # Plot
@@ -1605,11 +1605,11 @@ get_icu_pts <- function(patient.data, ...) {
 #' @return  UpSet plot showing the frequency of combinations of ICU/HDU treatments.
 #' Filled and empty circles below the x-axis of the plot indicate treatments that were and were not
 #' administered respectively.
-treatment.use.plot.icu <- function(data, ...){
+treatment.use.plot.icu <- function(data, treatments,...){
   d <- get_icu_pts(data)
   #Overriding colour from treatment.use.plot, therefore suppressMessages
   p <- suppressMessages(
-    treatment.use.plot(d) +
+    treatment.use.plot(d, treatments) +
       scale_fill_manual(
         values = c("darkorchid2", "darkorchid4"),
         name = "Treatment", labels = c("No", "Yes")
@@ -1823,7 +1823,7 @@ fit.summary.gamma <- function(fit){
 #' @export
 #' @keywords internal
 
-casefat2 <-  function(data, conf=0.95){
+casefat2 <-  function(data, embargo.limit, conf=0.95){
 
   # Function for the estimation of the case fatality ratio based on the nonparametric KM-like method by
   # Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
@@ -1862,7 +1862,7 @@ casefat2 <-  function(data, conf=0.95){
   ###############################################################
   # Survivor function and variance for combined endpoint
 
-  f.end <- revalue(f, c(death = 'endpoint', discharge = 'endpoint'))
+  f.end <- fct_recode(f, endpoint = 'death', endpoint = 'discharge')
 
   c0 = survfit(Surv(t, f.end)~1)
   si = which(c0$states!="endpoint")
@@ -1953,18 +1953,18 @@ casefat2 <-  function(data, conf=0.95){
 #' @export
 #' @keywords internal
 
-icu.cfr.func <- function(data){
+icu.cfr.func <- function(data, embargo.limit){
 
   icu.cases <- data %>% filter(ICU.ever == 'TRUE')
 
   non.icu.cases <- data %>% filter(is.na(ICU.ever) | ICU.ever == 'FALSE')
 
-  cfr.icu.list <- casefat2(icu.cases)
+  cfr.icu.list <- casefat2(icu.cases, embargo.limit)
   cfr.icu <- cfr.icu.list$cfr
   cfr.icu.l <- cfr.icu.list$lcfr
   cfr.icu.u <- cfr.icu.list$ucfr
 
-  cfr.non.icu.list <- casefat2(non.icu.cases)
+  cfr.non.icu.list <- casefat2(non.icu.cases, embargo.limit)
   cfr.non.icu <- cfr.non.icu.list$cfr
   cfr.non.icu.l <- cfr.non.icu.list$lcfr
   cfr.non.icu.u <- cfr.non.icu.list$ucfr
@@ -2369,7 +2369,7 @@ adm.outcome <- function(data, plt = F){
     t <- data.frame(x = admit.discharge)
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
@@ -2513,7 +2513,7 @@ adm.to.niv <- function(data,plt = F,...){
 
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
@@ -2573,7 +2573,7 @@ dur.niv <- function(data,plt = F, ...){
 
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
@@ -2622,7 +2622,7 @@ adm.to.icu <- function(data, plt = F,...){
 
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
@@ -2674,7 +2674,7 @@ dur.icu <- function(data, plt = F, ...) {
 
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
@@ -2724,7 +2724,7 @@ adm.to.imv <- function(data, plt = F, ...){
 
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
@@ -2775,7 +2775,7 @@ dur.imv <- function(data, plt=F, ...) {
 
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=t$x, y=dgamma(t$x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
@@ -2940,7 +2940,7 @@ plot.comorb.by.age <- function(data, ...) {
 
 #' @export plot.sx.by.age
 #' @keywords internal
-plot.sx.by.age <- function(data, ...) {
+plot.sx.by.age <- function(data, admission.symptoms, ...) {
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
                   one_of(admission.symptoms$field), start.to.exit, sex

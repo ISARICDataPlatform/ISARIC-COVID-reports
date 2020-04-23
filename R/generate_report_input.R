@@ -6,7 +6,7 @@
 #' @export
 #' @keywords internal
 # Main function d.e (dynamic.estimates) calculates estimates and confidence intervals, to be incorporated into report. #
-d.e <- function(data, datafull, ...){
+d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms, treatments, ...){
 
   # Summaries
 
@@ -201,7 +201,7 @@ d.e <- function(data, datafull, ...){
   obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
   obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
   obs.sd.adm.outcome <- round(x_sd, 1)
-  cases.full.adm.outcome <- length(adm.outcome(patient.data)$obs)
+  cases.full.adm.outcome <- length(adm.outcome(data)$obs)
   obs.median.adm.outcome <- round(x_median, 1)
   obs.iqr.adm.outcome <- round(IQR(x, na.rm = T), 1)
 
@@ -258,19 +258,19 @@ d.e <- function(data, datafull, ...){
 
   # CFR
 
-  cfr <- round(casefat2(data)$cfr, 2)
-  cfr.lower <-round(casefat2(data)$lcfr, 2)
-  cfr.upper <-  round(casefat2(data)$ucfr, 2)
+  cfr <- round(casefat2(data, embargo.limit)$cfr,  2)
+  cfr.lower <-round(casefat2(data, embargo.limit)$lcfr, 2)
+  cfr.upper <-  round(casefat2(data, embargo.limit)$ucfr, 2)
 
   # CFR for ICU/non-ICU
 
- cfr.icu <-  icu.cfr.func(data)$cfr.icu
- cfr.icu.l <- icu.cfr.func(data)$cfr.icu.l
- cfr.icu.u <- icu.cfr.func(data)$cfr.icu.u
+ cfr.icu <-  icu.cfr.func(data, embargo.limit)$cfr.icu
+ cfr.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.icu.l
+ cfr.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.icu.u
 
- cfr.non.icu <-  icu.cfr.func(data)$cfr.non.icu
- cfr.non.icu.l <- icu.cfr.func(data)$cfr.non.icu.l
- cfr.non.icu.u <- icu.cfr.func(data)$cfr.non.icu.u
+ cfr.non.icu <-  icu.cfr.func(data, embargo.limit)$cfr.non.icu
+ cfr.non.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.l
+ cfr.non.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.u
 
 
 
@@ -311,21 +311,21 @@ d.e <- function(data, datafull, ...){
 
   # Symptoms
 
-  s.dat <- symptom.prev.calc(data)
+  s.dat <- symptom.prev.calc(data, admission.symptoms)
 
   # Comorbidities
 
-  c.dat <- comorb.prev.calc(data)
+  c.dat <- comorb.prev.calc(data, comorbidities)
 
   # Treatments
 
-  t.dat <- treatment.use.calc(data)
+  t.dat <- treatment.use.calc(data, treatments)
 
   # Cough
 
-  cough_pre <- patient.data %>% filter(cough.any == 1) %>% nrow()
-  cough_abs <- patient.data %>% filter(cough.any == 2) %>% nrow()
-  cough_unk <- patient.data %>% filter(is.na(cough.any)) %>% nrow()
+  cough_pre <- data %>% filter(cough.any == 1) %>% nrow()
+  cough_abs <- data %>% filter(cough.any == 2) %>% nrow()
+  cough_unk <- data %>% filter(is.na(cough.any)) %>% nrow()
 
   # p-value
 
