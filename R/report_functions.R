@@ -1,20 +1,36 @@
 
-data.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data from Laura/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
-data.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
-column.table.file <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
-site.list.file <- "/Users/mdhall/ISARIC.COVID.reports/site_list.csv"
-verbose <- TRUE
-ref.date <- today()
-embargo.length <- 0
-message.out.file <- "messages.csv"
-source.name <- "test"
+# data.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data from Laura/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
+# data.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
+# column.table.file <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
+# site.list.file <- "/Users/mdhall/ISARIC.COVID.reports/site_list.csv"
+# verbose <- TRUE
+# ref.date <- today()
+# embargo.length <- 0
+# message.out.file <- "messages.csv"
+# source.name <- "test"
+#
+#
+# import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
 
 
-import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
-
+#' Import data
+#'
+#' Import data from Redcap .csv output for processing
+#' @param data.file Path of the data file
+#' @param data.dict.file Path of the data dictionary file
+#' @param column.table.file Path of the column translation file (default required_columns.csv)
+#' @param source.name String identifier for the data source (optional)
+#' @param message.out.file Path of a file to store messages about fields that were overwritten in the data cleaning process. If not given, this file is not generated
+#' @param embargo.length Length of the data embargo in days; patients enrolled less than this period before \code{ref.date} will be excluded from reports. Default 0.
+#' @param ref.date Date to be taken as the date of the report. Default is today's date.
+#' @param verbose Flag for verbose output
+#'
+#' @param source.name
+#' @export import.and.process.data
+#'
 import.and.process.data <- function(data.file,
                                     data.dict.file,
-                                    column.table.file,
+                                    column.table.file = "required_columns.csv",
                                     site.list,
                                     source.name = NA,
                                     message.out.file = NULL,
@@ -123,6 +139,8 @@ generate.report <- function(patient.data.output, file.name){
 
 # There is a general problem with non-numeric entries in numerical columns. This function replaces them with NA with a warning
 
+#' @export
+#' @keywords internal
 careful.as.numeric <- function(value, subjid, colname, message.out.file = NULL){
   out <- suppressWarnings(as.numeric(value))
   if(!is.na(value) & is.na(out)){
@@ -135,6 +153,8 @@ careful.as.numeric <- function(value, subjid, colname, message.out.file = NULL){
 }
 
 
+#' @export
+#' @keywords internal
 pcareful.as.numeric <- function(value.col, subjid, colname, message.out.file = NULL){
   if(is.numeric(value.col)){
     value.col
@@ -147,6 +167,8 @@ pcareful.as.numeric <- function(value.col, subjid, colname, message.out.file = N
 
 # Checks for dates in the future and returns NA if they are
 
+#' @export
+#' @keywords internal
 careful.date.check <- function(value, subjid, colname, check.early = F, message.out.file = NULL){
   if(is.na(value)) {
     return(NA)
@@ -167,6 +189,8 @@ careful.date.check <- function(value, subjid, colname, check.early = F, message.
   }
 }
 
+#' @export
+#' @keywords internal
 pcareful.date.check <- function(value.col, subjid, colname, check.early = FALSE, message.out.file = NULL){
   map2_dbl(value.col, subjid, function(x, y){
     careful.date.check(x, y, colname, check.early, message.out.file)
@@ -175,6 +199,8 @@ pcareful.date.check <- function(value.col, subjid, colname, check.early = FALSE,
 
 # Checks for ages (strictly) between 0 and 1 and multiples by 100
 
+#' @export
+#' @keywords internal
 careful.fractional.age <- function(value, subjid, colname, message.out.file = NULL){
   if(is.na(value)) {
     return(NA)
@@ -189,6 +215,8 @@ careful.fractional.age <- function(value, subjid, colname, message.out.file = NU
 }
 
 
+#' @export extract.named.column.from.events
+#' @keywords internal
 extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
   out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
 
@@ -203,6 +231,8 @@ extract.named.column.from.events <- function(events.tibble, column.name, sanity.
 
 # This is the function to return information about a patient's time on an intervention (e.g. IMV) from both daily and final forms
 
+#' @export
+#' @keywords internal
 process.event.dates <- function(events.tbl, summary.status.name, daily.status.name){
   subtbl <- events.tbl %>% dplyr::select(dsstdat, daily_dsstdat, !!summary.status.name, !!daily.status.name )
 
@@ -263,8 +293,8 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
 }
 
 
-
-
+#' @export
+#' @keywords internal
 import.patient.data <- function(data.file,
                                 data.dict.file,
                                 source.name = NA,
@@ -321,6 +351,8 @@ import.patient.data <- function(data.file,
 
 # This standardises column names from the lookup file and drops unncessary ones
 
+#' @export
+#' @keywords internal
 rename.and.drop.columns <- function(data, column.table, cst.reference){
 
   for(i in 1:nrow(column.table)){
@@ -351,6 +383,8 @@ rename.and.drop.columns <- function(data, column.table, cst.reference){
 
 # This makes the symptom, comorbidity and treatment reference table
 
+#' @export
+#' @keywords internal
 process.symptoms.comorbidities.treatments <- function(data.dict.file){
 
   d.dict <- read_csv(data.dict.file) %>%
@@ -430,6 +464,29 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
 
   bind_rows(comorbidities, admission.symptoms, treatments)
 }
+
+
+# Function to check for text that looks like it means SARS-CoV-2. Lots of typos in these fields. This may catch other coronaviruses.
+
+
+#' @export
+#' @keywords internal
+probable.cov.freetext <- function(text){
+  str_detect(text, "[sS][aA][rR][sS]") |
+    str_detect(text, "[cC][oO]r?[vV]") |
+    str_detect(text, "[nN][cC][oO][cC]") |
+    str_detect(text, "[nN][cC][vV][oO]") |
+    str_detect(text, "[cC][oO][iI][vV][dD]") |
+    str_detect(text, "[cC][vV][iI][dD]") |
+    str_detect(text, "[cC][oO][vV][oO][iI][dD]") |
+    str_detect(text, "[cC]or?n?o?n[ao]vir[iu]s") |
+    str_detect(text, "[cC]OR?N?O?N[AO]VIR[IU]S") |
+    str_detect(text, "[cC]or?n?o?n[ao]\\s[Vv]ir[iu]s") |
+    str_detect(text, "[cC]OR?N?O?N[AO]\\sVIR[IU]S") |
+    str_detect(text, "[Cc][Oo][Rr][Oo][Nn][Aa]")
+}
+
+
 pre.nest.sanity.checks <- function(data, message.output.file = NULL, verbose = FALSE){
   if(verbose) cat("Setting future dates to NA...\n")
 
@@ -475,7 +532,8 @@ pre.nest.sanity.checks <- function(data, message.output.file = NULL, verbose = F
   data
 }
 
-
+#' @export
+#' @keywords internal
 process.data <- function(data,
                          cst.reference,
                          embargo.limit = today(),
@@ -793,68 +851,6 @@ process.data <- function(data,
 
   if(verbose) cat("Wrangling dates for treatment modalities...\n")
 
-  process.event.dates <- function(events.tbl, summary.status.name, daily.status.name){
-    subtbl <- events.tbl %>% dplyr::select(dsstdat, daily_dsstdat, !!summary.status.name, !!daily.status.name )
-
-    colnames(subtbl)[3:4] <- c("summary.col","daily.col")
-
-    check.rows <- subtbl %>% filter(!is.na(summary.col) | !is.na(daily.col))
-    if(nrow(check.rows) == 0){
-      ever <- NA
-    } else {
-      ever <- any((check.rows$summary.col == 1) | (check.rows$daily.col == 1), na.rm = T)
-    }
-
-
-    rows <- subtbl %>% filter(!is.na(daily.col) & !(is.na(dsstdat) & is.na(daily_dsstdat))) %>%
-      mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
-      mutate(consolidated.dssdat = ymd(consolidated.dssdat))
-
-    if(nrow(rows) == 0){
-      # no reference
-      start.date <- NA
-      end.date <- NA
-      first.after.date <- NA
-      multiple.periods <- NA
-    } else if(!any(rows$daily.col == 1)){
-      # no "yes"
-      start.date <- NA
-      end.date <- NA
-      first.after.date <- NA
-      multiple.periods <- NA
-    } else {
-      start.date <- rows %>% filter(daily.col == 1) %>% slice(1) %>% pull(consolidated.dssdat)
-      last.date <- rows %>% filter(daily.col == 1) %>% slice(n()) %>% pull(consolidated.dssdat)
-      if(is.na(start.date)){
-        # sometimes happens. ever = TRUE but dates unknown
-        end.date <- NA
-        first.after.date <- NA
-      } else if(last.date == rows %>% filter(!is.na(consolidated.dssdat)) %>% slice(n()) %>% pull(consolidated.dssdat)){
-        # Patient was on at last report
-        end.date <- NA
-        first.after.date <- NA
-      } else {
-        # They were off at the next report
-        end.date <- last.date
-
-        next.report.row <- max(which(rows$consolidated.dssdat == last.date)) + 1
-        first.after.date <- rows$consolidated.dssdat[next.report.row]
-      }
-      if(nrow(rows)<=2 | is.na(start.date)){
-        multiple.periods <- F
-      } else {
-        # we are looking for the number of instances of 2 then 1. If this is more than 1, or more than 0 with the first report on NIMV,
-        # then the patient went on multiple times
-        temp <- map_dbl(2:nrow(rows), function(x)  rows$daily.col[x] - rows$daily.col[x-1] )
-        multiple.periods <- length(which(temp == -1)) < 1 | (length(which(temp == -1)) > 0 &  rows$daily.col[1] == 1)
-      }
-    }
-    list(ever = ever, start.date = start.date, end.date = end.date, first.after.date = first.after.date, multiple.periods = multiple.periods)
-  }
-
-
-
-
   patient.data <- patient.data %>%
     # NIV
     mutate(NIMV.cols  = map(events, function(el){
@@ -1032,24 +1028,6 @@ process.data <- function(data,
              map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mborres"))) %>%
     mutate(any.test.freetext =
              map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mbtestcd")))
-
-
-  # Function to check for text that looks like it means SARS-CoV-2. Lots of typos in these fields. This may catch other coronaviruses.
-
-  probable.cov.freetext <- function(text){
-    str_detect(text, "[sS][aA][rR][sS]") |
-      str_detect(text, "[cC][oO]r?[vV]") |
-      str_detect(text, "[nN][cC][oO][cC]") |
-      str_detect(text, "[nN][cC][vV][oO]") |
-      str_detect(text, "[cC][oO][iI][vV][dD]") |
-      str_detect(text, "[cC][vV][iI][dD]") |
-      str_detect(text, "[cC][oO][vV][oO][iI][dD]") |
-      str_detect(text, "[cC]or?n?o?n[ao]vir[iu]s") |
-      str_detect(text, "[cC]OR?N?O?N[AO]VIR[IU]S") |
-      str_detect(text, "[cC]or?n?o?n[ao]\\s[Vv]ir[iu]s") |
-      str_detect(text, "[cC]OR?N?O?N[AO]\\sVIR[IU]S") |
-      str_detect(text, "[Cc][Oo][Rr][Oo][Nn][Aa]")
-  }
 
   # IMPORTANT: At the moment "positive.COV19.test" refers to "evidence for a positive test". FALSE is not evidence for a negative test.
 

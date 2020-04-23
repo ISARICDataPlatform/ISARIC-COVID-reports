@@ -3,6 +3,19 @@
 
 ##### Age pyramid ####
 
+#' Plot patient demographics by outcome.
+#'
+#' Plots the age and sex distribution of patients according to clinical outcome.
+#'
+#'#' @export age.pyramid
+#' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for age group, sex, and outcome of patients. See 'Details'.
+#' @return  Bar plot of the age (in intervals of four years) and sex (male/female) of patients, plotted according to clinical outcome (discharge/death/ongoing care).
+#'
+#' The columns of \code{data} for age group, sex and outcome should be named "agegp5", "sex" and "outcome" respectively and formatted as follows:
+#' the variable "sex" should be numeric with values 1 and 2 for males and females respectively;
+#' the variable "agegp5" should be a factor with levels 0-4, 5-9, 10-14, ...., 90+;
+#' and the variable "outcome" should be a factor with levels 'discharge', 'censored' and 'death'; in this case, 'censored' patients are those for whom clinical care is ongoing.
+
 age.pyramid <- function(data, ...){
 
   data2 <- data %>%
@@ -70,9 +83,19 @@ age.pyramid <- function(data, ...){
 
 
 }
-
 ##### Distribution of sites by country #####
 
+
+#' Plot the number of sites by country
+#'
+#' Plots the number of sites by country
+#'
+#' @export sites.by.country
+#' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for the country and site associated with each patient. See 'Details'.
+#'
+#' The columns of \code{data} containing country and site names should be named "Country" and "site.name" respectively.
+#'
+#' @return  Bar plot showing the number of sites per country. Actual counts are printed on top of each bar.
 sites.by.country <- function(data, ...){
   data2 <- data %>%
     group_by(Country, site.name) %>%
@@ -90,7 +113,20 @@ sites.by.country <- function(data, ...){
     geom_text(aes(x=Country, y=n.sites + nudge, label=n.sites), size=4)
 }
 
+
 ##### Distribution of patients and outcomes by country #####
+
+
+#' Plot the distribution of patients by country and outcome
+#'
+#' Plots the distribution of patients by country and outcome
+#'
+#' @export outcomes.by.country
+#' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for the country and outcome associated with each patient. See 'Details'.
+#' @return  Bar plot showing the number of patients per country and by outcome (discharge/ongoing care/death). Actual counts of the total number of patients for each country are printed on top of each bar.
+#'
+#' The variables of \code{data} containing the country and outcome information of patients should be named "Country" and "outcome" respectively.
+#' The variable "outcome" should be a factor with levels 'discharge', 'censored' and 'death'; in this case, 'censored' patients are those for whom clinical care is ongoing.
 
 outcomes.by.country <- function(data, ...){
   data2 <- data %>%
@@ -99,7 +135,7 @@ outcomes.by.country <- function(data, ...){
     filter(!is.na(Country)) %>%
     mutate(uk = ifelse(Country == "UK", "UK", "Rest of world")) %>%
     group_by(Country, outcome, uk) %>%
-    dplyr::summarise(count = n()) %>%
+    summarise(count = n()) %>%
     ungroup()
 
 
@@ -108,47 +144,39 @@ outcomes.by.country <- function(data, ...){
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country)) %>%
     group_by(Country) %>%
-    dplyr::summarise(count = n()) %>%
-    mutate(uk = ifelse(Country == "UK", "UK", "Rest of world")) %>%
-    group_by(uk) %>%
-    mutate(nudge = max(count)/30) %>%
-    ungroup()
+    summarise(count = n()) %>%
+    mutate(uk = ifelse(Country == "UK", "UK", "Rest of world"))
 
-
+  nudge <- max(data3$count)/30
 
   plot1 <- ggplot() +
     geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=4) +
     geom_col(data = data2, aes(x = Country, y=count,  fill = outcome), col = "black") +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
-    facet_wrap (~ uk, scales = "free") +
+    # facet_wrap (~ uk, scales = "free") +
     # xlab("Country") +
-    # ylab("Cases") +
-    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    scale_x_discrete(expand = c(0, 1)) +
-    scale_y_continuous(expand = c(0, 1))
+    ylab("Cases") +
+    theme(axis.text.x = element_text(angle = 45, hjust=1))
 
-  gp <- ggplotGrob(plot1)
 
-  # optional: take a look at the grob object's layout
-  gtable::gtable_show_layout(gp)
+  plot1
 
-  # get gtable columns corresponding to the facets (5 & 9, in this case)
-  facet.columns <- gp$layout$l[grepl("panel", gp$layout$name)]
-
-  # get the number of unique x-axis values per facet (1 & 3, in this case)
-  x.var <- sapply(ggplot_build(plot1)$layout$panel_scales_x,
-                  function(l) length(l$range$range))
-
-  # change the relative widths of the facet columns based on
-  # how many unique x-axis values are in each facet
-  gp$widths[facet.columns] <- gp$widths[facet.columns] * x.var
-
-  # plot result
-  grid::grid.draw(gp)
 }
 
 ##### Outcomes by epi-week #####
+
+
+#' Plot weekly admission counts
+#'
+#' Plots patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset).
+#'
+#' @export outcomes.by.admission.date
+#' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for the date of admission and  outcome for each patient. See 'Details'.
+#' @return  Bar plot showing the number of patients per country and by outcome (discharge/ongoincg care/death). Bars are annotated with counts.
+#'
+#' The variables of \code{data} containing the date and outcome information of patients should be named "start.date" and "outcome" respectively.
+#' The variable "outcome" should be a factor with levels 'discharge', 'censored' and 'death'; in this case, 'censored' patients are those for whom clinical care is ongoing.
 
 outcomes.by.admission.date <- function(data, ...){
   data2 <- data %>%
@@ -184,10 +212,23 @@ outcomes.by.admission.date <- function(data, ...){
 
 ##### Comorbidities upset plot #####
 
-# (max.comorbidities is the n to list; this will be the n most frequent)
-
+#' Plot prevalence of combinations of comorbidities.
+#'
+#'  Plots the distribution of combinations of the most common comorbidities, amongst all patients for whom these data were recorded.
+#'
+#' @export comorbidities.upset
+#' @param data Output of \code{\link{process_data}}.
+#' @param max.comorbidities The \code{max.comorbidities} most frequent comorbidities will be included in the upset plot. Defaults to 4.
+#'
+#' @return  UpSet plot showing the frequency of combinations of the top \code{max.comorbidities} comorbidities.
+#' Filled and empty circles below the x-axis of the plot indicate the presence or absence of each comorbidity.
+#' The “Any other” category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.comorbidities} comorbidities,
+#' as well as any other comorbidities recorded as free text by clinical staff.
+#'
+#'  @examples
+#' comorbidities.upset(data = patient.data, max.comorbidities = 4)
 comorbidities.upset <- function(data, max.comorbidities, ...){
-
+  # (max.comorbidities is the n to list; this will be the n most frequent)
   # just the comorbidity columns
 
   data2 <- data %>%
@@ -297,11 +338,22 @@ comorbidities.upset <- function(data, max.comorbidities, ...){
 
 ##### Symptoms upset plot #####
 
-# (max.symptoms is the n to list; this will be the n most frequent)
-
-
+#' Plot prevalence of combinations of symptoms.
+#'
+#'  Plots the distribution of combinations of the most common symptoms on admission, amongst all patients for whom these data were recorded.
+#'
+#' @export symptoms.upset
+#' @param data Output of \code{\link{process_data}}.
+#' @param max.symptoms The \code{max.symptoms} most frequent symptoms will be included in the plot. Defaults to 4.
+#'
+#' @return  UpSet plot showing the frequency of combinations of the top \code{max.symptoms} symptoms.
+#' Filled and empty circles below the x-axis of the plot indicate the presence and absence respectively of each symptom.
+#' The “Any other” category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.symptoms} symptoms.
+#'
+#' @examples
+#' symptoms.upset(data = patient.data, max.symptoms = 4)
 symptoms.upset <- function(data, max.symptoms, ...){
-
+  # (max.symptoms is the n to list; this will be the n most frequent)
 
   # just the symptom columns
 
@@ -407,7 +459,8 @@ symptoms.upset <- function(data, max.symptoms, ...){
     scale_x_upset()
 }
 
-##### Prevalence of symptoms #####
+#' @export
+#' @keywords internal
 
 symptom.prev.calc <- function(data){
   data2 <- data %>%
@@ -438,58 +491,79 @@ symptom.prev.calc <- function(data){
 }
 
 ##### Prevalence of symptoms heatmap #####
-
+#'  Plot pairwise symptom prevalance.
+#'
+#'  Plots a heatmap for prevalance of pairwise combinations of symptoms.
+#'  The pairwise prevalence proportions are caculated amongst patients with recorded presence or absence of both symptoms.
+#' @export symptom.heatmap
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return  Heatmap showing the proportion of patients for each pairwise combination of symptoms.
 symptom.heatmap <- function(data, ...){
 
   data2 <- data %>%
-    dplyr::select(subjid, one_of(admission.symptoms$field)) %>%
-    group_by_at(vars(one_of(admission.symptoms$field))) %>%
-    summarise_at(vars(one_of(admission.symptoms$field)), sum, na.rm = T)
+    dplyr::select(subjid, one_of(admission.symptoms$field))
 
 
-  combinations.tibble <- tibble(x = rep(admission.symptoms$field, length(admission.symptoms$field)),
-                                y = rep(admission.symptoms$field, each = length(admission.symptoms$field))) %>%
-    filter(x != y) %>%
-    mutate(denominator = map2_dbl(x,y,function(x1,y1){
-      data2 %>% filter(!is.na(get(x1)) & !is.na(get(y1))) %>% nrow()
+  phi.correlation <- function(c1, c2){
+    if(c1 == c2){
+      return(1)
+    } else {
+      restricted.df <- data2 %>% dplyr::select_at(c(c1, c2))
 
-    }),
-    numerator = map2_dbl(x,y,function(x1,y1){
-      data2 %>% filter(get(x1) == 1 & get(y1) == 1) %>% nrow()
+      restricted.df <- restricted.df %>%
+        filter((!!sym(c1) != 3) & (!!sym(c2) != 3) & !is.na(!!sym(c1)) & !is.na(!!sym(c2))) %>%
+        mutate(!!sym(c1) := (!!sym(c1) == 1)) %>%
+        mutate(!!sym(c2) := !!sym(c2) == 1)
 
-    })) %>%
-    mutate(prop = numerator/denominator) %>%
-    left_join(admission.symptoms, by=c("x" = "field"), suffix = c(".x", ".y")) %>%
-    left_join(admission.symptoms, by=c("y" = "field"), suffix = c(".x", ".y")) #%>%
-  # mutate(temp.label.x = pmin(label.x, label.y), temp.label.y = pmax(label.x, label.y)) %>%
-  # dplyr::select(temp.label.x, temp.label.y, prop) %>%
-  # rename(label.x = temp.label.x, label.y = temp.label.y)
+      twobytwo <- table(restricted.df[[c1]], restricted.df[[c2]])
+      # print(twobytwo)
 
-  ct1 <- combinations.tibble %>%
-    mutate(rec.prop = 1/prop) %>%
-    mutate(rec.prop = replace(rec.prop, rec.prop == Inf, 1+max(1/combinations.tibble$prop[which(combinations.tibble$prop != 0)]))) %>%
-    dplyr::select(label.x,label.y,rec.prop) %>%
-    pivot_wider(names_from = "label.y", values_from = "rec.prop")
-  # no idea why this is NA
-  ct1[24,2] <- ct1[1,25]
+      return(phi(twobytwo))
+    }
+  }
 
+  combinations.tibble <- tibble(cond1 = rep(admission.symptoms$field, length(admission.symptoms$field)),
+                                cond2 = rep(admission.symptoms$field, each = length(admission.symptoms$field))) %>%
+    mutate(phi.correlation = map2_dbl(cond1, cond2, phi.correlation)) %>%
+    left_join(admission.symptoms, by=c("cond1" = "field"), suffix = c(".x", ".y")) %>%
+    left_join(admission.symptoms, by=c("cond2" = "field"), suffix = c(".x", ".y"))
 
-  ct1dist <- as.dist(ct1[,2:ncol(ct1)], diag = T)
-
-  fct.levels <- labels(ct1dist)[order.dendrogram(as.dendrogram(hclust(ct1dist)))]
+  fct.order <- c("Runny nose",
+                 "Sore throat",
+                 "Ear pain",
+                 "Diarrhoea",
+                 "Vomiting / Nausea",
+                 "Abdominal pain",
+                 "Joint pain",
+                 "Muscle aches",
+                 "Fatigue / Malaise",
+                 "Headache",
+                 "Shortness of breath",
+                 "History of fever",
+                 "Wheezing",
+                 "Cough (no sputum)",
+                 "Cough (with sputum)",
+                 "Cough (bloody sputum / haemoptysis)",
+                 "Chest pain",
+                 "Lymphadenopathy",
+                 "Conjunctivitis",
+                 "Bleeding",
+                 "Skin ulcers",
+                 "Skin rash",
+                 "Seizures",
+                 "Altered consciousness / confusion"
+                 )
 
   combinations.tibble.2 <- combinations.tibble %>%
-    mutate(label.x = factor(label.x,  levels = fct.levels)) %>%
-    mutate(label.y = factor(label.y,  levels = rev(fct.levels))) %>%
-    mutate(order.x = map_dbl(label.x, function(lx) which(fct.levels == lx))) %>%
-    mutate(order.y = map_dbl(label.y, function(ly) which(fct.levels == ly))) %>%
-    filter(order.x <= order.y)
-
+    mutate(label.x = factor(label.x, levels = fct.order)) %>%
+    mutate(label.y = factor(label.y, levels = fct.order))
 
 
   ggplot(combinations.tibble.2) +
-    geom_tile(aes(x=label.x, y=label.y, fill=prop)) +
-    scale_fill_gradient(low = "white", high =  "deepskyblue3", name = "Proportion\nof patients") +
+    geom_tile(aes(x=label.x, y=label.y, fill=phi.correlation)) +
+    scale_fill_gradient2(low = "indianred3", mid = "white", high =  "deepskyblue3",
+                         name = "phi coefficient", limits = c(-1,1)) +
     theme_bw() +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
@@ -500,7 +574,21 @@ symptom.heatmap <- function(data, ...){
 
 }
 
+##### Barplot for the prevalence of symptoms #####
 
+#'  Plot distribution of symptom prevalance.
+#'
+#'  Plots the proportion of patients presenting with each symptom at admission.
+#'
+#'  Note that the denominators used in the computation of proportions may differ by symptom as symptom information
+#'  may be incomplete for some patients.
+#'
+#' @export symptom.prevalence.plot
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return  Barplot showing the proportion of patients reporting each symptom.
+#' Bars are annotated with a fraction representing the number of patients presenting with a symptom
+#' over the number of patients for whom presence or absence of that symptom was recorded.
 symptom.prevalence.plot <- function(data, ...){
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field))
@@ -555,6 +643,9 @@ symptom.prevalence.plot <- function(data, ...){
 }
 
 # Prevalence of comorbidities
+#' @export
+#' @keywords internal
+
 
 comorb.prev.calc <- function(data){
 
@@ -586,6 +677,20 @@ comorb.prev.calc <- function(data){
 }
 
 
+##### Barplot for the prevalence of comorbidities #####
+
+#'  Plot distribution of comorbidity prevalance.
+#'
+#'  Plots the proportion of patients reporting each comorbidity at admission.
+#'
+#'  Note that the denominators used in the computation of proportions may differ by comorbidity as
+#'  information on the presence or absence of some comorbidities may be missing/incomplete for some patients.
+#' @export comorbidity.prevalence.plot
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return  Barplot showing the proportion of patients reporting each symptom.
+#' Bars are annotated with a fraction representing the number of patients reporting a comorbidity
+#' over the number of patients for whom presence or absence of that comorbidity was recorded.
 comorbidity.prevalence.plot <- function(data, ...){
 
   data2 <- data %>%
@@ -641,7 +746,11 @@ comorbidity.prevalence.plot <- function(data, ...){
 }
 
 
+
 # Raw proportions of patients undergoing each treatment
+#' @export
+#' @keywords internal
+
 
 treatment.use.calc <- function(data){
 
@@ -682,6 +791,21 @@ treatment.use.calc <- function(data){
   return(data3)
 }
 
+
+##### Treatment use plot #####
+
+#'  Plot distribution of treatments used.
+#'
+#'  Plots the proportion of patients given each treatment during clinical care.
+#'
+#'  Note that the denominators used in the computation of proportions may differ by treatment as
+#'  information on treatment given may be missing/incomplete for some patients.
+#' @export treatment.use.plot
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return  Barplot showing the proportion of patients given each treatment.
+#' Bars are annotated with a fraction representing the number of patients given a treatment
+#' over the number of patients for whom presence or absence of that treatment was recorded.
 treatment.use.plot <- function(data, ...){
 
   treatment.columns <- map(1:nrow(data), function(i){
@@ -739,12 +863,14 @@ treatment.use.plot <- function(data, ...){
     ylim(0, 1) +
     scale_fill_manual(values = c("chartreuse2", "chartreuse4"), name = "Treatment", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
-
   plt
 }
 
 
 # Upset plot for treatments @todo add maximum parameter?
+#' @export
+#' @keywords internal
+
 
 treatment.upset.prep <- function(data, ...) {
   details <- subset(
@@ -785,6 +911,8 @@ treatment.upset.prep <- function(data, ...) {
   return(details)
 }
 
+#' @export
+#' @keywords internal
 
 make.props.treats <- function(data, ...){
   details <- treatment.upset.prep(data)
@@ -806,26 +934,33 @@ make.props.treats <- function(data, ...){
 
 # df <- make.props.treats(patient.data)
 
-## "modified KM plot" ##
+## "Modified KM plot" ##     - increase xlim
 
-
+#'  Plot case fatality ratio (CFR) and survival functions for deaths and recovery.
+#'
+#'  Plots the proportion of deaths and recoveries over time as well as a non-parametric estimate for the CFR using
+#'  an adapted Kaplan-Meier method. See 'Details'.
+#'
+#'  The CFR and survival functions for death and recovery
+#'  are estimated using a nonparametric Kaplan-Meier–based method proposed by Ghani et al. (2005).
+#'  This method estimates the CFR with the formula \frac{a}{(a+b)},
+#'  where a and b are the values of the cumulative incidence function for deaths and recoveries respectively,
+#'   estimated at the last observed time point. See 'References' for details.
+#' @export modified.km.plot
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return  Plot of the survival functions for deaths and recoveries and a line indicating the CFR estimate.
+#'
+#' @references
+#' A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griﬃn, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).
+#' Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, *American Journal of Epidemiology*, **162**(5), 479 - 486.
+#' [doi:10.1093/aje/kwi230](doi:10.1093/aje/kwi230).
 modified.km.plot <- function(data, ...) {
 
 
   # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
 
   # Exclude rows which no entries for length of stay
-
-  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
-
-  #data2 <- data2 %>%
-  #mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
-
-  data2 <- data2 %>%
-    mutate(length.of.stay = map2_dbl(start.to.exit, start.to.censored, function(x,y){
-
-      max(x, y, na.rm = T)
-    }))
 
   # c$pstate is cumulative incidence function for each endpoint
   c <- casefat2(data)$c
@@ -845,7 +980,7 @@ modified.km.plot <- function(data, ...) {
     geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
     geom_ribbon(data = df %>% filter(status == "death"), aes(x=day, ymin = 0, ymax = value), fill ="indianred", alpha = 0.66)+
     geom_ribbon(data = df %>% filter(status == "discharge"), aes(x=day, ymin = value, ymax = 1), fill ="springgreen4", alpha = 0.66)+
-    theme_bw()+ xlim(0, 20) +
+    theme_bw()+ xlim(0, 50) +
     scale_colour_manual(values = c("indianred",  "springgreen4", "black"), name = "Legend", labels = c( "Deaths", "Discharges","Case fatality\nratio")) +
     scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
     xlab("Days after admission") +
@@ -855,8 +990,8 @@ modified.km.plot <- function(data, ...) {
 }
 
 
-
-
+#' @export
+#' @keywords internal
 
 hospital.fatality.ratio <- function(data){
   library(binom)
@@ -971,7 +1106,17 @@ hospital.fatality.ratio <- function(data){
 
 
 
+##### Treatment upset plot #####
 
+#' Plot frequency of combinations of treatments.
+#'
+#'  Plots the distribution of combinations of the 5 most common treatments administered during hospital stay,
+#'  across all patients with completed hospital stay and recorded treatment data.
+#' @export treatment.upset
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return  UpSet plot showing the frequency of combinations of the 5 most common treatments.
+#' Filled and empty circles below the x-axis of the plot indicate treatments that were and were not administered respectively.
 treatment.upset <- function(data, ...) {
   details <- treatment.upset.prep(data)
   treatments2 <- details %>%
@@ -1012,6 +1157,9 @@ treatment.upset <- function(data, ...) {
 
   return(p)
 }
+
+#' @export
+#' @keywords internal
 
 treatment.upset.ventilation <- function(data, ...) {
   # A second plot for types of ventilation. This one will use the whole dataset
@@ -1062,6 +1210,9 @@ treatment.upset.ventilation <- function(data, ...) {
   return(vent.plt)
 }
 
+#' @export
+#' @keywords internal
+
 treatment.upset.numbers <- function(data, ...) {
   details <- treatment.upset.prep(data)
   # Counts
@@ -1088,6 +1239,9 @@ treatment.upset.numbers <- function(data, ...) {
   )
   return(df)
 }
+
+#' @export
+#' @keywords internal
 
 plot_outcome_saturations <- function(data, ...) {
   # oxy_vsorresu is  1, Room air|2, Oxygen therapy|3, N/A
@@ -1119,7 +1273,7 @@ plot_outcome_saturations <- function(data, ...) {
   df <- df %>%
     dplyr::select(SpO2_admission_ra, Died, Discharged, Censored) %>%
     group_by(SpO2_admission_ra) %>%
-    dplyr::summarise(Died = sum(Died), Discharged = sum(Discharged), Censored = sum(Censored))
+    summarise(Died = sum(Died), Discharged = sum(Discharged), Censored = sum(Censored))
   df$Tot <- df$Died + df$Discharged + df$Censored
   df$Died <- df$Died / df$Tot
   df$Discharged <- df$Discharged / df$Tot
@@ -1143,6 +1297,9 @@ plot_outcome_saturations <- function(data, ...) {
   return(p)
 }
 
+#' @export
+#' @keywords internal
+
 plot_nosocomial <- function(data, ...){
   data2 <- data %>%
     filter(!is.na(admission.date) & !is.na(onset.date)) %>%
@@ -1150,7 +1307,7 @@ plot_nosocomial <- function(data, ...){
     mutate(at.07.days = onset.date >= admission.date + 7, at.14.days = onset.date >= admission.date + 14) %>%
     pivot_longer(4:5) %>%
     group_by(name) %>%
-    dplyr::summarise(perc = sum(value)/n())
+    summarise(perc = sum(value)/n())
 
   ggplot(data2) +
     geom_col(aes(name, perc*100), fill = "orange3", col = "black") +
@@ -1163,7 +1320,22 @@ plot_nosocomial <- function(data, ...){
 
 ######### Timeline plot ##############
 # @todo add ICU. Add IMV.
+# @todo rename 'ongoing care'.
 
+#' Plot timelines by patients' status.
+#'
+#' Plots the distribution of patients' status by number of days after admission. Seven statuses are considered:
+#' 'Discharged', 'Transferred', 'Unknown', 'Ongooing care', 'Ward', 'ICU' and 'Death'. See 'Details'.
+#'
+#'  Patients with “Unknown” status have left the site at the time of report but have unknown outcomes due to missing data.
+#'  Patients with "Transferred" status have been transferred to another health facility by the time of the report.
+#'  Patients still on site at the time of report appear in the“Ongoing care” category for days which are in the future at that time.
+#'  (For example, a patient admitted 7 days before the date of report and still on site at report would be categorised as “ongoing care” for days 8 and later.)
+#'  The black line in the plot marks the end of 14 days; due to the cut-off, only a small number of patients appear in the “ongoing care” category left of this line.
+#' @export status.by.time.after.admission
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return  Plot showing the proportion of patients in each category over time. Each status has been assigned a different colour code to enable easy differentiation.
 status.by.time.after.admission <- function(data, ...){
 
   data2 <- data %>%
@@ -1287,6 +1459,9 @@ status.by.time.after.admission <- function(data, ...){
     ylab("Proportion")
 }
 
+#' @export
+#' @keywords internal
+
 antiviral.use.upset <- function(data, ...){
 
   antiviral.mapper <- function(x){
@@ -1328,6 +1503,21 @@ antiviral.use.upset <- function(data, ...){
 
 # Cumulative recruitment by outcome
 
+# Cumulative recruitment by outcome #
+
+#' Plot cumulative recruitment of patients.
+#'
+#' Plots the cumulative recruitment of patients, separated by whether follow-up is ongoing or an outcome has been recorded.
+#' @export recruitment.dat.plot
+#' @param data Output of \code{\link{process_data}}.
+#' @param embargo.limit The cut-off date for inclusion in the report. Patients recruited after \code{embargo.limit} are not considered in the analysis.
+#' Set  \code{embargo.limit} to the date of the report if all patients are to be considered.
+#'
+#' this date have not been included.
+#'
+#' @return  Plot showing the cumulative number of patients in the study. One line plots the cumulative of patients for whom follow-up has been recorded
+#' while the other line captures patients for whom follow-up is ongoing. The ﬁrst dashed black line indicates the \code{embargo.limit}.
+#'  The second black line is the cut-off date for the next report, assuming that reports are issued weekly.
 recruitment.dat.plot <- function(data, embargo.limit, ...) {
   data <- data %>% filter(admission.date <= today())
 
@@ -1344,7 +1534,7 @@ recruitment.dat.plot <- function(data, embargo.limit, ...) {
 
   counts.tbl <- data %>%
     group_by(admission.date) %>%
-    dplyr::summarise(outcome = sum(outcome.count, na.rm = T), censored = sum(censored.count, na.rm = T))
+    summarise(outcome = sum(outcome.count, na.rm = T), censored = sum(censored.count, na.rm = T))
 
   plt.d <- plt.d %>%
     left_join(counts.tbl, by=c("date" = "admission.date"))  %>%
@@ -1380,6 +1570,9 @@ recruitment.dat.plot <- function(data, embargo.limit, ...) {
 
 ### ICU plots ----------------------------------------------------------------
 
+#' @export
+#' @keywords internal
+
 get_icu_pts <- function(patient.data, ...) {
   data <- patient.data %>%
     filter(ICU.ever == 1)
@@ -1400,6 +1593,18 @@ get_icu_pts <- function(patient.data, ...) {
   return(data)
 }
 
+
+##### Treatment upset plot for ICU  #####
+
+#' Plot frequency of combinations of Intensive Care Unit (ICU) and High Dependency Unit (HDU) treatments.
+#'
+#' Plots the distribution of combinations of treatments administered during ICU/HDU stay
+#' @export treatment.use.plot.icu
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return  UpSet plot showing the frequency of combinations of ICU/HDU treatments.
+#' Filled and empty circles below the x-axis of the plot indicate treatments that were and were not
+#' administered respectively.
 treatment.use.plot.icu <- function(data, ...){
   d <- get_icu_pts(data)
   #Overriding colour from treatment.use.plot, therefore suppressMessages
@@ -1412,6 +1617,9 @@ treatment.use.plot.icu <- function(data, ...){
   )
   return(p)
 }
+
+#' @export
+#' @keywords internal
 
 icu.treatment.upset.prep <- function(data, ...) {
   d <- get_icu_pts(data)
@@ -1445,6 +1653,9 @@ icu.treatment.upset.prep <- function(data, ...) {
     dplyr::select(-allna)
   return(details)
 }
+
+#' @export
+#' @keywords internal
 
 icu.treatment.upset <- function(data, ...) {
   details <- data %>%
@@ -1492,6 +1703,20 @@ icu.treatment.upset <- function(data, ...) {
   return(p)
 }
 
+
+# ICU violin plot #
+
+
+#' Plot lengths of hospital stay for patients admitted into Intensive Care Unit (ICU)/High Dependency Unit (HDU).
+#'
+#' Plots the distribution of lengths of stay for patients who were admitted to ICU/HDU: the distribution of the total length of hospital stay for this group is plotted,
+#' as well as the length of stay within ICU/HDU.
+#' @export icu.violin.plot
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return Violin plots (with box plots) showing the distribution of the total length of hospital stay for patients who were admitted to ICU/HDU and the
+#' distribution of the lengths of stay within ICU/HDU. The coloured areas of the plot indicate the kernel probability density of the observed data
+#' and the box plots show the median and interquartile range of the lengths of stay.
 icu.violin.plot  <- function(data, ...){
   data <- get_icu_pts(data)
   # Use available data for each measure
@@ -1543,9 +1768,23 @@ icu.violin.plot  <- function(data, ...){
 
 
 # For bootstrap
+#' @export
+#' @keywords internal
+
 samp.mean <- function(x, i) {mean(x[i])}
+
+#' @export
+#' @keywords internal
+
 samp.var <- function(x, i){var(x[i])}
+
+#' @export
+#' @keywords internal
+
 samp.median <- function(x,i){median(x[i])}
+
+#' @export
+#' @keywords internal
 
 fit.summary.gamma <- function(fit){
 
@@ -1579,6 +1818,10 @@ fit.summary.gamma <- function(fit){
 }
 
 
+# @todo set filter for lengths of stay to automatically remove potentially wrong entries > 150 days
+
+#' @export
+#' @keywords internal
 
 casefat2 <-  function(data, conf=0.95){
 
@@ -1593,9 +1836,10 @@ casefat2 <-  function(data, conf=0.95){
 
   data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   data2 <- data2 %>%
-    mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
+    mutate(length.of.stay =  map2_dbl(abs(start.to.exit), abs(admission.to.censored), function(x,y){
       max(x, y, na.rm = T)
-    }))
+    })) %>% filter(!is.na(outcome))  %>%
+      filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
 
 
   t <- abs(data2$length.of.stay)  # time
@@ -1706,6 +1950,9 @@ casefat2 <-  function(data, conf=0.95){
 
 # Calcualate cfr for ICU and non-ICU cases
 
+#' @export
+#' @keywords internal
+
 icu.cfr.func <- function(data){
 
   icu.cases <- data %>% filter(ICU.ever == 'TRUE')
@@ -1734,6 +1981,9 @@ icu.cfr.func <- function(data){
 
 #### Function to round 0 days to 0.5 (half a day) #######
 
+#' @export round.zeros
+#' @keywords internal
+
 round.zeros <- function(x){
 
   for (i in 1: length(x)){
@@ -1748,6 +1998,14 @@ round.zeros <- function(x){
 
 ## Violin plot by sex (length of hospital stay by sex) ####
 
+#' Plot lengths of hospital stay by sex
+#'
+#' Plots the distribution of lengths of stay for males and females on the same graph. Only cases with reported outcomes (i.e. death/discharge) are considered.
+#' @export violin.sex.func
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return Violin plots (with box plots) showing the distribution of the total length of hospital stay by sex. The coloured areas of the plot indicate the
+#'  kernel probability density of the observed data and the box plots show the median and interquartile range of the lengths of stay for each sex.
 violin.sex.func <- function(data, ...){
 
   # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
@@ -1777,7 +2035,7 @@ violin.sex.func <- function(data, ...){
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
       axis.title.y = element_text( size=12)
-    ) +  #+ ylim(0, max(length(vd$length.of.stay)))
+    ) +  ylim(c(0,100)) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
 
@@ -1786,6 +2044,9 @@ violin.sex.func <- function(data, ...){
 
 
 ### Violin sex plots by outcomes ###
+
+#' @export
+#' @keywords internal
 
 violin.sex.func.discharge <- function(data, ...){
 
@@ -1824,7 +2085,8 @@ violin.sex.func.discharge <- function(data, ...){
   return(plt)
 }
 
-
+#' @export
+#' @keywords internal
 violin.sex.func.death <- function(data, ...){
 
   # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
@@ -1862,7 +2124,8 @@ violin.sex.func.death <- function(data, ...){
   return(plt)
 }
 
-
+#' @export
+#' @keywords internal
 violin.sex.func.hospital <- function(data, ...){
 
   # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
@@ -1893,7 +2156,7 @@ violin.sex.func.hospital <- function(data, ...){
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
       axis.title.y = element_text( size=12)
-    ) +  #+ ylim(0, max(length(vd$length.of.stay)))
+    ) +  ylim(c(0,100)) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
 
@@ -1903,8 +2166,15 @@ violin.sex.func.hospital <- function(data, ...){
 
 ### Violin age ####
 
-
-
+#' Plot lengths of hospital stay by age group
+#'
+#' Plots the distribution of lengths of stay by age group. Only cases with reported outcomes (i.e. death/discharge) are considered.
+#' @export violin.age.func
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return Violin plots (with box plots) showing the distribution of the total length by age group. Age is plotted in  10-year intervals: 0-9, 10-19, \dots, 70+.
+#' The coloured areas of the plot indicate the kernel probability density of the observed data and the box plots show the
+#' median and interquartile range of the lengths of hospital stay for each age group.
 violin.age.func <- function(data, ...){
 
   # Analysis to be run on only entries with start.to.exit entries
@@ -1933,7 +2203,7 @@ violin.age.func <- function(data, ...){
     ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
     scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
     scale_x_discrete(drop = F) +
-    ylim(c(0,40)) +
+    ylim(c(0,100)) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
 
@@ -1944,7 +2214,8 @@ violin.age.func <- function(data, ...){
 
 
 ### Violin age plots by outcomes ###
-
+#' @export
+#' @keywords internal
 
 violin.age.func.discharge <- function(data, ...){
 
@@ -1985,7 +2256,8 @@ violin.age.func.discharge <- function(data, ...){
 
 }
 
-
+#' @export
+#' @keywords internal
 
 violin.age.func.death <- function(data, ...){
 
@@ -2021,7 +2293,8 @@ violin.age.func.death <- function(data, ...){
 
 }
 
-
+#' @export
+#' @keywords internal
 
 violin.age.func.hospital <- function(data, ...){
 
@@ -2063,7 +2336,8 @@ violin.age.func.hospital <- function(data, ...){
 
 ########### Admission to outcome (accounting for censorship) #########
 
-
+#' @export
+#' @keywords internal
 adm.outcome <- function(data, plt = F){
 
   data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
@@ -2103,7 +2377,7 @@ adm.outcome <- function(data, plt = F){
       ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
       theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                             colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '')
+      labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '') + xlim(c(0,100))
 
     return(list(plt=plt, fit=fit, obs = obs))
 
@@ -2114,14 +2388,31 @@ adm.outcome <- function(data, plt = F){
 }
 
 
+##  Admission to outcome plot (accounting for censorship) ####
 
+#' Plot distribution of time (in days) from admission to an outcome.
+#
+#' Plots a Gamma distribution fit to the lengths of hospital stay (in days) from admission to an outcome - either death or discharge, accounting for unobserved outcomes. See 'Details'.
+#'
+#' The estimates of the Gamma distribution were ﬁtted to the observed data were obtained by a maximum likelihood estimation
+#' procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} package in the \code{fitdistrplus} package.
+#' The lengths of stay for patients with unobserved outcomes were treated as interval censored data.
+#' @export adm.outcome.plot
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return Plot of the Gamma distribution fit to lengths of hospital stay. The black dashed line indicates the position of the estimated mean of the Gamma distribution.
+#' (Note that the expected mean is different from the *observed mean* of lengths of hospital stay, which is estimated using records from patients with observed outcomes only.)
+#' @references
+#' Delignette-Muller, M. L., & Dutang, C. (2015).
+#' fitdistrplus: An R package for fitting distributions. *Journal of statistical software*, **64**(4), 1-34.
 adm.outcome.plot <- function(data,...){
   adm.outcome(data, plt=T)$plt
 }
 
 ########## Onset to admission #####
 
-
+#' @export
+#' @keywords internal
 onset.adm <- function(data, plt = F){
 
   admit.discharge <- data$onset.to.admission
@@ -2156,6 +2447,21 @@ onset.adm <- function(data, plt = F){
 
 }
 
+
+#' Plot distribution of time (in days) from symptom onset to admission.
+#
+#' Plots a Gamma distribution fit to durations (in days) from symptom onset to admission. This includes only patients with
+#' complete records on the time (in days) between symptom onset and admission.
+#'
+#' The estimates of the Gamma distribution were ﬁtted to the observed data were obtained by a maximum likelihood estimation
+#' procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} package in the \code{fitdistrplus} package.
+#' @export onset.adm.plot
+#' @param data Output of \code{\link{process_data}}.
+#'
+#' @return Plot of the Gamma distribution fit to lengths of hospital stay. The black dashed line indicates the position of the estimated mean of the Gamma distribution.
+#' @references
+#' Delignette-Muller, M. L., & Dutang, C. (2015).
+#' fitdistrplus: An R package for fitting distributions. *Journal of statistical software*, **64**(4), 1-34.
 onset.adm.plot <- function(data,...){
   onset.adm(data, plt=T)$plt
 }
@@ -2163,7 +2469,8 @@ onset.adm.plot <- function(data,...){
 
 # Function to calculate NIMV durations for all cases with reported NIMV.start dates.
 # Durations are calculated for cases that are still in NIMV by the ref.date (i.e. date of the data).
-
+#' @export
+#' @keywords internal
 calculate.durations <- function(data){
   durs <- c()
   cens <- c()
@@ -2183,7 +2490,8 @@ calculate.durations <- function(data){
 
 
 ######## Admission to NIV ############
-
+#' @export
+#' @keywords internal
 adm.to.niv <- function(data,plt = F,...){
 
 
@@ -2227,7 +2535,8 @@ adm.to.niv <- function(data,plt = F,...){
 
 #adm.to.niv(patient.data)
 
-
+#' @export
+#' @keywords internal
 adm.to.niv.plot <- function(data,...){
   adm.to.niv(data, plt = T)$plt
 }
@@ -2235,7 +2544,8 @@ adm.to.niv.plot <- function(data,...){
 
 ####### Duration of NIV ###########
 
-
+#' @export
+#' @keywords internal
 dur.niv <- function(data,plt = F, ...){
   data2 <- data %>% filter(!is.na(NIMV.start.date)) %>% mutate(event.start.date = NIMV.start.date) %>% mutate(event.end.date = NIMV.end.date)
 
@@ -2280,7 +2590,8 @@ dur.niv <- function(data,plt = F, ...){
   }
 }
 
-
+#' @export
+#' @keywords internal
 dur.niv.plot <-  function(data,  ...){
   dur.niv(data, plt=T)$plt
 }
@@ -2289,7 +2600,8 @@ dur.niv.plot <-  function(data,  ...){
 
 ######## Admission to ICU #######
 
-
+#' @export
+#' @keywords internal
 adm.to.icu <- function(data, plt = F,...){
 
   data2 <- data %>% filter(!is.na(admission.to.ICU))
@@ -2327,13 +2639,16 @@ adm.to.icu <- function(data, plt = F,...){
 
 }
 
+#' @export
+#' @keywords internal
 adm.to.icu.plot <- function(data,...){
   adm.to.icu(data, plt=T)$plt
 }
 
 
 ####### Duration of ICU #########
-
+#' @export
+#' @keywords internal
 dur.icu <- function(data, plt = F, ...) {
 
   data2 <- data %>% filter(!is.na(ICU.admission.date)) %>% mutate(event.start.date = ICU.admission.date) %>% mutate(event.end.date = ICU.discharge.date)
@@ -2376,7 +2691,8 @@ dur.icu <- function(data, plt = F, ...) {
   }
 }
 
-
+#' @export
+#' @keywords internal
 dur.icu.plot <- function(data,...){
   dur.icu(data, plt=T)$plt
 }
@@ -2386,7 +2702,8 @@ dur.icu.plot <- function(data,...){
 
 ############## Admission to IMV #######################
 
-
+#' @export
+#' @keywords internal
 adm.to.imv <- function(data, plt = F, ...){
 
   data2 <- data %>% filter(!is.na(admission.to.IMV))
@@ -2424,6 +2741,8 @@ adm.to.imv <- function(data, plt = F, ...){
   }
 }
 
+#' @export
+#' @keywords internal
 adm.to.imv.plot <- function(data,...){
   adm.to.imv(data, plt=T)$plt
 }
@@ -2431,7 +2750,8 @@ adm.to.imv.plot <- function(data,...){
 
 ################ Duration of IMV ####################
 
-
+#' @export
+#' @keywords internal
 dur.imv <- function(data, plt=F, ...) {
 
   data2 <- data %>% filter(!is.na(IMV.start.date)) %>% mutate(event.start.date = IMV.start.date) %>% mutate(event.end.date = IMV.end.date)
@@ -2471,7 +2791,8 @@ dur.imv <- function(data, plt=F, ...) {
   }
 }
 
-
+#' @export
+#' @keywords internal
 dur.imv.plot <- function(data,...){
   dur.imv(data, plt=T)$plt
 }
@@ -2479,6 +2800,8 @@ dur.imv.plot <- function(data,...){
 
 ### Functions for admission observations / results etc.
 
+#' @export plot.by.age.make.zeroandone
+#' @keywords internal
 plot.by.age.make.zeroandone <- function(var, ...) {
   var[var == 2] <- 0
   var[var == 3] <- NA
@@ -2487,8 +2810,11 @@ plot.by.age.make.zeroandone <- function(var, ...) {
 
 }
 
-plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 250, ...) {
-  summ <- data %>%
+#' @export plot.prop.by.age
+#' @keywords internal
+plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 500, ...) {
+  data2 <- data
+  summ <- data2 %>%
     add_column(a = var) %>%
     filter(!is.na(a)) %>%
     group_by(AgeGrp) %>%
@@ -2499,6 +2825,8 @@ plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 250, ...) {
   d <- binom.confint(summ$v, summ$All, conf.level = .95, method = "exact")
   d$X <- summ$AgeGrp
   d$lbl <- paste(d$x, d$n, sep = "/\n", collapse = NULL)
+  censored.lbl <- paste("-", d$n, sep = "/\n", collapse = NULL)
+  d$lbl[d$x <= 5] <- censored.lbl[d$x <= 5]
   d$size <- d$n / sz
   xlabs <- c(
     "<20",
@@ -2510,6 +2838,7 @@ plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 250, ...) {
     "70-",
     expression(phantom(x) >= 80)
   )
+  N <- paste("N = ", sum(summ$All), sep = "", collapse = NULL)
   pts <- geom_point(
     data = d,
     aes(x = d$X, y = mean),
@@ -2531,22 +2860,25 @@ plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 250, ...) {
     name = name,
     limits = c(0, ymax + .05)
   )
-  lbls <- geom_text(
-    data = d,
-    aes(x = X, y = ymax, label = lbl),
-    size = 2
-  )
+  #  lbls <- geom_text(
+  #    data = d,
+  #    aes(x = X, y = ymax, label = lbl),
+  #    size = 2
+  #  )
   p <- ggplot() +
     pts +
     lines +
-    lbls +
+    #    lbls +
     xa + ya +
-    theme_bw()
+    theme_bw() + theme(axis.text = element_text(size = 6)) +
+    labs(title = N)
 
   return(p)
 
 }
 
+#' @export plot.by.age.grouping
+#' @keywords internal
 plot.by.age.grouping <- function(data, ...) {
   age.c <- (data$start.date - data$agedat) / 365.25 %>%
     round(0)
@@ -2570,6 +2902,8 @@ plot.by.age.grouping <- function(data, ...) {
 
 }
 
+#' @export plot.comorb.by.age
+#' @keywords internal
 
 plot.comorb.by.age <- function(data, ...) {
   df <- data %>%
@@ -2598,12 +2932,14 @@ plot.comorb.by.age <- function(data, ...) {
   pg <- plot.prop.by.age(df, df$smoking_mhyn,
                          "Proportion who\nsmoke", ymax = .4)
 
-  p <- grid.arrange(pa, pb, pc, pd, pe, pf, pg, ncol = 3)
+  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 3)
 
   return(p)
 
 }
 
+#' @export plot.sx.by.age
+#' @keywords internal
 plot.sx.by.age <- function(data, ...) {
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
@@ -2623,14 +2959,17 @@ plot.sx.by.age <- function(data, ...) {
   pd <- plot.prop.by.age(df, df$confusion_ceoccur_v2, "Confusion")
   pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal symptoms")
 
-  p <- grid.arrange(pa, pb, pc, pd, pe, ncol = 3)
+  p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 3)
 
   return(p)
 
 }
 
+#' @export plot.bw.by.age
+#' @keywords internal
 plot.bw.by.age <- function(data, var, name, ...) {
-  summ <- data %>%
+  data2 <- data
+  summ <- data2 %>%
     add_column(v = var) %>%
     filter(!is.na(v)) %>%
     filter(!is.na(AgeGrp)) %>%
@@ -2664,14 +3003,15 @@ plot.bw.by.age <- function(data, var, name, ...) {
   p <- ggplot(data = summ, aes(AgeGrp, v)) +
     geom_boxplot(outlier.shape = NA) +
     xa + ya +
-    theme_bw() +
+    theme_bw() + theme(axis.text = element_text(size = 6)) +
     labs(title = N)
 
   return(p)
 
 }
 
-
+#' @export plot.signs.by.age
+#' @keywords internal
 plot.signs.by.age <- function(data, ...) {
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
@@ -2704,12 +3044,14 @@ plot.signs.by.age <- function(data, ...) {
   pe_name <- expression("Temperature " (degree*C))
   pe <- plot.bw.by.age(df, df$Temp, pe_name)
 
-  p <- grid.arrange(pa, pb, pc, pd, pe, ncol = 3)
+  p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 3)
 
   return(p)
 
 }
 
+#' @export plot.blood.results.by.age
+#' @keywords internal
 plot.blood.results.by.age <- function(data, ...) {
   # Use a loop to collect data to avoid problems of data too large to process
   for (i in 1:nrow(data)) {
@@ -2769,9 +3111,9 @@ plot.blood.results.by.age <- function(data, ...) {
   df$Neut[df$Neut > 100 & is.na(df$Neut) == FALSE] <-
     df$Neut[df$Neut > 100 & is.na(df$Neut) == FALSE] / 1000
 
-  pa_name <- expression("White cell count " (10 ^ 9 * " /L"))
+  pa_name <- expression("WCC " (10 ^ 9 * " /L"))
   pa <- plot.bw.by.age(df, df$WCC, pa_name)
-  pb_name <- expression("Lymphocytes " (10 ^ 9 * " /L"))
+  pb_name <- expression("Lymphocytes " (10 ^ 9 * "/L"))
   pb <- plot.bw.by.age(df, df$Lcyte, pb_name)
   pc_name <- expression("Neutrophils " (10 ^ 9 * " /L"))
   pc <- plot.bw.by.age(df, df$Neut, pc_name)
@@ -2787,61 +3129,11 @@ plot.blood.results.by.age <- function(data, ...) {
 
   # Omit AST as N much lower than for ALT
 
-  p <- grid.arrange(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 3)
+  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 3)
 
   return(p)
 
 }
-
-######### Survival plot ######
-
-
-# surv.plot.func <- function(data, ...){
-#
-#   data2 <- data %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
-#   data2 <- data2 %>%
-#     dplyr::mutate(length.of.stay = map2_dbl(start.to.exit, admission.to.censored, function(x,y){
-#       max(x, y, na.rm = T)
-#     })) %>%
-#     dplyr::mutate(length.of.stay = abs(length.of.stay))
-#
-#   data2$sex <- data2$sex[!is.na(data2$sex)]  #plyr::revalue(as.factor(data2$sex), c('1' = 'Male', '2' = 'Female'))
-#
-#   data2$event <- as.factor(as.numeric(data2$censored)) #True (1) = censored (no event), false (0) = not censored (experienced event)
-#
-#   # Changing to event code to match Surv specifications
-#   # codes swapped to obtain actual discharge probabilities. #1 - event , 2 - no event
-#
-#   data2$event <- as.numeric(data2$event)
-#
-#
-#   df <- data.frame(data2$sex, data2$length.of.stay, data2$event)
-#   names(df) <- c('sex', 'length.of.stay', 'event')
-#
-#   #df <- data2 %>% dplyr::select(sex, length.of.stay, event) %>%
-#    # mutate(length.of.stay = abs(length.of.stay)) %>%
-#    # data.frame()
-#
-#   fit <- survival::survfit(Surv(length.of.stay, event) ~ sex, data = df)
-#
-#   plt <- survminer::ggsurvplot(fit,
-#                     pval = T, pval.coord = c(0, 0.03), conf.int = T,
-#                     risk.table = F, # Add risk table
-#                     # risk.table.col = "strata", # Change risk table color by groups
-#                     linetype = "strata", # Change line type by groups
-#                     #surv.median.line = "hv", # Specify median survival
-#                     ggtheme = theme_bw(), # Change ggplot2 theme
-#                     lengend.labs = c('Male', 'Female'),
-#                     palette = c('#D2691E', '#BA55D3'),
-#                     legend.labs = c("Male", "Female"), title = (main = ' '), ylab = 'Cumulative probability (of hospital exit)' , xlab = 'Time (in days) from admission', legend = c(0.8, 0.9))
-#
-#  # pval <- round(surv_pvalue(fit)$pval, 2)
-#
-#   return(list(plt=plt, df=df))
-#
-#   #return(list(plt = plt, pval=pval))
-#
-# }
 
 
 

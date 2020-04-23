@@ -3,6 +3,8 @@
 
 ############################################################################
 
+#' @export
+#' @keywords internal
 # Main function d.e (dynamic.estimates) calculates estimates and confidence intervals, to be incorporated into report. #
 d.e <- function(data, datafull, ...){
 
@@ -509,9 +511,3 @@ d.e <- function(data, datafull, ...){
 
 
 }
-
-de <- d.e(patient.data, unembargoed.data)
-
-# save(de, file = glue("{code.path}/report_input_data_{ref.date}.rda"))
-
-#save(de, file = glue("{code.path}/report_input_data_sa_{today()}.rda"))

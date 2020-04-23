@@ -8,6 +8,7 @@ Authors@R:
            email = "first.last@example.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: What the package does (one paragraph).
+Depends: R (>= 3.5.0)
 Imports: binom, boot, broom, fitdistrplus, knitr, ggupset, glue, grid, gridExtra, lubridate, magrittr, plyr, rmarkdown, sf, survival, survminer, taRifx, tidyselect, tidyverse, viridis
 License: `use_mit_license()`, `use_gpl3_license()` or friends to
     pick a license
