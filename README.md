@@ -1,6 +1,9 @@
 # ISARIC-COVID-reports
 
-
+## Background
+In response to the emergence of novel coronavirus (COVID-19), [ISARIC](https://isaric.tghn.org/) has launched a portfolio of resources to accelerate outbreak research and response, including tools for data collection, analysis and presentation. These tools have undergone extensive review by international clinical experts, and are free for all to use.
+The R code presented here has been developed by ISARIC and enables sites to produce rapid reports summarising the clinical characteristics of hospitalised patients with COVID-19. We hope that these reports will guide local responses, whilst supporting researchers to retain control of their data in the long-term.
+Data contributors are invited to input on the methods and contents of these reports. Additional information and resources are available on the ISARIC website.
 
 ## Installation
 
