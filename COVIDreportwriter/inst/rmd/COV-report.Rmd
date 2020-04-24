@@ -109,14 +109,14 @@ plot.blood.results.by.age(patient.data)
 
 **Figure 8**: Distribution of length of hospital stay, according to sex. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
-```{r  stay.by.sex, out.width= "80%"}
+```{r  staybysex, out.width= "80%"}
 
 violin.sex.func(patient.data)
 ```
 
 **Figure 9**: Distribution of length of hospital stay, according to patient age group. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
-```{r  stay.by.age, out.width= "80%"}
+```{r  staybyage, out.width= "80%"}
 
 violin.age.func(patient.data)
 ```
@@ -172,7 +172,7 @@ treatment.upset(patient.data)
 **Figure 14**: Treatments used amongst patients admitted to the ICU. This only includes patients for whom this information was recorded.
 
 
-```{r treatment.icu, echo=FALSE}
+```{r treatmenticu, echo=FALSE}
 treatment.use.plot.icu(patient.data, treatments)
 ```
 
@@ -182,7 +182,7 @@ treatment.use.plot.icu(patient.data, treatments)
 **Figure 15**: The distribution of combinations of treatments administered during ICU/HDU stay. Filled and empty circles below the x-axis indicate treatments that were and were not administered respectively.
 <!-- The distribution of combinations of treatments administered during  hospital stay for patients who were admitted to an Intensive Care Unit . Filled and empty circles below the x-axis indicate treatments that were and were not administered. -->
 
-```{r treatment2.icu, echo=FALSE}
+```{r treatment2icu, echo=FALSE}
 icu.treatment.upset(patient.data, treat)
 ```
 
@@ -200,7 +200,7 @@ icu.violin.plot(patient.data)
 
 **Figure 17**: Distribution of time from symptom onset to admission. The blue curve is the Gamma distribution fit to the data. The black dashed line indicates the position of the expected mean. Expected estimates, accounting for unobserved outcomes, are provided in the summary tables at the end of this report. 
 
-```{r onset.admission, out.width = '80%'}
+```{r onsetadmission, out.width = '80%'}
 
 onset.adm.plot(patient.data)
 
@@ -211,7 +211,7 @@ onset.adm.plot(patient.data)
 **Figure 18**: Distribution of time from admission to an outcome - either death or recovery (discharge). The blue curve is the Gamma distribution fit to the data. The black dashed line indicated the position of the expected mean.
 
 
-```{r  adm.outcome, out.width = '80%'}
+```{r  admoutcome, out.width = '80%'}
 
 adm.outcome.plot(patient.data)
 
