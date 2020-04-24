@@ -1340,7 +1340,7 @@ status.by.time.after.admission <- function(data, ...){
 
   data2 <- data %>%
     dplyr::mutate(final.status = map_chr(exit.code, function(x){
-      ifelse(is.na(x), "censored", x)
+      ifelse(is.na(x), "censored", as.character(x))
     })) %>%
     dplyr::mutate(final.status = map_chr(final.status, function(x){
       switch(x,
@@ -2911,7 +2911,7 @@ plot.comorb.by.age <- function(data, ...) {
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
                   asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
-                  diabetes_mhyn, diabetescom_mhyn, dementia_mhyn, smoking_mhyn,
+                  diabetes, dementia_mhyn, smoking_mhyn,
                   start.to.exit, sex
     )
   df <- plot.by.age.grouping(df)

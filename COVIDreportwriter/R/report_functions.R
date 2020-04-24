@@ -130,9 +130,7 @@ generate.report <- function(patient.data.output, file.name, site.name){
   treatments <- cst.reference %>% filter(type == "treatment")
   
   de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments)
-  
-  print(getwd())
-  
+
   report.rmd.file <- system.file("rmd", "COV-report.Rmd", package = "COVIDreportwriter")
   render(report.rmd.file, output_file=file.name)
   
@@ -411,7 +409,7 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
       mutate(field = replace(field, field == old.name, new.name))
     
     cst.reference <- cst.reference %>%
-      filter(field %in% required.columns)
+      filter(field %in% required.columns | derived)
   }
   
   
@@ -450,12 +448,12 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
   comorbidities.labels[1] <- "Chronic cardiac disease"
   comorbidities.labels[18] <- "Other"
   
-  comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
+  comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels, derived = FALSE)
   
-  comorbidities <- bind_rows(comorbidities, tibble(field = "pregnancy", label = "Pregnancy"))
-  comorbidities <- comorbidities %>% bind_rows(list(field = "liver.disease", label = "Liver disease")) %>%
+  comorbidities <- bind_rows(comorbidities, tibble(field = "pregnancy", label = "Pregnancy", derived = TRUE))
+  comorbidities <- comorbidities %>% bind_rows(list(field = "liver.disease", label = "Liver disease", derived = TRUE)) %>%
     filter(field != "mildliver" & field != "modliver")
-  comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "Diabetes")) %>%
+  comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "Diabetes", derived = TRUE)) %>%
     filter(field != "diabetes_mhyn" & field != "diabetescom_mhyn")
   
   comorbidities <- comorbidities %>% mutate(type = "comorbidity")
@@ -470,18 +468,18 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     as_tibble() %>%
     pull(2) %>%
     map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
-    map_chr(function(x) sub("\\s+$", "", x))
+    map_chr(function(x) sub("\\s+$", "", x)) 
   
   admission.symptoms.labels[2] <- "Cough: no sputum"
   
-  admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
+  admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels, derived = FALSE)
   
-  admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
-    bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
-    bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)")) %>%
+  admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)", derived = TRUE)) %>%
+    bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)", derived = TRUE)) %>%
+    bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)", derived = TRUE)) %>%
     filter(field != "cough_ceoccur_v2" & field != "coughsput_ceoccur_v2" & field !="coughhb_ceoccur_v2")
   
-  admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "shortness.breath", label = "Shortness of breath")) %>%
+  admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "shortness.breath", label = "Shortness of breath", derived = TRUE)) %>%
     filter(field != "shortbreath_ceoccur_v2" & field != "lowerchest_ceoccur_v2")
   
   admission.symptoms <- admission.symptoms %>% mutate(type = "symptom")
@@ -496,13 +494,13 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     # I don't know why you can't figure this out nicely. Do it later.
     map_chr(function(x) sub("\\s+$", "", x)) %>%
     map_chr(function(x) sub("\\?+$", "", x)) %>%
-    map_chr(function(x) sub("\\s+$", "", x))
+    map_chr(function(x) sub("\\s+$", "", x)) 
   
   treatment.labels[9] <- "Inhaled nitric oxide"
   treatment.labels[10] <- "Tracheostomy"
   treatment.labels[14] <- "Other"
   
-  treatments <- tibble(field = treatment.colnames, label = treatment.labels, type = "treatment")
+  treatments <- tibble(field = treatment.colnames, label = treatment.labels, type = "treatment", derived = FALSE)
   
   bind_rows(comorbidities, admission.symptoms, treatments)
 }

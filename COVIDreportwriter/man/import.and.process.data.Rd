@@ -7,7 +7,7 @@
 import.and.process.data(
   data.file,
   data.dict.file,
-  column.table.file = "required_columns.csv",
+  column.table.file = NULL,
   source.name = NA,
   message.out.file = NULL,
   embargo.length = 0,
