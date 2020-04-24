@@ -943,7 +943,7 @@ make.props.treats <- function(data, ...){
 #'
 #'  The CFR and survival functions for death and recovery
 #'  are estimated using a nonparametric Kaplan-Meier–based method proposed by Ghani et al. (2005).
-#'  This method estimates the CFR with the formula \frac{a}{(a+b)},
+#'  This method estimates the CFR with the formula $\frac{a}{(a+b)}$,
 #'  where a and b are the values of the cumulative incidence function for deaths and recoveries respectively,
 #'   estimated at the last observed time point. See 'References' for details.
 #' @export modified.km.plot
@@ -952,7 +952,7 @@ make.props.treats <- function(data, ...){
 #' @return  Plot of the survival functions for deaths and recoveries and a line indicating the CFR estimate.
 #'
 #' @references
-#' A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griﬃn, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).
+#' A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griffin, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).
 #' Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, *American Journal of Epidemiology*, **162**(5), 479 - 486.
 #' [doi:10.1093/aje/kwi230](doi:10.1093/aje/kwi230).
 modified.km.plot <- function(data, embargo.limit, ...) {
@@ -1516,7 +1516,7 @@ antiviral.use.upset <- function(data, ...){
 #' this date have not been included.
 #'
 #' @return  Plot showing the cumulative number of patients in the study. One line plots the cumulative of patients for whom follow-up has been recorded
-#' while the other line captures patients for whom follow-up is ongoing. The ﬁrst dashed black line indicates the \code{embargo.limit}.
+#' while the other line captures patients for whom follow-up is ongoing. The first dashed black line indicates the \code{embargo.limit}.
 #'  The second black line is the cut-off date for the next report, assuming that reports are issued weekly.
 recruitment.dat.plot <- function(data, embargo.limit, ...) {
   data <- data %>% filter(admission.date <= today())
@@ -2394,7 +2394,7 @@ adm.outcome <- function(data, plt = F){
 #
 #' Plots a Gamma distribution fit to the lengths of hospital stay (in days) from admission to an outcome - either death or discharge, accounting for unobserved outcomes. See 'Details'.
 #'
-#' The estimates of the Gamma distribution were ﬁtted to the observed data were obtained by a maximum likelihood estimation
+#' The estimates of the Gamma distribution were fitted to the observed data were obtained by a maximum likelihood estimation
 #' procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} package in the \code{fitdistrplus} package.
 #' The lengths of stay for patients with unobserved outcomes were treated as interval censored data.
 #' @export adm.outcome.plot
@@ -2453,7 +2453,7 @@ onset.adm <- function(data, plt = F){
 #' Plots a Gamma distribution fit to durations (in days) from symptom onset to admission. This includes only patients with
 #' complete records on the time (in days) between symptom onset and admission.
 #'
-#' The estimates of the Gamma distribution were ﬁtted to the observed data were obtained by a maximum likelihood estimation
+#' The estimates of the Gamma distribution were fitted to the observed data were obtained by a maximum likelihood estimation
 #' procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} package in the \code{fitdistrplus} package.
 #' @export onset.adm.plot
 #' @param data Output of \code{\link{process_data}}.

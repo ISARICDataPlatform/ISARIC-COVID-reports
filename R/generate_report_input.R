@@ -22,8 +22,8 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   min.age <- ceiling(min(data$consolidated.age, na.rm=T)) # minimum age
   max.age <- ceiling(max(data$consolidated.age, na.rm=T)) # maximum age
 
-  transfer.outcome <- sum(summary(as.factor(data$exit.code))[['transfer']],  summary(as.factor(data$exit.code))[['transfer.palliative']])
-  unk.outcome <-  sum(summary(as.factor(data$exit.code))[['hospitalisation']], summary(as.factor(data$exit.code))[['unknown']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed
+  transfer.outcome <- sum(summary(data$exit.code)[['transfer']],  summary(data$exit.code)[['transfer.palliative']])
+  unk.outcome <-  sum(summary(data$exit.code)[['hospitalisation']], summary(data$exit.code)[['unknown']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed
 
 
   # ages by sex

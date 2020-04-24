@@ -1,20 +1,17 @@
-
-# data.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data from Laura/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
-# data.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
-# column.table.file <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
-# site.list.file <- "/Users/mdhall/ISARIC.COVID.reports/site_list.csv"
-# verbose <- TRUE
-# ref.date <- today()
-# embargo.length <- 0
-# message.out.file <- "messages.csv"
-# source.name <- "test"
+#
+d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/CoVEOT_DATA_2020-04-20_0714.csv"
+d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/CoVEOT_DataDictionary_2020-04-10.csv"
+c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
+s.list <- "/Users/mdhall/ISARIC.COVID.reports/site_list.csv"
+verbose <- TRUE
+ref.date <- today()
+embargo.length <- 0
+message.out.file <- "messages.csv"
+source.name <- "test"
 #
 #
 # import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
 
-
-#' Import data
-#'
 #' Import data from Redcap .csv output for processing
 #' @param data.file Path of the data file
 #' @param data.dict.file Path of the data dictionary file
@@ -25,7 +22,7 @@
 #' @param ref.date Date to be taken as the date of the report. Default is today's date.
 #' @param verbose Flag for verbose output
 #'
-#' @param source.name
+#' @import readr glue lubridate magrittr purrr stringr tidyr forcats
 #' @export import.and.process.data
 #'
 import.and.process.data <- function(data.file,
@@ -78,7 +75,7 @@ import.and.process.data <- function(data.file,
 
   if(verbose) cat("Joining events tables...\n")
 
-  patient.data <- demog.data %>% left_join(event.data)
+  patient.data <- demog.data %>% left_join(event.data, by="subjid")
 
   patient.data <- patient.data %>%
     # cut out any rows where the IDs suggest test data
@@ -115,25 +112,36 @@ import.and.process.data <- function(data.file,
 
   patient.data.output <- process.data(patient.data, cst.reference, ref.date - embargo.length, verbose)
 
+  patient.data.output$cst.reference <- cst.reference
+  patient.data.output$embargo.limit <- ref.date - embargo.length
+
   patient.data.output
 
 }
+
+#' Generate a PDF report from the data
+#' @param patient.data.output List output from \code{import.and.process.data}
+#' @param file.name Path to a PDF file for the report
+
+#' @import rmarkdown psych ggplot2 fitdistrplus boot survival tibble grid gridExtra ggupset viridis
+#' @export generate.report
+#'
 
 generate.report <- function(patient.data.output, file.name){
   patient.data <- patient.data.output$detailed.data
   unembargoed.data <- patient.data.output$unembargoed.data
   countries.and.sites <- patient.data.output$countries.and.sites
+  cst.reference <- patient.data.output$cst.reference
+
+  embargo.limit <- patient.data.output$embargo.limit
 
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
   treatments <- cst.reference %>% filter(type == "treatment")
 
+  de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments)
 
-
-  de <- d.e(patient.data, unembargoed.data)
-
-
-  rmarkdown::render('COV-report.Rmd',output_file='test.pdf')
+  render('COV-report.Rmd',output_file=file.name)
 
 }
 
@@ -294,6 +302,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
 
 
 #' @export
+#' @import dplyr purrr
 #' @keywords internal
 import.patient.data <- function(data.file,
                                 data.dict.file,
@@ -755,6 +764,7 @@ process.data <- function(data,
                       "6" = "unknown"))
       }
     })) %>%
+    dplyr::mutate(exit.code = factor(exit.code, levels = c("discharge", "hospitalisation", "transfer", "death", "transfer.palliative", "unknown"))) %>%
     # censorship occurs if the patient is still in site
     dplyr::mutate(censored = map2_lgl(subjid, events, function(y, x){
       if(x %>% pull(redcap_event_name) %>% startsWith("discharge") %>% any() %>% not()){
@@ -1015,7 +1025,7 @@ process.data <- function(data,
 
   ##### Untangling COVID test fields #####
 
-  if(verbose) cat("Untangling SARS-CoV-19 test results...\n")
+  if(verbose) cat("Untangling SARS-CoV-2 test results...\n")
 
   patient.data <- patient.data %>%
     mutate(cov.test.result =
