@@ -135,7 +135,7 @@ generate.report <- function(patient.data.output, file.name, site.name){
   de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments, site.name, embargo.length)
 
   report.rmd.file <- system.file("rmd", "COV-report.Rmd", package = "COVIDreportwriter")
-  render(report.rmd.file) #output_file=file.name)
+  render(report.rmd.file, output_file=file.name)
   
 }
 
