@@ -4,7 +4,7 @@ d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Si
 c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
 verbose <- TRUE
 ref.date <- today()
-embargo.length <- 0
+embargo.length <- 14
 message.out.file <- "messages.csv"
 source.name <- "test"
 # #
@@ -106,6 +106,8 @@ import.and.process.data <- function(data.file,
   patient.data.output$cst.reference <- cst.reference
   patient.data.output$embargo.limit <- ref.date - embargo.length
   
+  patient.data.output$embargo.length <- embargo.length
+  
   patient.data.output
   
 }
@@ -124,12 +126,13 @@ generate.report <- function(patient.data.output, file.name, site.name){
   cst.reference <- patient.data.output$cst.reference
   
   embargo.limit <- patient.data.output$embargo.limit
+  embargo.length <- patient.data$embargo.length
   
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
   treatments <- cst.reference %>% filter(type == "treatment")
   
-  de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments)
+  de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments, site.name, embargo.length)
 
   report.rmd.file <- system.file("rmd", "COV-report.Rmd", package = "COVIDreportwriter")
   render(report.rmd.file, output_file=file.name, output_dir = getwd())
