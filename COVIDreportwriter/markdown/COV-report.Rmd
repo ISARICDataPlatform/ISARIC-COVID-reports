@@ -223,40 +223,6 @@ modified.km.plot(patient.data, embargo.limit)
 
 ```
 
-\newpage
-
-# Country Comparisons
-
-**Figure 20**: Number of sites per country.
-
-```{r recruitment1, echo=FALSE}
-
-sites.by.country(unembargoed.data)
-
-```
-
-\newpage
-
-**Figure 21**: Distribution of patients by country and outcome
-
-```{r recruitment2, echo=FALSE}
-
-outcomes.by.country(patient.data)
-
-```
-
-
-\newpage
-
-# Recruitment
-
-**Figure 22**: Cumulative recruitment of participants, separated by whether follow-up is ongoing or an outcome has been recorded.  The first dashed black line indicates the exclusion date for this report: patients recruited after this date have not been included. The second black line is the exclusion date for next week's report.
-
-``` {r recruitmentbyoutcome, echo=FALSE}
-
-recruitment.dat.plot(unembargoed.data, today()-14)
-
-```
 
 \newpage
 

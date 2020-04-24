@@ -7,7 +7,7 @@
 #'
 #' Plots the age and sex distribution of patients according to clinical outcome.
 #'
-#'#' @export age.pyramid
+#' @export age.pyramid
 #' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for age group, sex, and outcome of patients. See 'Details'.
 #' @return  Bar plot of the age (in intervals of four years) and sex (male/female) of patients, plotted according to clinical outcome (discharge/death/ongoing care).
 #'

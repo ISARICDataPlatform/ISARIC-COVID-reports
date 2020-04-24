@@ -20,6 +20,3 @@ and the variable "outcome" should be a factor with levels 'discharge', 'censored
 \description{
 Plots the age and sex distribution of patients according to clinical outcome.
 }
-\details{
-#' @export age.pyramid
-}

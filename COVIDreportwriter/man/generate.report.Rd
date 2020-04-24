@@ -4,12 +4,14 @@
 \alias{generate.report}
 \title{Generate a PDF report from the data}
 \usage{
-generate.report(patient.data.output, file.name)
+generate.report(patient.data.output, file.name, site.name)
 }
 \arguments{
 \item{patient.data.output}{List output from \code{import.and.process.data}}
 
 \item{file.name}{Path to a PDF file for the report}
+
+\item{site.name}{Name of the site from which this data is derived}
 }
 \description{
 Generate a PDF report from the data

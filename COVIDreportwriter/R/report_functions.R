@@ -1,13 +1,12 @@
 # #
-# d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/CoVEOT_DATA_2020-04-20_0714.csv"
-# d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/CoVEOT_DataDictionary_2020-04-10.csv"
-# c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
-# s.list <- "/Users/mdhall/ISARIC.COVID.reports/site_list.csv"
-# verbose <- TRUE
-# ref.date <- today()
-# embargo.length <- 0
-# message.out.file <- "messages.csv"
-# source.name <- "test"
+d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/CoVEOT_DATA_2020-04-20_0714.csv"
+d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/CoVEOT_DataDictionary_2020-04-10.csv"
+c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
+verbose <- TRUE
+ref.date <- today()
+embargo.length <- 0
+message.out.file <- "messages.csv"
+source.name <- "test"
 # #
 #
 # import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
@@ -28,121 +27,115 @@
 import.and.process.data <- function(data.file,
                                     data.dict.file,
                                     column.table.file = "required_columns.csv",
-                                    site.list,
                                     source.name = NA,
                                     message.out.file = NULL,
                                     embargo.length = 0,
                                     ref.date = today(),
                                     verbose = F){
-
+  
   column.table <- read_csv(column.table.file)
-  site.list <- read_csv(site.list.file)
-
+  
   raw.data <- import.patient.data(data.file, data.dict.file, source.name, verbose)
-
+  
   cst.reference <- process.symptoms.comorbidities.treatments(data.dict.file)
-
+  
   temp <- rename.and.drop.columns(raw.data, column.table, cst.reference)
   raw.data <- temp$data
   cst.reference <- temp$cst.reference
-
+  
   raw.data <- raw.data %>% mutate(site.number = substr(redcap_data_access_group, 1, 3))
-
-  raw.data <- raw.data %>%
-    left_join(site.list, by = "site.number") %>%
-    dplyr::select(-site.number)
-
+  
   if(!is.null(message.out.file)){
     write("oldvalue,new.value,column.name,subject.id,reason", file = message.out.file, append = FALSE)
   }
-
+  
   raw.data <- pre.nest.sanity.checks(raw.data, message.out.file, verbose)
-
+  
   if(verbose) cat("Making patient data frame...\n")
-
+  
   demog.data <- raw.data %>%
     group_by(subjid) %>%
     slice(1) %>%
     ungroup()
-
+  
   # Join in a copy of all rows as the events column for each patient
-
+  
   event.data <- raw.data %>%
     group_by(subjid) %>%
     nest() %>%
     dplyr::rename(events = data) %>%
     ungroup()
-
+  
   if(verbose) cat("Joining events tables...\n")
-
+  
   patient.data <- demog.data %>% left_join(event.data, by="subjid")
-
+  
   patient.data <- patient.data %>%
     # cut out any rows where the IDs suggest test data
     mutate(probable.test = str_detect(subjid, "[tT][eE][sS][tT]"))
-
+  
   for(probable.test.id in patient.data %>% filter(probable.test) %>% pull(subjid)){
     warning(glue("Probable test data for patient ID {probable.test.id}. Ignoring this ID.\n"))
     if(!is.null(message.out.file)){
       write(glue("all.values,NULL,all.columns,{probable.test.id},test.id"), file = message.out.file, append = TRUE)
     }
   }
-
+  
   patient.data <- patient.data %>%
     filter(!probable.test) %>%
     dplyr::select(-probable.test)
-
-
+  
+  
   patient.data <- patient.data %>%
     mutate(multiple.exit.rows  = map2_lgl(subjid, events, function(y,x){
       outcome.rows <- x %>% filter((startsWith(redcap_event_name, "dischargeoutcome") | startsWith(redcap_event_name, "dischargedeath")) & !is.na(dsterm))
       nrow(outcome.rows) > 1
     }))
-
+  
   for(probable.duplicate.id in patient.data %>% filter(multiple.exit.rows) %>% pull(subjid)){
     warning(glue("Probable duplicate patient ID {probable.duplicate.id}. Ignoring this ID.\n"))
     if(!is.null(message.out.file)){
       write(glue("all.values,NULL,all.columns,{probable.duplicate.id},duplicate.id"), file = message.out.file, append = TRUE)
     }
   }
-
+  
   patient.data <- patient.data %>%
     filter(!multiple.exit.rows) %>%
     dplyr::select(-multiple.exit.rows)
-
+  
   patient.data.output <- process.data(patient.data, cst.reference, ref.date - embargo.length, verbose)
-
+  
   patient.data.output$cst.reference <- cst.reference
   patient.data.output$embargo.limit <- ref.date - embargo.length
-
+  
   patient.data.output
-
+  
 }
 
 #' Generate a PDF report from the data
 #' @param patient.data.output List output from \code{import.and.process.data}
 #' @param file.name Path to a PDF file for the report
-
+#' @param site.name Name of the site from which this data is derived
 #' @import rmarkdown psych ggplot2 fitdistrplus boot survival tibble grid gridExtra ggupset viridis
 #' @export generate.report
 #'
 
-generate.report <- function(patient.data.output, file.name){
+generate.report <- function(patient.data.output, file.name, site.name){
   patient.data <- patient.data.output$detailed.data
   unembargoed.data <- patient.data.output$unembargoed.data
   countries.and.sites <- patient.data.output$countries.and.sites
   cst.reference <- patient.data.output$cst.reference
-
+  
   embargo.limit <- patient.data.output$embargo.limit
-
+  
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
   treatments <- cst.reference %>% filter(type == "treatment")
-
+  
   de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments)
-
+  
   render('markdown/COV-report.Rmd',output_file=file.name)
-
+  
 }
 
 # There is a general problem with non-numeric entries in numerical columns. This function replaces them with NA with a warning
@@ -227,7 +220,7 @@ careful.fractional.age <- function(value, subjid, colname, message.out.file = NU
 #' @keywords internal
 extract.named.column.from.events <- function(events.tibble, column.name, sanity.check = F){
   out <- events.tibble %>% filter(!is.na(!!as.name(column.name))) %>% pull(column.name)
-
+  
   if(length(out) > 1 & sanity.check){
     stop("Too many entries")
   } else if(length(out) == 0){
@@ -243,21 +236,21 @@ extract.named.column.from.events <- function(events.tibble, column.name, sanity.
 #' @keywords internal
 process.event.dates <- function(events.tbl, summary.status.name, daily.status.name){
   subtbl <- events.tbl %>% dplyr::select(dsstdat, daily_dsstdat, !!summary.status.name, !!daily.status.name )
-
+  
   colnames(subtbl)[3:4] <- c("summary.col","daily.col")
-
+  
   check.rows <- subtbl %>% filter(!is.na(summary.col) | !is.na(daily.col))
   if(nrow(check.rows) == 0){
     ever <- NA
   } else {
     ever <- any((check.rows$summary.col == 1) | (check.rows$daily.col == 1), na.rm = T)
   }
-
-
+  
+  
   rows <- subtbl %>% filter(!is.na(daily.col) & !(is.na(dsstdat) & is.na(daily_dsstdat))) %>%
     mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
     mutate(consolidated.dssdat = ymd(consolidated.dssdat))
-
+  
   if(nrow(rows) == 0){
     # no reference
     start.date <- NA
@@ -284,7 +277,7 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
     } else {
       # They were off at the next report
       end.date <- last.date
-
+      
       next.report.row <- max(which(rows$consolidated.dssdat == last.date)) + 1
       first.after.date <- rows$consolidated.dssdat[next.report.row]
     }
@@ -308,7 +301,7 @@ import.patient.data <- function(data.file,
                                 data.dict.file,
                                 source.name = NA,
                                 verbose = F){
-
+  
   if(verbose) {
     if(!is.na(source.name)){
       cat(glue("Importing data from source {source.name}...\n"))
@@ -316,21 +309,21 @@ import.patient.data <- function(data.file,
       cat("Importing data...\n")
     }
   }
-
+  
   data.dict <- read_csv(data.dict.file)
-
+  
   column.types <- data.dict %>% dplyr::select(1, 4) %>%
     dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
-
+  
   data <- read_csv(data.file, guess_max = 100000)
-
+  
   # Columns that should be text
   text.columns.temp <- column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
   # some data dictionary columns are not in the data!
   text.columns <- intersect(text.columns.temp, colnames(data))
   # don't waste time on ones that are already character, and avoid doing anything to date columns
   text.columns <- text.columns[which(text.columns %>% map_lgl(function(x) !is.Date(data %>% pull(x)) & !is.character(data %>% pull(x))))]
-
+  
   # Columns that should be numerical
   nontext.columns.temp <- column.types %>% filter(!(type %in% c("text", "descriptive", "notes", "file"))) %>% pull(col.name)
   # radio buttons appear differently in the CSV. E.g. "ethnic" becomes "ethnic___1", "ethnic___2", etc
@@ -338,23 +331,23 @@ import.patient.data <- function(data.file,
   nontext.columns <-intersect(colnames(data), c(nontext.columns.temp, nontext.columns.extra))
   # don't waste time on ones that are already character
   nontext.columns <- nontext.columns[which(nontext.columns %>% map_lgl(function(x) !is.numeric(data %>% pull(x))))]
-
+  
   # readr warnings about parsing failure can often be dealt with by increasing guess_max
-
+  
   data <- data %>%
     # Columns that should be character are converted to character.
     # Note also that some of these _could_ be numerical (e.g. temperature measurements) but the fields are free text
     mutate_at(text.columns, as.character)
-
+  
   # Columns that should be numeric are converted to numeric. Parse failures becomes NA.
   # this may actually need a for loop!
   for(ntc in nontext.columns){
     data <- data %>% mutate_at(vars(tidyselect::all_of(ntc)), .funs = ~pcareful.as.numeric(., subjid = subjid, colname = ntc))
   }
-
+  
   data <- data %>%
     dplyr::mutate(data.source = source.name)
-
+  
   data
 }
 
@@ -363,12 +356,46 @@ import.patient.data <- function(data.file,
 #' @export
 #' @keywords internal
 rename.and.drop.columns <- function(data, column.table, cst.reference){
-
+  
+  if(!is.null(column.table)){
+    required.columns <- column.table$report.column.name
+  } else {
+    required.columns <- c('dsstdat', 'daily_dsstdat', 'daily_lbdat', 'hostdat', 'cestdat', 'dsstdtc', 'daily_fio2_lborres', 'age_estimateyears',
+                          'hodur', 'invasive_prdur', 'subjid', 'liver_mhyn', 'chroniccard_mhyn', 'chronicpul_mhyn', 'asthma_mhyn', 'renal_mhyn',
+                          'modliver', 'mildliver', 'chronicneu_mhyn', 'malignantneo_mhyn', 'chronhaemo_mhyn', 'aidshiv_mhyn', 'obesity_mhyn',
+                          'diabetescom_mhyn', 'diabetes_mhyn', 'rheumatologic_mhyn', 'dementia_mhyn', 'malnutrition_mhyn', 'smoking_mhyn',
+                          'other_mhyn', 'fever_ceoccur_v2', 'cough_ceoccur_v2', 'coughsput_ceoccur_v2', 'coughhb_ceoccur_v2',
+                          'sorethroat_ceoccur_v2', 'runnynose_ceoccur_v2', 'earpain_ceoccur_v2', 'wheeze_ceoccur_v2', 'chestpain_ceoccur_v2',
+                          'myalgia_ceoccur_v2', 'jointpain_ceoccur_v2', 'fatigue_ceoccur_v2', 'shortbreath_ceoccur_v2', 'lowerchest_ceoccur_v2',
+                          'headache_ceoccur_v2', 'confusion_ceoccur_v2', 'seizures_cecoccur_v2', 'abdopain_ceoccur_v2', 'vomit_ceoccur_v2',
+                          'diarrhoea_ceoccur_v2', 'conjunct_ceoccur_v2', 'rash_ceoccur_v2', 'skinulcers_ceoccur_v2', 'lymp_ceoccur_v2',
+                          'bleed_ceoccur_v2', 'antiviral_cmyn', 'antibiotic_cmyn', 'corticost_cmyn', 'antifung_cmyn', 'oxygen_cmoccur',
+                          'noninvasive_proccur', 'invasive_proccur', 'pronevent_prtrt', 'inhalednit_cmtrt', 'tracheo_prtrt', 'extracorp_prtrt',
+                          'rrt_prtrt', 'inotrop_cmtrt', 'other_cmyn', 'agedat', 'pregyn_rptestcd', 'redcap_event_name', 'dsterm', 'dsstdtcyn',
+                          'icu_hostdat', 'icu_hoendat', 'hodur', 'invasive_prdur', 'antiviral_cmyn', 'antiviral_cmtrt___1', 'antiviral_cmtrt___2',
+                          'antiviral_cmtrt___3', 'antiviral_cmtrt___4', 'antiviral_cmtrt___5', 'antiviral_cmtrt___6', 'antiviral_cmtype',
+                          'antibiotic_cmyn', 'antifung_cmyn', 'corticost_cmyn', 'noninvasive_proccur', 'daily_noninvasive_prtrt',
+                          'invasive_proccur', 'daily_invasive_prtrt', 'extracorp_prtrt', 'daily_ecmo_prtrt', 'icu_hoterm', 'daily_hoterm',
+                          'rrt_prtrt', 'daily_rrt_cmtrt', 'inotrop_cmtrt', 'daily_inotrope_cmyn', 'daily_fio2_lborres', 'daily_nasaloxy_cmtrt',
+                          'daily_nasaloxy_cmtrt', 'corna_mbcat', 'corna_mbcaty', 'coronaother_mborres', 'mborres', 'mbtestcd',
+                          'redcap_data_access_group', 'rheumatologic_mhyn', 'sex', 'healthwork_erterm', 'rr_vsorres', 'oxy_vsorres',
+                          'oxy_vsorresu', 'hr_vsorres', 'sysbp_vsorres', 'temp_vsorres', 'temp_vsorresu', 'daily_crp_lborres',
+                          'daily_bun_lborres', 'daily_bun_lborresu', 'daily_wbc_lborres', 'daily_wbc_lborresu', 'daily_pt_lborres',
+                          'ddimer_lborres', 'daily_bil_lborresu', 'daily_aptt_lborres', 'daily_lymp_lborres', 'daily_neutro_lborres',
+                          'daily_alt_lborres', 'daily_ast_lborres', 'daily_bil_lborres', 'daily_bun_lborresu', 'daily_bil_lborresu')
+  }
+  
+  
   for(i in 1:nrow(column.table)){
-    old.name <- column.table$redcap.column.name[i]
-    new.name <- column.table$report.column.name[i]
+    if(!is.null(column.table)){
+      old.name <- column.table$redcap.column.name[i]
+    } else {
+      old.name <- required.columns[i]
+    }
+    new.name <- required.columns[i]
     if(!new.name %in% colnames(data)){
       if(!old.name %in% colnames(data)){
+        warning(glue("Required column {new.name} not found or mapped. Adding an empty column with this name."))
         # we need this column even if it is all empty
         data <- data %>%
           mutate(!!(new.name) := NA)
@@ -378,13 +405,15 @@ rename.and.drop.columns <- function(data, column.table, cst.reference){
           rename_at(vars(all_of(old.name)), ~new.name)
       }
     }
-
+    
     cst.reference <- cst.reference %>%
       mutate(field = replace(field, field == old.name, new.name))
   }
-
-  data <- data %>% dplyr::select(-setdiff(colnames(data), column.table$report.column.name))
-
+  
+  
+  
+  data <- data %>% dplyr::select(-setdiff(colnames(data), required.columns))
+  
   list(data = data, cst.reference = cst.reference)
 }
 
@@ -395,16 +424,16 @@ rename.and.drop.columns <- function(data, column.table, cst.reference){
 #' @export
 #' @keywords internal
 process.symptoms.comorbidities.treatments <- function(data.dict.file){
-
+  
   d.dict <- read_csv(data.dict.file) %>%
     dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
     dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
-
-
+  
+  
   comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
   admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4") & field.type == "radio" &  field.name != "bleed_ceterm_v2") %>% pull(field.name)
   treatment.colnames <- d.dict %>% filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
-
+  
   comorbidities.labels <- d.dict %>%
     filter(form.name == "comorbidities" & field.type == "radio") %>%
     pull(field.label) %>%
@@ -413,20 +442,20 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     pull(2) %>%
     map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
     map_chr(function(x) sub("\\s+$", "", x))
-
+  
   comorbidities.labels[1] <- "Chronic cardiac disease"
   comorbidities.labels[18] <- "Other"
-
+  
   comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels)
-
+  
   comorbidities <- bind_rows(comorbidities, tibble(field = "pregnancy", label = "Pregnancy"))
   comorbidities <- comorbidities %>% bind_rows(list(field = "liver.disease", label = "Liver disease")) %>%
     filter(field != "mildliver" & field != "modliver")
   comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "Diabetes")) %>%
     filter(field != "diabetes_mhyn" & field != "diabetescom_mhyn")
-
+  
   comorbidities <- comorbidities %>% mutate(type = "comorbidity")
-
+  
   admission.symptoms.labels <- d.dict %>%
     filter(form.name == "admission_signs_and_symptoms" &
              startsWith(field.label, "4") &
@@ -438,21 +467,21 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     pull(2) %>%
     map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
     map_chr(function(x) sub("\\s+$", "", x))
-
+  
   admission.symptoms.labels[2] <- "Cough: no sputum"
-
+  
   admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels)
-
+  
   admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)")) %>%
     bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)")) %>%
     bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)")) %>%
     filter(field != "cough_ceoccur_v2" & field != "coughsput_ceoccur_v2" & field !="coughhb_ceoccur_v2")
-
+  
   admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "shortness.breath", label = "Shortness of breath")) %>%
     filter(field != "shortbreath_ceoccur_v2" & field != "lowerchest_ceoccur_v2")
-
+  
   admission.symptoms <- admission.symptoms %>% mutate(type = "symptom")
-
+  
   treatment.labels <- d.dict %>%
     filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>%
     pull(field.label) %>%
@@ -464,13 +493,13 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     map_chr(function(x) sub("\\s+$", "", x)) %>%
     map_chr(function(x) sub("\\?+$", "", x)) %>%
     map_chr(function(x) sub("\\s+$", "", x))
-
+  
   treatment.labels[9] <- "Inhaled nitric oxide"
   treatment.labels[10] <- "Tracheostomy"
   treatment.labels[14] <- "Other"
-
+  
   treatments <- tibble(field = treatment.colnames, label = treatment.labels, type = "treatment")
-
+  
   bind_rows(comorbidities, admission.symptoms, treatments)
 }
 
@@ -498,9 +527,9 @@ probable.cov.freetext <- function(text){
 
 pre.nest.sanity.checks <- function(data, message.output.file = NULL, verbose = FALSE){
   if(verbose) cat("Setting future dates to NA...\n")
-
+  
   date.columns <- c("dsstdat", "daily_dsstdat", "daily_lbdat", "hostdat", "cestdat", "dsstdtc")
-
+  
   for(dc in date.columns){
     data <- data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(.,
                                                                               subjid = subjid,
@@ -508,7 +537,7 @@ pre.nest.sanity.checks <- function(data, message.output.file = NULL, verbose = F
                                                                               check.early = TRUE,
                                                                               message.out.file = message.output.file))
   }
-
+  
   for(dc in "agedat"){
     data <- data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(.,
                                                                               subjid = subjid,
@@ -516,28 +545,28 @@ pre.nest.sanity.checks <- function(data, message.output.file = NULL, verbose = F
                                                                               check.early = FALSE,
                                                                               message.out.file = message.output.file))
   }
-
+  
   data <- data %>%
     mutate_at(c(date.columns, "agedat"), function(x) as.Date(x, origin = "1970-01-01"))
-
-
+  
+  
   # Now, some fields need to be numerical even if the data dictionary does not think they are.
   # These are just the ones of those that we _currently use_. Others should be added as required.
-
+  
   if(verbose) cat("Manually adjusting some fields...\n")
-
+  
   data <- data %>%
     mutate(daily_fio2_lborres = map2_dbl(subjid, daily_fio2_lborres, function(x, y) careful.as.numeric(y, x, "daily_fio2_lborres", message.output.file))) %>%
     mutate(age_estimateyears = map2_dbl(subjid, age_estimateyears, function(x, y) careful.as.numeric(y, x, "age_estimateyears", message.output.file))) %>%
     mutate(hodur = map2_dbl(subjid, hodur, function(x, y) careful.as.numeric(y, x, "hodur", message.output.file))) %>%
     mutate(invasive_prdur = map2_dbl(subjid, invasive_prdur, function(x, y) careful.as.numeric(y, x, "invasive_prdur", message.output.file)))
-
+  
   # Replace the fractional ages
-
+  
   data <- data %>%  mutate(age_estimateyears = map2_dbl(age_estimateyears, subjid, function(x, y){
     careful.fractional.age(x, y, "age_estimateyears", message.output.file)
   }))
-
+  
   data
 }
 
@@ -547,16 +576,16 @@ process.data <- function(data,
                          cst.reference,
                          embargo.limit = today(),
                          verbose = F){
-
-
+  
+  
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
   treatments <- cst.reference %>% filter(type == "treatment")
-
+  
   patient.data <- data
-
+  
   # Group liver disease categories
-
+  
   patient.data <- patient.data %>%
     mutate(liver.disease = pmap_dbl(list(mildliver, modliver, liver_mhyn), function(mild, moderate, any){
       if(is.na(mild) & is.na(moderate) & is.na(any)){
@@ -575,8 +604,8 @@ process.data <- function(data,
         3
       }
     }))
-
-
+  
+  
   # Group diabetes categories
   patient.data <- patient.data %>%
     mutate(diabetes = pmap_dbl(list(diabetes_mhyn, diabetescom_mhyn, diabetes_mhyn), function(simple, complex, any){
@@ -597,13 +626,13 @@ process.data <- function(data,
         2
       }
     }))
-
+  
   # Cough records may have not been entered coherently, and are recoded to be mutually exclusive.
   # Someone with a cough with sputum does not have a cough without it
-
+  
   patient.data <- patient.data %>%
     mutate(cough.cols = pmap(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
-
+      
       if(any(c(x,y,z) == 3) | any(is.na(c(x,y,z)))){
         cough.nosputum <- NA
         cough.sputum <- NA
@@ -645,9 +674,9 @@ process.data <- function(data,
         }
       }
     }))
-
+  
   # Group shortness of breath categories
-
+  
   patient.data <- patient.data %>%
     mutate(shortness.breath = map2_dbl(shortbreath_ceoccur_v2, lowerchest_ceoccur_v2, function(adult, paed){
       if(is.na(adult) & is.na(paed)){
@@ -664,12 +693,12 @@ process.data <- function(data,
         2
       }
     }))
-
-
+  
+  
   # Add new columns with more self-explanatory names as needed
-
+  
   if(verbose) cat("Adding new columns...\n")
-
+  
   patient.data <- patient.data %>%
     # Consolidated age is the exact age at enrolment if this is present. Otherwise it is taken from the estimated age column.
     dplyr::mutate(consolidated.age = pmap_dbl(list(age_estimateyears, agedat, dsstdat), function(ageest, dob, doa){
@@ -702,7 +731,7 @@ process.data <- function(data,
       })
       str_replace(newlabels, "70-119", "70+")
     }))
-
+  
   patient.data <- patient.data %>%
     mutate(pregnancy = pmap_dbl(list(pregyn_rptestcd, sex, consolidated.age), function(preg, sx, age){
       if(is.na(preg)){
@@ -724,7 +753,7 @@ process.data <- function(data,
         preg
       }
     }))
-
+  
   patient.data <- patient.data %>%
     # check if symptoms, comorbidities and treatments were actually recorded
     dplyr::mutate(symptoms.recorded = pmap_lgl(list(!!!rlang::parse_exprs(admission.symptoms$field)), ~any(!is.na(c(...))))) %>%
@@ -733,8 +762,8 @@ process.data <- function(data,
       temp <- x %>% mutate(tr = pmap_lgl(list(!!!rlang::parse_exprs(treatments$field)), ~any(!is.na(c(...)))))
       any(temp$tr)
     }))
-
-
+  
+  
   patient.data <- patient.data %>%
     # exit date is whenever the patient leaves the site. @todo look at linking up patients moving between sites
     dplyr::mutate(exit.date = map2_chr(subjid, events, function(y, x){
@@ -779,7 +808,7 @@ process.data <- function(data,
         }
       }
     }))
-
+  
   patient.data <- patient.data %>%
     # outcome is death, discharge or other for transfers etc
     dplyr::mutate(outcome = map2_chr(censored, events, function(x, y){
@@ -826,7 +855,7 @@ process.data <- function(data,
       ifelse(x=="discharge", as.character(y), NA)
     }))  %>%
     dplyr::mutate(discharge.date = ymd(discharge.date))
-
+  
   patient.data <- patient.data %>%
     dplyr::mutate(ICU.start.date = map_chr(events, function(x) as.character(extract.named.column.from.events(x, "icu_hostdat", TRUE)))) %>%
     dplyr::mutate(ICU.start.date = ymd(ICU.start.date)) %>%
@@ -843,7 +872,7 @@ process.data <- function(data,
       suppressWarnings(as.character(max(x,y, na.rm = T)))
     })) %>%
     dplyr::mutate(start.date = ymd(start.date))
-
+  
   patient.data <- patient.data %>%
     dplyr::mutate(antiviral.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmyn", TRUE) )) %>%
     dplyr::mutate(antiviral.Ribavirin = map_dbl(events, function(x) extract.named.column.from.events(x, "antiviral_cmtrt___1", TRUE) )) %>%
@@ -856,11 +885,11 @@ process.data <- function(data,
     dplyr::mutate(antibiotic.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antibiotic_cmyn", TRUE) )) %>%
     dplyr::mutate(antifungal.any = map_dbl(events, function(x) extract.named.column.from.events(x, "antifung_cmyn", TRUE) )) %>%
     dplyr::mutate(steroid.any = map_dbl(events, function(x) extract.named.column.from.events(x, "corticost_cmyn", TRUE) ))
-
+  
   ###### Date wrangling ######
-
+  
   if(verbose) cat("Wrangling dates for treatment modalities...\n")
-
+  
   patient.data <- patient.data %>%
     # NIV
     mutate(NIMV.cols  = map(events, function(el){
@@ -923,12 +952,12 @@ process.data <- function(data,
     })) %>%
     { bind_cols(., bind_rows(!!!.$Inotrope.cols)) } %>%
     dplyr::select(-Inotrope.cols)
-
+  
   # O2 ever - more complex
-
+  
   patient.data <- patient.data %>%
     mutate(O2.ever = map_lgl(events, function(x){
-
+      
       x2 <- x %>% filter(!is.na(daily_fio2_lborres) | !is.na(daily_nasaloxy_cmtrt) | !is.na(daily_nasaloxy_cmtrt))
       if(nrow(x2) == 0){
         NA
@@ -937,10 +966,10 @@ process.data <- function(data,
         any(x2$O2.ever, na.rm = T)
       }
     }))
-
+  
   # ICU.start.data and ICU.end.date hae values from daily sheets but omit some
   # values from the outcome sheet. Where available, the outcome sheet ispreferred.
-
+  
   patient.data <- patient.data %>%
     # ICU.ever is either ICU2.ever or non-NA icu_hoterm. At the moment, NA ICU2.evers lead to NA ICU.evers in the absence of a icu_hoterm.
     # It's possible that they should be FALSE instead
@@ -949,7 +978,7 @@ process.data <- function(data,
     mutate(ICU.start.date = replace(ICU.start.date, is.na(ICU.start.date), ICU2.start.date[which(is.na(ICU.start.date))])) %>%
     mutate(ICU.end.date = replace(ICU.end.date, is.na(ICU.end.date), ICU2.end.date[which(is.na(ICU.end.date))])) %>%
     mutate(ICU.multiple.periods = ICU2.multiple.periods)
-
+  
   # if we can get those from the daily forms then we can get this
   patient.data$ICU.duration[is.na(patient.data$ICU.duration) == TRUE] <-
     as.numeric(difftime(
@@ -957,13 +986,13 @@ process.data <- function(data,
       patient.data$ICU.start.date[is.na(patient.data$ICU.duration) == TRUE],
       unit="days"
     ))
-
+  
   # drop the ICU2 columns
-
+  
   patient.data <- patient.data %>% dplyr::select(-starts_with("ICU2"))
-
+  
   ###### Calculation of time periods #####
-
+  
   patient.data <- patient.data %>%
     dplyr::mutate(NIMV.duration = map2_dbl(NIMV.end.date, NIMV.start.date, function(x,y){
       as.numeric(difftime(x, y,  unit="days"))
@@ -1022,11 +1051,11 @@ process.data <- function(data,
            start.to.ICU = as.numeric(difftime(ICU.start.date, start.date, unit="days")),
            start.to.IMV = as.numeric(difftime(IMV.start.date, start.date, unit="days")),
            start.to.NIMV = as.numeric(difftime(NIMV.start.date, start.date, unit="days")))
-
+  
   ##### Untangling COVID test fields #####
-
+  
   if(verbose) cat("Untangling SARS-CoV-2 test results...\n")
-
+  
   patient.data <- patient.data %>%
     mutate(cov.test.result =
              map_dbl(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "corna_mbcat"))) %>%
@@ -1038,9 +1067,9 @@ process.data <- function(data,
              map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mborres"))) %>%
     mutate(any.test.freetext =
              map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mbtestcd")))
-
+  
   # IMPORTANT: At the moment "positive.COV19.test" refers to "evidence for a positive test". FALSE is not evidence for a negative test.
-
+  
   patient.data <- patient.data %>%
     mutate(positive.COV19.test = pmap_lgl(list(subjid, cov.test.result, cov.test.organism, cov.other.organism.freetext, any.test.result, any.test.freetext),
                                           function(id, ctest, cpos, cfreetext, anytest, anyfreetext){
@@ -1075,41 +1104,41 @@ process.data <- function(data,
                                               return(FALSE)
                                             }
                                           }))
-
-
+  
+  
   # Minimal table for the unebargoed data
-
+  
   unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, admission.date, outcome)
-
+  
   # Data for the by-country summary
-
+  
   countries.and.sites <-  unembargoed.data %>%
     group_by(Country, site.name) %>%
     dplyr::summarise(n.sites = 1) %>%
     dplyr::summarise(n.sites = sum(n.sites)) %>%
     filter(!is.na(Country))
-
+  
   # Impose the embargo
-
+  
   if(verbose) cat("Imposing the embargo...\n")
-
-
+  
+  
   patient.data <-  patient.data %>%
     filter(dsstdat <= embargo.limit)
-
+  
   # Save to disk
-
+  
   # Remove cases with problematic outcome code-date matches
-
+  
   # Temporary fix! #
-
+  
   patient.data<- patient.data %>% filter(!(is.na(exit.code) & !is.na(exit.date)))
-
+  
   # Detach the events table
-
+  
   # patient.data <- patient.data %>% dplyr::select(-events)
-
+  
   list(unembargoed.data = unembargoed.data, detailed.data = patient.data, countries.and.sites = countries.and.sites)
-
+  
 }
 
