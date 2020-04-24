@@ -2008,20 +2008,18 @@ round.zeros <- function(x){
 #'
 #' @return Violin plots (with box plots) showing the distribution of the total length of hospital stay by sex. The coloured areas of the plot indicate the
 #'  kernel probability density of the observed data and the box plots show the median and interquartile range of the lengths of stay for each sex.
-violin.sex.func <- function(data, ...){
+violin.sex.func <- function(data, embargo.limit, ...){
 
   # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
 
 
-  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3)
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3) %>% filter(start.to.exit > 0) # Exclude negative values for length of stay - indication of issue with data entry
 
   data2 <- data2%>%
     mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
-    mutate(sex = factor(sex, levels = c("Male", "Female")))
-
-  # Exclude negative values for length of stay - indication of issue with data entry
-  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+    mutate(sex = factor(sex, levels = c("Male", "Female")))  %>%
+    filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
 
 
   vd <- tibble(Sex = data2$sex, length.of.stay = data2$length.of.stay )
@@ -2037,7 +2035,7 @@ violin.sex.func <- function(data, ...){
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
       axis.title.x = element_text( size=12),
       axis.title.y = element_text( size=12)
-    ) +  ylim(c(0,100)) +
+    ) +  ylim(c(0,max(vd$length.of.stay) - 20)) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
 
@@ -2177,19 +2175,16 @@ violin.sex.func.hospital <- function(data, ...){
 #' @return Violin plots (with box plots) showing the distribution of the total length by age group. Age is plotted in  10-year intervals: 0-9, 10-19, \dots, 70+.
 #' The coloured areas of the plot indicate the kernel probability density of the observed data and the box plots show the
 #' median and interquartile range of the lengths of hospital stay for each age group.
-violin.age.func <- function(data, ...){
+violin.age.func <- function(data, embargo.limit,...){
 
   # Analysis to be run on only entries with start.to.exit entries
 
-  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10))
+  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(start.to.exit > 0) # Exclude negative values for length of stay - indication of issue with data entry
 
   data2 <- data2 %>%
-    mutate(length.of.stay = round.zeros(start.to.exit))
-
-  # Exclude negative values for length of stay - indication of issue with data entry
-  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
-
-
+    mutate(length.of.stay = round.zeros(start.to.exit)) %>%
+    filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
+  
 
   vdx<- tibble(subjid = data2$subjid, Age = data2$agegp10, length_of_stay = data2$length.of.stay )
 
@@ -2205,7 +2200,7 @@ violin.age.func <- function(data, ...){
     ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
     scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
     scale_x_discrete(drop = F) +
-    ylim(c(0,100)) +
+    ylim(c(0,max(vdx$length_of_stay) - 20)) +
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
 
