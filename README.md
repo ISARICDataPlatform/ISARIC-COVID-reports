@@ -16,9 +16,9 @@ You may also need to install [pandoc](https://pandoc.org/) and the R library "de
 With the respository downloaded, navigate to the directory containing it using the R command line and type:
 
     library(devtools)
-    install(".")
+    install("COVIDreportwriter")
     
-For basic operation, you require two files from Redcap output: a data file and a data dictionary file. Supposing the file name of the former is data.csv and the latter data_dict.csv, a basic report can be generated using the R commands:
+For basic operation, you require two files from REDCap output: a data file and a data dictionary file. Supposing the file name of the former is data.csv and the latter data_dict.csv, a basic report can be generated using the R commands:
 
     library(COVIDreportwriter)
     imported.data <- import.and.process.data(data.csv, data_dict.csv)
