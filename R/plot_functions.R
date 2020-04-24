@@ -1821,6 +1821,7 @@ fit.summary.gamma <- function(fit){
 # @todo set filter for lengths of stay to automatically remove potentially wrong entries > 150 days
 
 #' @export
+#' @import dplyr
 #' @keywords internal
 
 casefat2 <-  function(data, embargo.limit, conf=0.95){
@@ -1834,7 +1835,7 @@ casefat2 <-  function(data, embargo.limit, conf=0.95){
 
   # Exclude rows which no entries for length of stay
 
-  data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
   data2 <- data2 %>%
     mutate(length.of.stay =  map2_dbl(abs(start.to.exit), abs(admission.to.censored), function(x,y){
       max(x, y, na.rm = T)
@@ -1951,13 +1952,14 @@ casefat2 <-  function(data, embargo.limit, conf=0.95){
 # Calcualate cfr for ICU and non-ICU cases
 
 #' @export
+#' @import dplyr
 #' @keywords internal
 
 icu.cfr.func <- function(data, embargo.limit){
 
-  icu.cases <- data %>% filter(ICU.ever == 'TRUE')
+  icu.cases <- data %>% dplyr::filter(ICU.ever == 'TRUE')
 
-  non.icu.cases <- data %>% filter(is.na(ICU.ever) | ICU.ever == 'FALSE')
+  non.icu.cases <- data %>% dplyr::filter(is.na(ICU.ever) | ICU.ever == 'FALSE')
 
   cfr.icu.list <- casefat2(icu.cases, embargo.limit)
   cfr.icu <- cfr.icu.list$cfr

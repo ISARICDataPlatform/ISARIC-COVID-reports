@@ -81,6 +81,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   ECMO.ab <-  sum(data$ECMO.ever=='FALSE', na.rm=T)
   ECMO.un <-  N.cases -  ECMO.pr -   ECMO.ab
 
+
   # Distribution estimates - EXPECTED
 
   # Admission to outcome
@@ -143,9 +144,6 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   adm.imv <- round(adm.imv.summ$m, 1)
   adm.imv.l <- round(adm.imv.summ$lower.m, 1)
   adm.imv.u <- round(adm.imv.summ$upper.m, 1)
-
-
-
 
   # # Duration of IMV (more censored cases than cases with outcomes; causing mle error)
   #
@@ -264,13 +262,13 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
 
   # CFR for ICU/non-ICU
 
- cfr.icu <-  icu.cfr.func(data, embargo.limit)$cfr.icu
- cfr.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.icu.l
- cfr.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.icu.u
+  cfr.icu <-  icu.cfr.func(data, embargo.limit)$cfr.icu
+  cfr.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.icu.l
+  cfr.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.icu.u
 
- cfr.non.icu <-  icu.cfr.func(data, embargo.limit)$cfr.non.icu
- cfr.non.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.l
- cfr.non.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.u
+  cfr.non.icu <-  icu.cfr.func(data, embargo.limit)$cfr.non.icu
+  cfr.non.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.l
+  cfr.non.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.u
 
 
 
