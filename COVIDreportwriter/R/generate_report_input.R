@@ -6,8 +6,14 @@
 #' @export
 #' @keywords internal
 # Main function d.e (dynamic.estimates) calculates estimates and confidence intervals, to be incorporated into report. #
-d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms, treatments, ...){
+d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms, treatments, site.name, embargo.length, ...){
 
+  
+  # For site-specific reports
+  
+  site.name <- site.name
+  embargo.length <- embargo.length
+  
   # Summaries
 
   N.cases <- nrow(data)      # total embargoed
@@ -21,7 +27,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
 
   min.age <- ceiling(min(data$consolidated.age, na.rm=T)) # minimum age
   max.age <- ceiling(max(data$consolidated.age, na.rm=T)) # maximum age
-
+   
   transfer.outcome <- sum(summary(data$exit.code)[['transfer']],  summary(data$exit.code)[['transfer.palliative']])
   unk.outcome <-  sum(summary(data$exit.code)[['hospitalisation']], summary(data$exit.code)[['unknown']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed
 
@@ -334,7 +340,10 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   #surv.sum <- sum(table(surv.plot.func(data)$df$sex, surv.plot.func(data)$df$event))
 
 
-  return(list(N.cases = N.cases,
+  return(list(site.name = site.name,
+              embargo.length = embargo.length,
+              
+              N.cases = N.cases,
               N.cases.full = N.cases.full,
               N.var = N.var,
               N.sites.full = N.sites.full,
