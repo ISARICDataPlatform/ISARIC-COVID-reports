@@ -1,14 +1,14 @@
-#
-d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/CoVEOT_DATA_2020-04-20_0714.csv"
-d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/CoVEOT_DataDictionary_2020-04-10.csv"
-c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
-s.list <- "/Users/mdhall/ISARIC.COVID.reports/site_list.csv"
-verbose <- TRUE
-ref.date <- today()
-embargo.length <- 0
-message.out.file <- "messages.csv"
-source.name <- "test"
-#
+# #
+# d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/CoVEOT_DATA_2020-04-20_0714.csv"
+# d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/CoVEOT_DataDictionary_2020-04-10.csv"
+# c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
+# s.list <- "/Users/mdhall/ISARIC.COVID.reports/site_list.csv"
+# verbose <- TRUE
+# ref.date <- today()
+# embargo.length <- 0
+# message.out.file <- "messages.csv"
+# source.name <- "test"
+# #
 #
 # import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
 
@@ -141,7 +141,7 @@ generate.report <- function(patient.data.output, file.name){
 
   de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments)
 
-  render('COV-report.Rmd',output_file=file.name)
+  render('markdown/COV-report.Rmd',output_file=file.name)
 
 }
 
