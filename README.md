@@ -4,7 +4,7 @@
 
 ## Installation
 
-The R code is provided as an R package called "COVIDreportwriter". To install this, first download the Github repository, either by using the links on this page or using the command line (in the MacOS/Linux/Unix terminal or [git bash](https://gitforwindows.org/)):
+The R code is provided as a package called "COVIDreportwriter". To install this, first download the Github repository, either by using the links on this page or using the command line (in the MacOS/Linux/Unix terminal or [git bash](https://gitforwindows.org/)):
 
     git clone https://github.com/ISARICDataPlatform/ISARIC-COVID-reports.git
 
