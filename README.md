@@ -21,7 +21,7 @@ With the respository downloaded, navigate to the directory containing it using t
 For basic operation, you require two files from REDCap output: a data file and a data dictionary file. Supposing the file name of the former is data.csv and the latter data_dict.csv, a basic report can be generated using the R commands:
 
     library(COVIDreportwriter)
-    imported.data <- import.and.process.data(data.csv, data_dict.csv)
+    imported.data <- import.and.process.data("data.csv", "data_dict.csv")
     generate.report(imported.data, "report.pdf", "My site")
     
 This should output a report named "report.pdf". The third argument to `generate.report` is an identifier for your data, for example the name of a hospital site.
