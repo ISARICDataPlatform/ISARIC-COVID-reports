@@ -2917,8 +2917,7 @@ plot.comorb.by.age <- function(data, ...) {
   df <- plot.by.age.grouping(df)
   for (i in 2:9) df[, i] <- plot.by.age.make.zeroandone(df[, i])
   df$All <- 1
-  df$DM <- pmax(df$diabetes_mhyn, df$diabetescom_mhyn, na.rm = TRUE)
-
+  
   pa <- plot.prop.by.age(df, df$asthma_mhyn,
                          "Proportion with\nasthma", ymax = .4)
   pb <- plot.prop.by.age(df, df$malignantneo_mhyn,
@@ -2927,7 +2926,7 @@ plot.comorb.by.age <- function(data, ...) {
                          "Proportion with\nHIV", ymax = .4)
   pd <- plot.prop.by.age(df, df$obesity_mhyn,
                          "Proportion with\nobesity", ymax = .4)
-  pe <- plot.prop.by.age(df, df$DM,
+  pe <- plot.prop.by.age(df, df$diabetes,
                          "Proportion with\ndiabetes mellitus", ymax = .4)
   pf <- plot.prop.by.age(df, df$dementia_mhyn,
                          "Proportion with\ndementia", ymax = .4)
@@ -2950,10 +2949,20 @@ plot.sx.by.age <- function(data, admission.symptoms, ...) {
   df <- plot.by.age.grouping(df)
   for (i in 2:25) df[, i] <- plot.by.age.make.zeroandone(df[, i])
   df$All <- 1
-  df$Cough <- pmax(df$cough.bloodysputum, df$cough.nosputum, df$cough.sputum,
-                   na.rm = TRUE)
-  df$GI <- pmax(df$abdopain_ceoccur_v2, df$vomit_ceoccur_v2,
-                df$diarrhoea_ceoccur_v2, na.rm = TRUE)
+  if(length(intersect(colnames(df), c("cough.bloodysputum", "cough.nosputum", "cough.sputum") )) != 0){
+    df$Cough <- pmax(df$cough.bloodysputum, df$cough.nosputum, df$cough.sputum,
+                     na.rm = TRUE)
+  } else {
+    df$Cough <- NA 
+  }
+  if(length(intersect(colnames(df), c("abdopain_ceoccur_v2", "vomit_ceoccur_v2", "diarrhoea_ceoccur_v2") )) != 0){
+    df$GI <- pmax(df$abdopain_ceoccur_v2, df$vomit_ceoccur_v2,
+                  df$diarrhoea_ceoccur_v2, na.rm = TRUE)
+  } else {
+    df$GI <- NA
+  }
+
+
 
   pa <- plot.prop.by.age(df, df$fever_ceoccur_v2, "Fever")
   pb <- plot.prop.by.age(df, df$Cough, "Cough")

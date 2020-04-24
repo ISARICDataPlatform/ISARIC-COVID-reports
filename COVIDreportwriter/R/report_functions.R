@@ -1,6 +1,6 @@
 # #
-d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/CoVEOT_DATA_2020-04-20_0714.csv"
-d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/CoVEOT_DataDictionary_2020-04-10.csv"
+d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
+d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
 c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
 verbose <- TRUE
 ref.date <- today()
@@ -26,20 +26,18 @@ source.name <- "test"
 #'
 import.and.process.data <- function(data.file,
                                     data.dict.file,
-                                    column.table.file = "required_columns.csv",
+                                    column.table.file = NULL,
                                     source.name = NA,
                                     message.out.file = NULL,
                                     embargo.length = 0,
                                     ref.date = today(),
                                     verbose = F){
-  
-  column.table <- read_csv(column.table.file)
-  
+
   raw.data <- import.patient.data(data.file, data.dict.file, source.name, verbose)
   
   cst.reference <- process.symptoms.comorbidities.treatments(data.dict.file)
   
-  temp <- rename.and.drop.columns(raw.data, column.table, cst.reference)
+  temp <- rename.and.drop.columns(raw.data, column.table.file, cst.reference)
   raw.data <- temp$data
   cst.reference <- temp$cst.reference
   
@@ -123,7 +121,6 @@ import.and.process.data <- function(data.file,
 generate.report <- function(patient.data.output, file.name, site.name){
   patient.data <- patient.data.output$detailed.data
   unembargoed.data <- patient.data.output$unembargoed.data
-  countries.and.sites <- patient.data.output$countries.and.sites
   cst.reference <- patient.data.output$cst.reference
   
   embargo.limit <- patient.data.output$embargo.limit
@@ -134,7 +131,10 @@ generate.report <- function(patient.data.output, file.name, site.name){
   
   de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments)
   
-  render('markdown/COV-report.Rmd',output_file=file.name)
+  print(getwd())
+  
+  report.rmd.file <- system.file("rmd", "COV-report.Rmd", package = "COVIDreportwriter")
+  render(report.rmd.file, output_file=file.name)
   
 }
 
@@ -355,9 +355,10 @@ import.patient.data <- function(data.file,
 
 #' @export
 #' @keywords internal
-rename.and.drop.columns <- function(data, column.table, cst.reference){
+rename.and.drop.columns <- function(data, column.table.file, cst.reference){
   
-  if(!is.null(column.table)){
+  if(!is.null(column.table.file)){
+    column.table     <- read_csv(column.table.file)
     required.columns <- column.table$report.column.name
   } else {
     required.columns <- c('dsstdat', 'daily_dsstdat', 'daily_lbdat', 'hostdat', 'cestdat', 'dsstdtc', 'daily_fio2_lborres', 'age_estimateyears',
@@ -386,8 +387,8 @@ rename.and.drop.columns <- function(data, column.table, cst.reference){
   }
   
   
-  for(i in 1:nrow(column.table)){
-    if(!is.null(column.table)){
+  for(i in 1:length(required.columns)){
+    if(!is.null(column.table.file)){
       old.name <- column.table$redcap.column.name[i]
     } else {
       old.name <- required.columns[i]
@@ -408,6 +409,9 @@ rename.and.drop.columns <- function(data, column.table, cst.reference){
     
     cst.reference <- cst.reference %>%
       mutate(field = replace(field, field == old.name, new.name))
+    
+    cst.reference <- cst.reference %>%
+      filter(field %in% required.columns)
   }
   
   
@@ -1108,15 +1112,7 @@ process.data <- function(data,
   
   # Minimal table for the unebargoed data
   
-  unembargoed.data <- patient.data %>% dplyr::select(subjid, Country, site.name, start.date, admission.date, outcome)
-  
-  # Data for the by-country summary
-  
-  countries.and.sites <-  unembargoed.data %>%
-    group_by(Country, site.name) %>%
-    dplyr::summarise(n.sites = 1) %>%
-    dplyr::summarise(n.sites = sum(n.sites)) %>%
-    filter(!is.na(Country))
+  unembargoed.data <- patient.data %>% dplyr::select(subjid, start.date, admission.date, outcome)
   
   # Impose the embargo
   
@@ -1138,7 +1134,7 @@ process.data <- function(data,
   
   # patient.data <- patient.data %>% dplyr::select(-events)
   
-  list(unembargoed.data = unembargoed.data, detailed.data = patient.data, countries.and.sites = countries.and.sites)
+  list(unembargoed.data = unembargoed.data, detailed.data = patient.data)
   
 }
 

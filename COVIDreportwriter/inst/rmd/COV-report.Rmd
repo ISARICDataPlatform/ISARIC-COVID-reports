@@ -18,6 +18,13 @@ urlcolor: blue
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
+summary.file <-  system.file("rmd", "summary.Rmd", package = "COVIDreportwriter")
+background.file <- system.file("rmd", "background.Rmd", package = "COVIDreportwriter")
+caveats.file <- system.file("rmd", "caveats.Rmd", package = "COVIDreportwriter")
+methods.file <- system.file("rmd", "methods.Rmd", package = "COVIDreportwriter")
+references.file <- system.file("rmd", "references.Rmd", package = "COVIDreportwriter")
+summtables.file <- system.file("rmd", "summarytables.Rmd", package = "COVIDreportwriter")
+team.file <- system.file("rmd", "teammembers.Rmd", package = "COVIDreportwriter")
 
 
 ```
@@ -28,7 +35,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 # Summary
 
-```{r child = 'markdown/summary.Rmd'}
+```{r child = summary.file}
 ```
 \newpage
 # Patient Characteristics
@@ -228,31 +235,31 @@ modified.km.plot(patient.data, embargo.limit)
 
 # Background
 
-```{r child = 'markdown/background.Rmd'}
+```{r child = background.file}
 ```
 
 # Methods
 
-```{r child = 'markdown/methods.Rmd'}
+```{r child = methods.file}
 ```
 
 # Caveats
 
-```{r child = 'markdown/caveats.Rmd'}
+```{r child = caveats.file}
 ```
 
 # Summary Tables
 Proportions are presented in parantheses. Proportions have been rounded to two decimal places. 
 
-```{r child = 'markdown/summarytables.Rmd'}
+```{r child = summtables.file}
 ```
 
 # ISARIC Team Members
 
-```{r child = 'markdown/teammembers.Rmd'}
+```{r child = team.file}
 ```
 
 # References
 
-```{r child = 'markdown/references.Rmd'}
+```{r child = references.file}
 ```
