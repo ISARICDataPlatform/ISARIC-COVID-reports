@@ -1,4 +1,4 @@
-Package: ISARIC.COVID.reports
+Package: COVIDreportwriter
 Title: Generation of COVID-19 reports from REDCAP clinical data
 Version: 0.1.0
 Authors@R: 
