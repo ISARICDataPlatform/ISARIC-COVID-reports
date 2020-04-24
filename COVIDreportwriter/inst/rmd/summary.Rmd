@@ -3,17 +3,15 @@ title: "Summary"
 output: html_document
 ---
 
-The results in this report have been produced using data from the ISARIC COVID-19 database. For information, or to contribute to the collaboration, please contact [ncov@isaric.org](ncov@isaric.org).
+The results in this report have been produced using data from `r de$site.name` using the ISARIC COVID-19 database. For information, or to contribute to the collaboration, please contact [ncov@isaric.org](ncov@isaric.org).
 
-Up to the date of this report, data have been entered for <span style="background-color: #FFFF00">**`r de$N.cases.full`** individuals from **`r de$N.sites.full`** sites across **`r de$N.countries.full`** countries.</span>
+Up to the date of this report, data have been entered for **`r de$N.cases.full`** individuals.
 
-We thank all of the data contributors for collecting standardised data during these extraordinary times. We plan to issue this report of aggregate data weekly for the duration of the SARS-CoV-2/COVID-19 pandemic.  
+Please note the following caveats. Information is incomplete for the many patients who are still being treated. Furthermore, it is likely that we received more cases of severely ill individuals than those with relatively less severe illness; outcomes from these data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. Some patients may be participants in clinical trials of experimental interventions. Additional caveats are provided in the in the ‘Caveats’ section below. 
 
-Please note the following caveats. Information is incomplete for the many patients who are still being treated. Note that we received more cases of severely ill individuals than people with relatively less severe illness; outcomes from these data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. Some patients may be participants in clinical trials of experimental interventions. Many of the included cases are from the United Kingdom. Additional caveats are provided in the in the 'Caveats' section below.
+The analysis detailed in this report only includes individuals for whom data collection commenced on or before **`r format(embargo.limit, "%d %B %Y")`**. We have applied a `r de$embargo.length`-day rule to focus analysis on individuals who are more likely to have a recorded outcome. By excluding patients enrolled during the last `r de$embargo.length` days, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. However, this limits our analysis to this restricted cohort despite the much larger volumes of data held in the database.  
 
-The analysis detailed in this report only includes individuals for whom data collection commenced on or before <span style="background-color: #FFFF00">`r format(embargo.limit, "%d %B %Y")`</span>. We have applied a 14-day rule to focus analysis on individuals who are more likely to have a recorded outcome. By excluding patients enrolled during the last 14 days, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. However, this limits our analysis to this restricted cohort despite the much larger volumes of data held in the database.  
-
-The cohort comprises <span style="background-color: #FFFF00">**`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females</span> -- sex is unreported for `r de$N.sex.unknown` cases. SARS-COV-2 infection has been **confirmed by laboratory testing in `r de$cov.19.confirmed` of these individuals**. `r de$cov.19.suspected` individuals are recorded as suspected of SARS-COV-2 infection, without laboratory confirmation at the time of data analysis. 
+The cohort comprises **`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females -- sex is unreported for `r de$N.sex.unknown` cases. SARS-COV-2 infection has been **confirmed by laboratory testing in `r de$cov.19.confirmed` of these individuals**. `r de$cov.19.suspected` individuals are recorded as suspected of SARS-COV-2 infection, without laboratory confirmation at the time of data analysis. 
 
 The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
 
@@ -21,27 +19,26 @@ Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$
 
 <!-- Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr*100`% (95% CI: `r de$hfr.lower*100`%, `r de$hfr.upper*100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed. -->
 
-The observed mean duration for the number of days from hospital admission to outcome (death or discharge) is `r de$obs.mean.adm.outcome`, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome` days and a median of `r de$obs.median.adm.outcome` days. These estimates are based on all cases which have complete records on length of hospital stay (N = `r de$cases.full.adm.outcome`).
+A total of `r de$cases.full.adm.outcome` cases had complete information on length of hospital stay. Of these, the observed mean number of days from hospital admission to outcome (death or discharge) was `r de$obs.mean.adm.outcome`, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome` days and a median of `r de$obs.median.adm.outcome` days. 
 
-The observed mean number of days from (first) symptom onset to hospital admission is `r de$obs.mean.onset.adm`, with a SD of `r de$obs.sd.onset.adm` days and a median of `r de$obs.median.onset.adm` days. 
+The observed mean number of days from (first) symptom onset to hospital admission was `r de$obs.mean.onset.adm`, with a SD of `r de$obs.sd.onset.adm` days and a median of `r de$obs.median.onset.adm` days. 
 
-The symptoms on admission represent the policy for hospital admission and containment at that time plus, whatever the case definition was. As time passes for most countries these will change. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
+The symptoms on admission represent the policy for hospital admission and containment at this site. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
 
-`r sum(patient.data$NIMV.ever == 'TRUE', na.rm = T)` patients received non-invasive mechanical ventilation (NIV). The mean and median durations from admission to receiving NIV are `r round(mean(de$a.nimv, na.rm=T), 1)` days  and  `r round(median(de$a.nimv, na.rm=T), 1)` days respectively (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days) -- estimated from  records on cases with complete records on dates of hospital admission and NIV onset (N = `r length(de$a.nimv)`).
-
-
-The mean and median durations for NIV are `r round(mean(de$d.nimv, na.rm=T), 1)` days and `r round(median(de$d.nimv, na.rm=T), 1)` days respectively (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days) -- estimated based on only those cases which have complete NIV duration records (N = `r length(de$d.nimv)`).
+`r sum(patient.data$NIMV.ever == 'TRUE', na.rm = T)` patients received non-invasive mechanical ventilation (NIV). The mean and median durations from admission to receiving NIV were `r round(mean(de$a.nimv, na.rm=T), 1)` days  and  `r round(median(de$a.nimv, na.rm=T), 1)` days respectively (SD: `r round(sd(de$a.nimv, na.rm=T), 1)` days) -- estimated from  records on cases with complete records on dates of hospital admission and NIV onset (N = `r length(de$a.nimv)`).
 
 
-`r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted at some point of their illness into an intensive care unit (ICU) or high dependency unit (HDU). The observed mean and median durations (in days) from hospital admission to ICU/HDU admission are `r round(mean(de$a.icu, na.rm=T), 1)` and `r round(median(de$a.icu, na.rm=T), 1)` respectively (SD: `r round(sd(de$a.icu, na.rm=T), 1)`) -- estimated from  records on cases with complete date records on hospital admission and ICU/HDU entry (N = `r length(de$a.icu)`).
+The mean and median durations for NIV were `r round(mean(de$d.nimv, na.rm=T), 1)` days and `r round(median(de$d.nimv, na.rm=T), 1)` days respectively (SD: `r round(sd(de$d.nimv, na.rm=T), 1)` days) -- estimated based on only those cases which have complete NIV duration records (N = `r length(de$d.nimv)`).
+
+
+`r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients were admitted at some point into an intensive care unit (ICU) or high dependency unit (HDU). The observed mean and median durations (in days) from hospital admission to ICU/HDU admission were `r round(mean(de$a.icu, na.rm=T), 1)` and `r round(median(de$a.icu, na.rm=T), 1)` respectively (SD: `r round(sd(de$a.icu, na.rm=T), 1)`) -- estimated from  records on cases with complete date records on hospital admission and ICU/HDU entry (N = `r length(de$a.icu)`).
 
 
 The duration of stay in ICU/HDU has a mean of `r round(mean(de$d.icu, na.rm=T), 1)` days and a median of `r round(median(de$d.icu, na.rm=T), 1)` (SD: `r round(sd(de$d.icu, na.rm=T), 1)` days) -- estimated on only those cases with complete records for ICU/HDU duration or ICU/HDU start/end dates (N = `r length(de$d.icu)`). Of these `r sum(patient.data$ICU.ever == 'TRUE', na.rm = T)` patients who were admitted into ICU/HDU, `r de$N.icu.deaths` died, `r de$N.icu.censored` are still in hospital and `r de$N.icu.recoveries` have recovered and been discharged. Outcome records are unavailable for `r de$N.icu.NA` cases.
 
+`r sum(patient.data$IMV.ever == 'TRUE', na.rm = T)` patients received invasive mechanical ventilation (IMV). The mean and median durations (in days) from admission to receiving IMV were `r round(mean(de$a.imv, na.rm=T), 1)` and `r round(median(de$a.imv, na.rm=T), 1)` respectively (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days) -- estimated from records on cases with complete information on dates of hospital admission and IMV onset (N = `r length(de$a.imv)`).
 
-`r sum(patient.data$IMV.ever == 'TRUE', na.rm = T)` patients received invasive mechanical ventilation (IMV). The mean and median durations from admission to receiving IMV are `r round(mean(de$a.imv, na.rm=T), 1)` days and `r round(median(de$a.imv, na.rm=T), 1)` days respectively (SD: `r round(sd(de$a.imv, na.rm=T), 1)` days) -- estimated from  records on cases with complete records on dates of hospital admission and IMV onset (N = `r length(de$a.imv)`).
-
-The mean, median and SD for the duration of IMV -- estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays -- are `r round(mean(de$d.imv, na.rm=T), 1)` days, `r round(median(de$d.imv, na.rm=T), 1)` and `r round(sd(de$d.imv, na.rm=T), 1)` days respectively.
+The mean, median and SD for the duration (in days) of IMV -- estimated based on all `r length(de$d.imv)` cases with complete records on IMV stays -- were `r round(mean(de$d.imv, na.rm=T), 1)`, `r round(median(de$d.imv, na.rm=T), 1)` and `r round(sd(de$d.imv, na.rm=T), 1)` respectively.
 
 Of `r de$n.treat` patients with a recorded outcome and details of treatments received, `r de$p.abx`% received an antibiotic and `r de$p.av`% received antivirals. These treatment categories are not mutually exclusive since some patients received multiple treatments. `r de$p.o2`% of patients received some degree of oxygen supplementation: of these, `r de$p.NIV`% received NIV and `r de$p.In.Ven`% IMV.
 
