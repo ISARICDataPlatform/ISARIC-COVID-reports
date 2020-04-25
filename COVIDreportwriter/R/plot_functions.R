@@ -2477,7 +2477,7 @@ calculate.durations <- function(data){
       durs[i] <- data$event.end.date[i] - data$event.start.date[i]
       cens[i] <- 0                # if end.date is available, then consider as not censored
     }else{
-      durs[i] <- ref.date - data$event.start.date[i]  # if end.date is unreported, use reference date (ie. data pull date) as reference
+      durs[i] <- today() - data$event.start.date[i]  # if end.date is unreported, use reference date (ie. data pull date) as reference
       cens[i] <- 1                # if end.date is not reported, then consider as censored
     }
   }
