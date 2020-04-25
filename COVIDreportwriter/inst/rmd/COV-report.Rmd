@@ -111,14 +111,14 @@ plot.blood.results.by.age(patient.data)
 
 ```{r  staybysex, out.width= "80%"}
 
-violin.sex.func(patient.data)
+violin.sex.func(patient.data, embargo.limit)
 ```
 
 **Figure 9**: Distribution of length of hospital stay, according to patient age group. This only includes cases with reported outcomes. The coloured areas indicate the kernel probability density of the observed data and the box plots show the mean and interquartile range of the variable of interest.
 
 ```{r  staybyage, out.width= "80%"}
 
-violin.age.func(patient.data)
+violin.age.func(patient.data, embargo.limit)
 ```
 
 \newpage

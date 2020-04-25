@@ -9,7 +9,7 @@ Authors@R:
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: Processes raw REDCAP clinical data for the generation of a PDF report containing text and plot summaries of the data.  
 Depends: R (>= 3.5.0)
-Imports: binom, boot, broom, fitdistrplus, knitr, ggupset, glue, grid, gridExtra, lubridate, magrittr, rmarkdown, sf, survival, survminer, taRifx, tidyselect, tidyverse, viridis
+Imports: binom, boot, broom, filesstrings, fitdistrplus, knitr, ggupset, glue, grid, gridExtra, lubridate, magrittr, rmarkdown, sf, survival, survminer, taRifx, tidyselect, tidyverse, viridis
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

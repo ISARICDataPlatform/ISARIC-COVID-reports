@@ -1,12 +1,12 @@
 # #
-d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
-d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
-c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
-verbose <- TRUE
-ref.date <- today()
-embargo.length <- 14
-message.out.file <- "messages.csv"
-source.name <- "test"
+# d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
+# d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
+# c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
+# verbose <- TRUE
+# ref.date <- today()
+# embargo.length <- 14
+# message.out.file <- "messages.csv"
+# source.name <- "test"
 # #
 #
 # import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
@@ -135,8 +135,8 @@ generate.report <- function(patient.data.output, file.name, site.name){
   de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments, site.name, embargo.length)
 
   report.rmd.file <- system.file("rmd", "COV-report.Rmd", package = "COVIDreportwriter")
-  render(report.rmd.file, output_file=file.name, knit_root_dir = getwd())
-  
+  render(report.rmd.file, output_file=file.name)
+  file.move(system.file("rmd", file.name, package = "COVIDreportwriter"), getwd())
   
 }
 
