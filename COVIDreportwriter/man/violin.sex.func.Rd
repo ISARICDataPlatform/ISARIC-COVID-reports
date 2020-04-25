@@ -4,7 +4,7 @@
 \alias{violin.sex.func}
 \title{Plot lengths of hospital stay by sex}
 \usage{
-violin.sex.func(data, ...)
+violin.sex.func(data, embargo.limit, ...)
 }
 \arguments{
 \item{data}{Output of \code{\link{process_data}}.}

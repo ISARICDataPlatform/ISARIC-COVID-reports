@@ -4,7 +4,7 @@
 \alias{violin.age.func}
 \title{Plot lengths of hospital stay by age group}
 \usage{
-violin.age.func(data, ...)
+violin.age.func(data, embargo.limit, ...)
 }
 \arguments{
 \item{data}{Output of \code{\link{process_data}}.}
