@@ -78,21 +78,21 @@ comorbidities.upset(patient.data, 4, comorbidities)
 **Figure 4**: Comorbidities stratified by age group. Numbers on the plot show the number with the comorbidity and the number in the age group (numbers are not displayed if <5). Denominators vary between plots due to data completeness. 
 
 ```{r comorbbyage, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-grid.draw(plot.comorb.by.age(patient.data))
+grid.draw(comorb.by.age(patient.data))
 
 ```
 
 **Figure 5**: Symptoms recorded at hospital presentation stratified by age group. Numbers on the plot show the number reporting the symptoms and the number in the age group (numbers are not displayed if <5). Denominators vary between plots due to data completeness. 
 
 ```{r sxbyage, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-grid.draw(plot.sx.by.age(patient.data, admission.symptoms))
+grid.draw(sx.by.age(patient.data, admission.symptoms))
 
 ```
 
 **Figure 6**: Box and whisker plots for observations at hospital presentation stratified by age group. Outliers are omitted.  N is the number of individuals included in the plot (this varies between plots due to data completeness).
 
 ```{r signsbyage, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-grid.draw(plot.signs.by.age(patient.data))
+grid.draw(signs.by.age(patient.data))
 
 ```
 
@@ -100,7 +100,7 @@ grid.draw(plot.signs.by.age(patient.data))
 ALT, Alanine transaminase; APTT, Activated partial thromboplastin time; CRP, C-reactive protein
 
 ```{r labsbyage, echo=FALSE, out.width= "100%", fig.height=3, message=FALSE}
-grid.draw(plot.blood.results.by.age(patient.data))
+grid.draw(blood.results.by.age(patient.data))
 
 ```
 
