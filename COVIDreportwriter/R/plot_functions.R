@@ -23,72 +23,79 @@
 #' `censored' patients are those for whom clinical care is ongoing.
 
 age.pyramid <- function(data, ...){
-
-  data2 <- data %>%
-    filter(!is.na(outcome)) %>%
-    group_by(agegp5, sex, outcome) %>%
-    dplyr::summarise(count = n()) %>%
-    ungroup() %>%
-    filter(!is.na(sex) & !is.na(agegp5)) %>%
-    dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death"))) %>%
-    dplyr::mutate(count = map2_dbl(count, sex, function(c, s){
-      if(s == 1){
-        -c
+  
+  if( all(is.na(data$age_estimateyears)) | all(is.na(data$sex))){
+    plt <- insufficient.data.plot(data)
+  }else{
+      
+      data2 <- data %>%
+        filter(!is.na(outcome)) %>%
+        group_by(agegp5, sex, outcome) %>%
+        dplyr::summarise(count = n()) %>%
+        ungroup() %>%
+        filter(!is.na(sex) & !is.na(agegp5)) %>%
+        dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death"))) %>%
+        dplyr::mutate(count = map2_dbl(count, sex, function(c, s){
+          if(s == 1){
+            -c
+          } else {
+            c
+          }
+        })) %>%
+        dplyr::mutate(sex = map_chr(sex, function(s){
+          c("M", "F")[s]
+        }))
+      
+      # this is to get the axes right (maximum the same in both directions)
+      
+      max.count = data2 %>% group_by(agegp5, sex) %>% dplyr::summarise(sac = sum(abs(count))) %>% pull(sac) %>% max()
+      
+      order.of.magnitude <- ceiling(log10(max.count))
+      
+      if(as.numeric(substr(as.character(max.count), 1, 1)) > 5){
+        tick.increment <- 10^(order.of.magnitude-1)
       } else {
-        c
+        tick.increment <- 10^(order.of.magnitude-1)/2
       }
-    })) %>%
-    dplyr::mutate(sex = map_chr(sex, function(s){
-      c("M", "F")[s]
-    }))
-
-  # this is to get the axes right (maximum the same in both directions)
-
-  max.count = data2 %>% group_by(agegp5, sex) %>% dplyr::summarise(sac = sum(abs(count))) %>% pull(sac) %>% max()
-
-  order.of.magnitude <- ceiling(log10(max.count))
-
-  if(as.numeric(substr(as.character(max.count), 1, 1)) > 5){
-    tick.increment <- 10^(order.of.magnitude-1)
-  } else {
-    tick.increment <- 10^(order.of.magnitude-1)/2
+      
+      plot.breaks <- seq(-(ceiling(max.count/tick.increment)*tick.increment), ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)
+      plot.labels <- as.character(c(rev(seq(tick.increment, ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)),
+                                    0,
+                                    seq(tick.increment, ceiling(max.count/tick.increment)*tick.increment, by= tick.increment)))
+      
+      
+      plt <- ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp5, y=count, fill = outcome), stat = "identity", col = "black") +
+        geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
+        coord_flip(clip = 'off') +
+        theme_bw() +
+        scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
+        xlab("Age group") +
+        ylab("Count") +
+        scale_x_discrete(drop = "F") +
+        scale_y_continuous(
+          # currently in hard-coded increments of 5. @todo make this better
+          breaks = plot.breaks,
+          labels = plot.labels,
+          limits = c(-1.1*max.count, 1.1*max.count)) +
+        annotation_custom(
+          grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
+          ymin = -max.count/2,
+          ymax = -max.count/2,
+          xmin = length(levels(data2$agegp5))+1.5 ,
+          xmax = length(levels(data2$agegp5))+1.5) +
+        annotation_custom(
+          grob = textGrob(label = "Females", hjust = 0.4, gp = gpar(cex = 1.5)),
+          ymin = max.count/2,
+          ymax = max.count/2,
+          xmin = length(levels(data2$agegp5))+1.5,
+          xmax = length(levels(data2$agegp5))+1.5) +
+        theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
+      
+    }
+    
+    plt
+    
   }
-
-  plot.breaks <- seq(-(ceiling(max.count/tick.increment)*tick.increment), ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)
-  plot.labels <- as.character(c(rev(seq(tick.increment, ceiling(max.count/tick.increment)*tick.increment, by = tick.increment)),
-                                0,
-                                seq(tick.increment, ceiling(max.count/tick.increment)*tick.increment, by= tick.increment)))
-
-
-  ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp5, y=count, fill = outcome), stat = "identity", col = "black") +
-    geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
-    coord_flip(clip = 'off') +
-    theme_bw() +
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
-    xlab("Age group") +
-    ylab("Count") +
-    scale_x_discrete(drop = "F") +
-    scale_y_continuous(
-      # currently in hard-coded increments of 5. @todo make this better
-      breaks = plot.breaks,
-      labels = plot.labels,
-      limits = c(-1.1*max.count, 1.1*max.count)) +
-    annotation_custom(
-      grob = textGrob(label = "Males", hjust = 0.5, gp = gpar(cex = 1.5)),
-      ymin = -max.count/2,
-      ymax = -max.count/2,
-      xmin = length(levels(data2$agegp5))+1.5 ,
-      xmax = length(levels(data2$agegp5))+1.5) +
-    annotation_custom(
-      grob = textGrob(label = "Females", hjust = 0.4, gp = gpar(cex = 1.5)),
-      ymin = max.count/2,
-      ymax = max.count/2,
-      xmin = length(levels(data2$agegp5))+1.5,
-      xmax = length(levels(data2$agegp5))+1.5) +
-    theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
-
-
-}
 ##### Distribution of sites by country #####
 
 
@@ -2011,6 +2018,11 @@ round.zeros <- function(x){
 #' @return Violin plots (with box plots) showing the distribution of the total length of hospital stay by sex. The coloured areas of the plot indicate the
 #'  kernel probability density of the observed data and the box plots show the median and interquartile range of the lengths of stay for each sex.
 violin.sex.func <- function(data, embargo.limit, ...){
+  
+  
+  if(all(is.na(data$sex))){
+    plt <- insufficient.data.plot(data)
+  }else{
 
   # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
 
@@ -2041,6 +2053,9 @@ violin.sex.func <- function(data, embargo.limit, ...){
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
 
+  
+  }
+  
   return(plt)
 }
 
@@ -2178,6 +2193,11 @@ violin.sex.func.hospital <- function(data, ...){
 #' The coloured areas of the plot indicate the kernel probability density of the observed data and the box plots show the
 #' median and interquartile range of the lengths of hospital stay for each age group.
 violin.age.func <- function(data, embargo.limit,...){
+  
+  
+  if(all(is.na(data$age_estimateyears))){
+    plt <- insufficient.data.plot(data)
+  }else{
 
   # Analysis to be run on only entries with start.to.exit entries
 
@@ -2206,7 +2226,12 @@ violin.age.func <- function(data, embargo.limit,...){
     theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                           colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
 
+  
+  }
+  
+  
   return(plt)
+  
 
 }
 
@@ -2922,6 +2947,11 @@ plot.by.age.grouping <- function(data, ...) {
 #' of the number of people in each age group for whom information on that comorbidity is available. On top of each plot, N (the number of individuals 
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 comorb.by.age <- function(data, ...) {
+  
+  if( all(is.na(data$age_estimateyears)) | all(is.na(data$sex))){
+    p <- insufficient.data.plot(data)
+  }else{
+  
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
                   asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
@@ -2948,6 +2978,8 @@ comorb.by.age <- function(data, ...) {
                          "Proportion who\nsmoke", ymax = .4)
 
   p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 3)
+  
+  }
 
   return(p)
 
@@ -2968,6 +3000,12 @@ comorb.by.age <- function(data, ...) {
 #' of the number of people in each age group for whom information on that symptom is available. On top of each plot, N (the number of individuals 
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 sx.by.age <- function(data, admission.symptoms, ...) {
+  
+  if( all(is.na(data$age_estimateyears)) | all(is.na(data$sex))){
+    p <- insufficient.data.plot(data)
+  }else{
+  
+  
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
                   one_of(admission.symptoms$field), start.to.exit, sex
@@ -2997,7 +3035,7 @@ sx.by.age <- function(data, admission.symptoms, ...) {
   pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal symptoms")
 
   p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 3)
-
+}
   return(p)
 
 }
@@ -3058,41 +3096,46 @@ plot.bw.by.age <- function(data, var, name, ...) {
 #' @return A plot for each observation, showing box plots by age group. On top of each plot, N (the number of individuals 
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 signs.by.age <- function(data, ...) {
-  df <- data %>%
-    dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
-                  rr_vsorres, oxy_vsorresu, oxy_vsorres, hr_vsorres,
-                  sysbp_vsorres, temp_vsorres, temp_vsorresu, start.to.exit,
-                  sex
-    )
-  df <- plot.by.age.grouping(df)
-  df$RR <- as.numeric(df$rr_vsorres)
-  df$SpO2_roomair <- as.numeric(df$oxy_vsorres)
-  df$SpO2_roomair[df$oxy_vsorresu != 1] <- NA
-  df$HR <- as.numeric(df$hr_vsorres)
-  df$SBP <- as.numeric(df$sysbp_vsorres)
-  df$Temp <- as.numeric(df$temp_vsorres)
-  # In case anyone goes Fahrenheit
-  if (max(df$temp_vsorresu, na.rm = TRUE) >= 2) {
-    df$temp_vsorresu[is.na(df$temp_vsorresu) == TRUE] <- 0
-    df$Temp[df$temp_vsorresu == 2 & is.na(df$Temp) == FALSE] <-
-      (df$Temp[df$temp_vsorresu == 2 & is.na(df$Temp) == FALSE] - 32) * 5 / 9
+  
+  if( all(is.na(data$age_estimateyears)) | all(is.na(data$sex))){
+    p <- insufficient.data.plot(data)
+  }else{
+    
+    df <- data %>%
+      dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
+                    rr_vsorres, oxy_vsorresu, oxy_vsorres, hr_vsorres,
+                    sysbp_vsorres, temp_vsorres, temp_vsorresu, start.to.exit,
+                    sex
+      )
+    df <- plot.by.age.grouping(df)
+    df$RR <- as.numeric(df$rr_vsorres)
+    df$SpO2_roomair <- as.numeric(df$oxy_vsorres)
+    df$SpO2_roomair[df$oxy_vsorresu != 1] <- NA
+    df$HR <- as.numeric(df$hr_vsorres)
+    df$SBP <- as.numeric(df$sysbp_vsorres)
+    df$Temp <- as.numeric(df$temp_vsorres)
+    # In case anyone goes Fahrenheit
+    if (max(df$temp_vsorresu, na.rm = TRUE) >= 2) {
+      df$temp_vsorresu[is.na(df$temp_vsorresu) == TRUE] <- 0
+      df$Temp[df$temp_vsorresu == 2 & is.na(df$Temp) == FALSE] <-
+        (df$Temp[df$temp_vsorresu == 2 & is.na(df$Temp) == FALSE] - 32) * 5 / 9
+    }
+    df$SpO2_roomair[df$SpO2_roomair < 0 | df$SpO2_roomair > 100] <- NA
+    
+    pa_name <- expression("Respiratory rate " ("min." ^ -1))
+    pa <- plot.bw.by.age(df, df$RR, pa_name)
+    pb_name <- expression("O" [2] * " saturation in room air (%)")
+    pb <- plot.bw.by.age(df, df$SpO2_roomair, pb_name)
+    pc_name <- expression("Heart rate " ("min." ^ -1))
+    pc <- plot.bw.by.age(df, df$HR, pc_name)
+    pd <- plot.bw.by.age(df, df$SBP, "Systolic blood pressure (mmHg)")
+    pe_name <- expression("Temperature " (degree*C))
+    pe <- plot.bw.by.age(df, df$Temp, pe_name)
+    
+    p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 3)
   }
-  df$SpO2_roomair[df$SpO2_roomair < 0 | df$SpO2_roomair > 100] <- NA
-
-  pa_name <- expression("Respiratory rate " ("min." ^ -1))
-  pa <- plot.bw.by.age(df, df$RR, pa_name)
-  pb_name <- expression("O" [2] * " saturation in room air (%)")
-  pb <- plot.bw.by.age(df, df$SpO2_roomair, pb_name)
-  pc_name <- expression("Heart rate " ("min." ^ -1))
-  pc <- plot.bw.by.age(df, df$HR, pc_name)
-  pd <- plot.bw.by.age(df, df$SBP, "Systolic blood pressure (mmHg)")
-  pe_name <- expression("Temperature " (degree*C))
-  pe <- plot.bw.by.age(df, df$Temp, pe_name)
-
-  p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 3)
-
   return(p)
-
+  
 }
 
 ##  Plot vital signs by age  ####
@@ -3108,6 +3151,11 @@ signs.by.age <- function(data, ...) {
 #' @return A plot for each laboratory result, showing box plots by age group. On top of each plot, N (the number of individuals 
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 blood.results.by.age <- function(data, ...) {
+  
+  if( all(is.na(data$age_estimateyears)) | all(is.na(data$sex))){
+    p<- insufficient.data.plot(data)
+  }else{
+  
   # Use a loop to collect data to avoid problems of data too large to process
   for (i in 1:nrow(data)) {
     p <- data$events[i][[1]] %>%
@@ -3186,6 +3234,7 @@ blood.results.by.age <- function(data, ...) {
 
   p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 3)
 
+}
   return(p)
 
 }
@@ -3193,7 +3242,7 @@ blood.results.by.age <- function(data, ...) {
 #' @export insufficient.data.plot
 #' @keywords internal
 
-insufficient.data.plot <- function(){
+insufficient.data.plot <- function(data){
   ggplot() + annotate(geom="text", label = "Insufficient data to display this plot", x=0, y=0) + theme_void()
   
 }
