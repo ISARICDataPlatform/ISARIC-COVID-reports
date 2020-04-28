@@ -7,24 +7,22 @@
 modified.km.plot(data, embargo.limit, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 }
 \value{
 Plot of the survival functions for deaths and recoveries and a line indicating the CFR estimate.
 }
 \description{
 Plots the proportion of deaths and recoveries over time as well as a non-parametric estimate for the CFR using
-an adapted Kaplan-Meier method. See 'Details'.
+an adapted Kaplan-Meier method. See `Details'.
 }
 \details{
-The CFR and survival functions for death and recovery
-are estimated using a nonparametric Kaplan-Meier–based method proposed by Ghani et al. (2005).
-This method estimates the CFR with the formula $\frac{a}{(a+b)}$,
-where a and b are the values of the cumulative incidence function for deaths and recoveries respectively,
-estimated at the last observed time point. See 'References' for details.
+The CFR and survival functions for death and recovery are estimated using a nonparametric Kaplan-Meier-based method proposed by Ghani et al. (2005).
+This method estimates the CFR with the formula a/(a+b), where a and b are the values of the cumulative incidence function for deaths and recoveries respectively,
+estimated at the last observed time point. See `References' for details.
 }
 \references{
 A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griffin, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).
-Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, \emph{American Journal of Epidemiology}, \strong{162}(5), 479 - 486.
+Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, \emph{American Journal of Epidemiology}, \strong{162}(5), 479-486.
 \url{doi:10.1093/aje/kwi230}.
 }

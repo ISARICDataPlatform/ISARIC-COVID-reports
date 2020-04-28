@@ -2,7 +2,7 @@
 % Please edit documentation in R/report_functions.R
 \name{generate.report}
 \alias{generate.report}
-\title{Generate a PDF report from the data}
+\title{Generate a PDF report from the data.}
 \usage{
 generate.report(patient.data.output, file.name, site.name)
 }
@@ -13,6 +13,10 @@ generate.report(patient.data.output, file.name, site.name)
 
 \item{site.name}{Name of the site from which this data is derived}
 }
+\value{
+PDF report containing summaries of the data.
+}
 \description{
-Generate a PDF report from the data
+Generates a PDF report containing summaries of the data, including comparison of lengths of hospital stay by sex and age group, outcome by sex,
+comorbidity, symptom and treatment distributions and distribution of vital signs on presentation at hospital.
 }

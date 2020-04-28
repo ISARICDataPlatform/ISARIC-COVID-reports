@@ -7,7 +7,7 @@
 recruitment.dat.plot(data, embargo.limit, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 
 \item{embargo.limit}{The cut-off date for inclusion in the report. Patients recruited after \code{embargo.limit} are not considered in the analysis.
 Set  \code{embargo.limit} to the date of the report if all patients are to be considered.

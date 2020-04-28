@@ -7,7 +7,7 @@
 sites.by.country(data, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}. This should be a dataframe which includes columns for the country and site associated with each patient. See 'Details'.
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for the country and site associated with each patient. See `Details'.
 
 The columns of \code{data} containing country and site names should be named "Country" and "site.name" respectively.}
 }

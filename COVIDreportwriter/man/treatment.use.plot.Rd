@@ -7,7 +7,7 @@
 treatment.use.plot(data, treatments, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 }
 \value{
 Barplot showing the proportion of patients given each treatment.

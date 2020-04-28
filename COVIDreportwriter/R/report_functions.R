@@ -1,12 +1,12 @@
 # #
-d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
-d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
-c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
-verbose <- TRUE
-ref.date <- today()
-embargo.length <- 14
-message.out.file <- "messages.csv"
-source.name <- "test"
+# d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
+# d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
+# c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
+# verbose <- TRUE
+# # ref.date <- today()
+# embargo.length <- 14
+# message.out.file <- "messages.csv"
+# source.name <- "test"
 # #
 #
 # import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
@@ -27,7 +27,10 @@ source.name <- "test"
 #' \item{detailed.data}{Data frame containing patients' records up to \code{embargo.limit}}
 #' \item{cst.reference}{Data frame containing name and labels of the symptoms, combordities, and treatments considered.}
 #' }
-#' @import readr glue lubridate magrittr purrr stringr tidyr forcats
+#' @import readr purrr stringr tidyr forcats
+#' @importFrom glue glue
+#' @importFrom lubridate ymd is.Date today
+#' @importFrom magrittr not
 #' @export import.and.process.data
 import.and.process.data <- function(data.file,
                                     data.dict.file,
@@ -128,13 +131,20 @@ import.and.process.data <- function(data.file,
 #' @param site.name Name of the site from which this data is derived
 #' 
 #' @return PDF report containing summaries of the data.
-#' @import rmarkdown psych ggplot2 fitdistrplus boot survival tibble grid gridExtra ggupset viridis filesstrings
+#' @import rmarkdown ggplot2 fitdistrplus boot survival tibble grid ggupset viridis
+#' @importFrom filesstrings file.move
+#' @importFrom gridExtra arrangeGrob
+#' @importFrom psych phi
+#' @importFrom lubridate epiweek
 #' @export generate.report
 generate.report <- function(patient.data.output, file.name, site.name){
+  patient.data <- patient.data.output$detailed.data
+  unembargoed.data <- patient.data.output$unembargoed.data
+  
   cst.reference <- patient.data.output$cst.reference
   
   embargo.limit <- patient.data.output$embargo.limit
-  embargo.length <- patient.data$embargo.length
+  embargo.length <- patient.data.output$embargo.length
   
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
@@ -144,7 +154,7 @@ generate.report <- function(patient.data.output, file.name, site.name){
 
   report.rmd.file <- system.file("rmd", "COV-report.Rmd", package = "COVIDreportwriter")
   render(report.rmd.file, output_file=file.name)
-  file.move(system.file("rmd", file.name, package = "COVIDreportwriter"), getwd())
+  file.move(system.file("rmd", file.name, package = "COVIDreportwriter"), getwd(), overwrite = TRUE)
   
 }
 
@@ -1016,8 +1026,7 @@ process.data <- function(data,
                   start.to.exit = as.numeric(difftime(exit.date, start.date,  unit="days"))) %>%
     dplyr::mutate(admission.to.censored = map2_dbl(admission.to.exit, admission.date, function(x,y){
       if(is.na(x)){
-        # censored until today
-        as.numeric(difftime(ref.date, y,  unit="days"))
+        as.numeric(difftime(embargo.limit, y,  unit="days"))
       }
       else {
         NA
@@ -1025,7 +1034,7 @@ process.data <- function(data,
     })) %>%
     dplyr::mutate(start.to.censored = map2_dbl(admission.to.exit, start.date, function(x,y){
       if(is.na(x)){
-        as.numeric(difftime(ref.date, y,  unit="days"))
+        as.numeric(difftime(embargo.limit, y,  unit="days"))
       }
       else {
         NA

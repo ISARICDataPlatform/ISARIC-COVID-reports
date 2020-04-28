@@ -7,19 +7,18 @@
 comorbidities.upset(data, max.comorbidities, comorbidities, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 
 \item{max.comorbidities}{The \code{max.comorbidities} most frequent comorbidities will be included in the upset plot. Defaults to 4.}
 }
 \value{
 UpSet plot showing the frequency of combinations of the top \code{max.comorbidities} comorbidities.
 Filled and empty circles below the x-axis of the plot indicate the presence or absence of each comorbidity.
-The “Any other” category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.comorbidities} comorbidities,
-as well as any other comorbidities recorded as free text by clinical staff.
-
-@examples
-comorbidities.upset(data = patient.data, max.comorbidities = 4)
+The `Any other' category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.comorbidities} comorbidities, as well as any other comorbidities recorded as free text by clinical staff.
 }
 \description{
 Plots the distribution of combinations of the most common comorbidities, amongst all patients for whom these data were recorded.
+}
+\examples{
+comorbidities.upset(data = patient.data, max.comorbidities = 4)
 }
