@@ -3,18 +3,24 @@
 
 ##### Age pyramid ####
 
+#' @title 
 #' Plot patient demographics by outcome.
-#'
+#' @description 
 #' Plots the age and sex distribution of patients according to clinical outcome.
-#'
+#' 
 #' @export age.pyramid
-#' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for age group, sex, and outcome of patients. See 'Details'.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for age group, sex, and outcome of patients. See `Details'.
 #' @return  Bar plot of the age (in intervals of four years) and sex (male/female) of patients, plotted according to clinical outcome (discharge/death/ongoing care).
 #'
+#' @details 
 #' The columns of \code{data} for age group, sex and outcome should be named "agegp5", "sex" and "outcome" respectively and formatted as follows:
 #' the variable "sex" should be numeric with values 1 and 2 for males and females respectively;
 #' the variable "agegp5" should be a factor with levels 0-4, 5-9, 10-14, ...., 90+;
-#' and the variable "outcome" should be a factor with levels 'discharge', 'censored' and 'death'; in this case, 'censored' patients are those for whom clinical care is ongoing.
+#' and the variable `outcome' should be a factor with levels'
+#' `discharge', 
+#' `censored' 
+#' and `death'; in this case,
+#' `censored' patients are those for whom clinical care is ongoing.
 
 age.pyramid <- function(data, ...){
 
@@ -91,7 +97,7 @@ age.pyramid <- function(data, ...){
 #' Plots the number of sites by country
 #'
 #' @export sites.by.country
-#' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for the country and site associated with each patient. See 'Details'.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for the country and site associated with each patient. See `Details'.
 #'
 #' The columns of \code{data} containing country and site names should be named "Country" and "site.name" respectively.
 #'
@@ -119,15 +125,11 @@ sites.by.country <- function(data, ...){
 
 #' Plot the distribution of patients by country and outcome
 #'
-#' Plots the distribution of patients by country and outcome
+#' Plots the distribution of patients by country and outcome.
 #'
 #' @export outcomes.by.country
-#' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for the country and outcome associated with each patient. See 'Details'.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for the country and outcome associated with each patient. See `Details'.
 #' @return  Bar plot showing the number of patients per country and by outcome (discharge/ongoing care/death). Actual counts of the total number of patients for each country are printed on top of each bar.
-#'
-#' The variables of \code{data} containing the country and outcome information of patients should be named "Country" and "outcome" respectively.
-#' The variable "outcome" should be a factor with levels 'discharge', 'censored' and 'death'; in this case, 'censored' patients are those for whom clinical care is ongoing.
-
 outcomes.by.country <- function(data, ...){
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
@@ -172,12 +174,9 @@ outcomes.by.country <- function(data, ...){
 #' Plots patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset).
 #'
 #' @export outcomes.by.admission.date
-#' @param data Output of \code{\link{process_data}}. This should be a dataframe which includes columns for the date of admission and  outcome for each patient. See 'Details'.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for the date of admission and  outcome for each patient. See `Details'.
 #' @return  Bar plot showing the number of patients per country and by outcome (discharge/ongoincg care/death). Bars are annotated with counts.
 #'
-#' The variables of \code{data} containing the date and outcome information of patients should be named "start.date" and "outcome" respectively.
-#' The variable "outcome" should be a factor with levels 'discharge', 'censored' and 'death'; in this case, 'censored' patients are those for whom clinical care is ongoing.
-
 outcomes.by.admission.date <- function(data, embargo.limit, ...){
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
@@ -217,15 +216,14 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
 #'  Plots the distribution of combinations of the most common comorbidities, amongst all patients for whom these data were recorded.
 #'
 #' @export comorbidities.upset
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #' @param max.comorbidities The \code{max.comorbidities} most frequent comorbidities will be included in the upset plot. Defaults to 4.
 #'
-#' @return  UpSet plot showing the frequency of combinations of the top \code{max.comorbidities} comorbidities.
+#' @return UpSet plot showing the frequency of combinations of the top \code{max.comorbidities} comorbidities.
 #' Filled and empty circles below the x-axis of the plot indicate the presence or absence of each comorbidity.
-#' The “Any other” category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.comorbidities} comorbidities,
-#' as well as any other comorbidities recorded as free text by clinical staff.
+#' The `Any other' category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.comorbidities} comorbidities, as well as any other comorbidities recorded as free text by clinical staff.
 #'
-#'  @examples
+#' @examples
 #' comorbidities.upset(data = patient.data, max.comorbidities = 4)
 comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
   # (max.comorbidities is the n to list; this will be the n most frequent)
@@ -343,12 +341,12 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
 #'  Plots the distribution of combinations of the most common symptoms on admission, amongst all patients for whom these data were recorded.
 #'
 #' @export symptoms.upset
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #' @param max.symptoms The \code{max.symptoms} most frequent symptoms will be included in the plot. Defaults to 4.
 #'
-#' @return  UpSet plot showing the frequency of combinations of the top \code{max.symptoms} symptoms.
+#' @return UpSet plot showing the frequency of combinations of the top \code{max.symptoms} symptoms.
 #' Filled and empty circles below the x-axis of the plot indicate the presence and absence respectively of each symptom.
-#' The “Any other” category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.symptoms} symptoms.
+#' The `Any other' category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.symptoms} symptoms.
 #'
 #' @examples
 #' symptoms.upset(data = patient.data, max.symptoms = 4)
@@ -496,7 +494,7 @@ symptom.prev.calc <- function(data, admission.symptoms){
 #'  Plots a heatmap for prevalance of pairwise combinations of symptoms.
 #'  The pairwise prevalence proportions are caculated amongst patients with recorded presence or absence of both symptoms.
 #' @export symptom.heatmap
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  Heatmap showing the proportion of patients for each pairwise combination of symptoms.
 symptom.heatmap <- function(data, admission.symptoms, ...){
@@ -584,7 +582,7 @@ symptom.heatmap <- function(data, admission.symptoms, ...){
 #'  may be incomplete for some patients.
 #'
 #' @export symptom.prevalence.plot
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  Barplot showing the proportion of patients reporting each symptom.
 #' Bars are annotated with a fraction representing the number of patients presenting with a symptom
@@ -686,7 +684,7 @@ comorb.prev.calc <- function(data, comorbidities){
 #'  Note that the denominators used in the computation of proportions may differ by comorbidity as
 #'  information on the presence or absence of some comorbidities may be missing/incomplete for some patients.
 #' @export comorbidity.prevalence.plot
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  Barplot showing the proportion of patients reporting each symptom.
 #' Bars are annotated with a fraction representing the number of patients reporting a comorbidity
@@ -801,7 +799,7 @@ treatment.use.calc <- function(data, treatments){
 #'  Note that the denominators used in the computation of proportions may differ by treatment as
 #'  information on treatment given may be missing/incomplete for some patients.
 #' @export treatment.use.plot
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  Barplot showing the proportion of patients given each treatment.
 #' Bars are annotated with a fraction representing the number of patients given a treatment
@@ -939,21 +937,19 @@ make.props.treats <- function(data, ...){
 #'  Plot case fatality ratio (CFR) and survival functions for deaths and recovery.
 #'
 #'  Plots the proportion of deaths and recoveries over time as well as a non-parametric estimate for the CFR using
-#'  an adapted Kaplan-Meier method. See 'Details'.
+#'  an adapted Kaplan-Meier method. See `Details'.
 #'
-#'  The CFR and survival functions for death and recovery
-#'  are estimated using a nonparametric Kaplan-Meier–based method proposed by Ghani et al. (2005).
-#'  This method estimates the CFR with the formula $\frac{a}{(a+b)}$,
-#'  where a and b are the values of the cumulative incidence function for deaths and recoveries respectively,
-#'   estimated at the last observed time point. See 'References' for details.
+#'  The CFR and survival functions for death and recovery are estimated using a nonparametric Kaplan-Meier-based method proposed by Ghani et al. (2005).
+#'  This method estimates the CFR with the formula a/(a+b), where a and b are the values of the cumulative incidence function for deaths and recoveries respectively,
+#'  estimated at the last observed time point. See `References' for details.
 #' @export modified.km.plot
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  Plot of the survival functions for deaths and recoveries and a line indicating the CFR estimate.
 #'
 #' @references
 #' A. C. Ghani, C. A. Donnelly, D. R. Cox, J. T. Griffin, C. Fraser, T. H. Lam, L. M. Ho, W. S. Chan, R. M. Anderson, A. J. Hedley, G. M. Leung (2005).
-#' Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, *American Journal of Epidemiology*, **162**(5), 479 - 486.
+#' Methods for Estimating the Case Fatality Ratio for a Novel, Emerging Infectious Disease, *American Journal of Epidemiology*, **162**(5), 479-486.
 #' [doi:10.1093/aje/kwi230](doi:10.1093/aje/kwi230).
 modified.km.plot <- function(data, embargo.limit, ...) {
 
@@ -1113,7 +1109,7 @@ hospital.fatality.ratio <- function(data){
 #'  Plots the distribution of combinations of the 5 most common treatments administered during hospital stay,
 #'  across all patients with completed hospital stay and recorded treatment data.
 #' @export treatment.upset
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  UpSet plot showing the frequency of combinations of the 5 most common treatments.
 #' Filled and empty circles below the x-axis of the plot indicate treatments that were and were not administered respectively.
@@ -1324,16 +1320,22 @@ plot_nosocomial <- function(data, ...){
 
 #' Plot timelines by patients' status.
 #'
-#' Plots the distribution of patients' status by number of days after admission. Seven statuses are considered:
-#' 'Discharged', 'Transferred', 'Unknown', 'Ongooing care', 'Ward', 'ICU' and 'Death'. See 'Details'.
+#' Plots the distribution of patients' status by number of days after admission. Seven statuses are considered: `Discharge', 
+#' `Transferred',
+#'  `Unknown', 
+#'  `Ongoing care', 
+#'  `Ward', 
+#'  `ICU' and 
+#'  `Death'. 
+#'  See `Details'.
 #'
-#'  Patients with “Unknown” status have left the site at the time of report but have unknown outcomes due to missing data.
-#'  Patients with "Transferred" status have been transferred to another health facility by the time of the report.
-#'  Patients still on site at the time of report appear in the“Ongoing care” category for days which are in the future at that time.
-#'  (For example, a patient admitted 7 days before the date of report and still on site at report would be categorised as “ongoing care” for days 8 and later.)
-#'  The black line in the plot marks the end of 14 days; due to the cut-off, only a small number of patients appear in the “ongoing care” category left of this line.
+#'  Patients with `Unknown' status have left the site at the time of report but have unknown outcomes due to missing data.
+#'  Patients with `Transferred' status have been transferred to another health facility by the time of the report.
+#'  Patients still on site at the time of report appear in the`Ongoing care' category for days which are in the future at that time.
+#'  (For example, a patient admitted 7 days before the date of report and still on site at report would be categorised as `ongoing care' for days 8 and later.)
+#'  The black line in the plot marks the end of 14 days; due to the cut-off, only a small number of patients appear in the `ongoing care' category left of this line.
 #' @export status.by.time.after.admission
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  Plot showing the proportion of patients in each category over time. Each status has been assigned a different colour code to enable easy differentiation.
 status.by.time.after.admission <- function(data, ...){
@@ -1509,7 +1511,7 @@ antiviral.use.upset <- function(data, ...){
 #'
 #' Plots the cumulative recruitment of patients, separated by whether follow-up is ongoing or an outcome has been recorded.
 #' @export recruitment.dat.plot
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #' @param embargo.limit The cut-off date for inclusion in the report. Patients recruited after \code{embargo.limit} are not considered in the analysis.
 #' Set  \code{embargo.limit} to the date of the report if all patients are to be considered.
 #'
@@ -1600,7 +1602,7 @@ get_icu_pts <- function(patient.data, ...) {
 #'
 #' Plots the distribution of combinations of treatments administered during ICU/HDU stay
 #' @export treatment.use.plot.icu
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  UpSet plot showing the frequency of combinations of ICU/HDU treatments.
 #' Filled and empty circles below the x-axis of the plot indicate treatments that were and were not
@@ -1712,7 +1714,7 @@ icu.treatment.upset <- function(data, ...) {
 #' Plots the distribution of lengths of stay for patients who were admitted to ICU/HDU: the distribution of the total length of hospital stay for this group is plotted,
 #' as well as the length of stay within ICU/HDU.
 #' @export icu.violin.plot
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return Violin plots (with box plots) showing the distribution of the total length of hospital stay for patients who were admitted to ICU/HDU and the
 #' distribution of the lengths of stay within ICU/HDU. The coloured areas of the plot indicate the kernel probability density of the observed data
@@ -2004,7 +2006,7 @@ round.zeros <- function(x){
 #'
 #' Plots the distribution of lengths of stay for males and females on the same graph. Only cases with reported outcomes (i.e. death/discharge) are considered.
 #' @export violin.sex.func
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return Violin plots (with box plots) showing the distribution of the total length of hospital stay by sex. The coloured areas of the plot indicate the
 #'  kernel probability density of the observed data and the box plots show the median and interquartile range of the lengths of stay for each sex.
@@ -2170,7 +2172,7 @@ violin.sex.func.hospital <- function(data, ...){
 #'
 #' Plots the distribution of lengths of stay by age group. Only cases with reported outcomes (i.e. death/discharge) are considered.
 #' @export violin.age.func
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return Violin plots (with box plots) showing the distribution of the total length by age group. Age is plotted in  10-year intervals: 0-9, 10-19, \dots, 70+.
 #' The coloured areas of the plot indicate the kernel probability density of the observed data and the box plots show the
@@ -2387,15 +2389,15 @@ adm.outcome <- function(data, plt = F){
 
 ##  Admission to outcome plot (accounting for censorship) ####
 
-#' Plot distribution of time (in days) from admission to an outcome.
+#' @title Plot distribution of time (in days) from admission to an outcome.
 #
-#' Plots a Gamma distribution fit to the lengths of hospital stay (in days) from admission to an outcome - either death or discharge, accounting for unobserved outcomes. See 'Details'.
+#' @description Plots a Gamma distribution fit to the lengths of hospital stay (in days) from admission to an outcome - either death or discharge, accounting for unobserved outcomes. See `Details'.
 #'
+#' @details
 #' The estimates of the Gamma distribution were fitted to the observed data were obtained by a maximum likelihood estimation
-#' procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} package in the \code{fitdistrplus} package.
-#' The lengths of stay for patients with unobserved outcomes were treated as interval censored data.
+#' procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} function in the \code{fitdistrplus} package. The lengths of stay for patients with unobserved outcomes were treated as interval censored data.
 #' @export adm.outcome.plot
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return Plot of the Gamma distribution fit to lengths of hospital stay. The black dashed line indicates the position of the estimated mean of the Gamma distribution.
 #' (Note that the expected mean is different from the *observed mean* of lengths of hospital stay, which is estimated using records from patients with observed outcomes only.)
@@ -2445,15 +2447,18 @@ onset.adm <- function(data, plt = F){
 }
 
 
+#' @title
 #' Plot distribution of time (in days) from symptom onset to admission.
 #
+#' @description
 #' Plots a Gamma distribution fit to durations (in days) from symptom onset to admission. This includes only patients with
 #' complete records on the time (in days) between symptom onset and admission.
 #'
+#' @details
 #' The estimates of the Gamma distribution were fitted to the observed data were obtained by a maximum likelihood estimation
 #' procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} package in the \code{fitdistrplus} package.
 #' @export onset.adm.plot
-#' @param data Output of \code{\link{process_data}}.
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return Plot of the Gamma distribution fit to lengths of hospital stay. The black dashed line indicates the position of the estimated mean of the Gamma distribution.
 #' @references
@@ -2899,10 +2904,24 @@ plot.by.age.grouping <- function(data, ...) {
 
 }
 
-#' @export plot.comorb.by.age
-#' @keywords internal
 
-plot.comorb.by.age <- function(data, ...) {
+
+
+
+##  Plot comorbidities by age  ####
+
+#' @title Plot the prevalence of comorbidities by age group.
+#
+#' @description Plots the prevalence of seven comorbidities (asthma, malignancy, HIV, obesity, diabetes mellitus, dementia, and smoking), stratified  by age group.
+#'
+#' @export comorb.by.age
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
+#'
+#' @return A plot for each comorbidity, showing the 95% binomial confidence interval (represented by a black line) 
+#' for the proportion of patients in each age group with that comorbidity. The width of the boxes gives an indication--in relative terms-- 
+#' of the number of people in each age group for whom information on that comorbidity is available. On top of each plot, N (the number of individuals 
+#' whose records are included in the plot) is printed (this varies between plots due to data completeness).
+comorb.by.age <- function(data, ...) {
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
                   asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
@@ -2934,9 +2953,21 @@ plot.comorb.by.age <- function(data, ...) {
 
 }
 
-#' @export plot.sx.by.age
-#' @keywords internal
-plot.sx.by.age <- function(data, admission.symptoms, ...) {
+
+ ##  Plot symptoms by age  ####
+
+#' @title Plot the prevalence of symptoms by age group.
+#
+#' @description Plots the prevalence of five comorbidities (fever, cough, shortness of breath, confusion, and gastrointestinal symptoms), stratified  by age group.
+#'
+#' @export sx.by.age
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
+#'
+#' @return A plot for each symptom, showing the 95% binomial confidence interval (represented by a black line) 
+#' for the proportion of patients in each age group who presented that symptom. The width of the boxes gives an indication--in relative terms-- 
+#' of the number of people in each age group for whom information on that symptom is available. On top of each plot, N (the number of individuals 
+#' whose records are included in the plot) is printed (this varies between plots due to data completeness).
+sx.by.age <- function(data, admission.symptoms, ...) {
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
                   one_of(admission.symptoms$field), start.to.exit, sex
@@ -3016,9 +3047,17 @@ plot.bw.by.age <- function(data, var, name, ...) {
 
 }
 
-#' @export plot.signs.by.age
-#' @keywords internal
-plot.signs.by.age <- function(data, ...) {
+##  Plot vital signs by age  ####
+
+#' @title Box plots for observations at hospital by age group.
+#
+#' @description Plots patients' data on five vital signs (respiratory rate, heart rate, systolic blood pressure and temperature) as well as the oxygen staturation in room air (%), by age group. 
+#' Respiratory rate is recorded in breaths per minute, heart rate in beats per minute, systolic blood pressure in mmHg and temperature in degree Celsius.   
+#' @export signs.by.age
+#' @param data \code{detailed.data}, a component of the \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
+#' @return A plot for each observation, showing box plots by age group. On top of each plot, N (the number of individuals 
+#' whose records are included in the plot) is printed (this varies between plots due to data completeness).
+signs.by.age <- function(data, ...) {
   df <- data %>%
     dplyr::select(subjid, age_estimateyears, agedat, start.date, agegp10,
                   rr_vsorres, oxy_vsorresu, oxy_vsorres, hr_vsorres,
@@ -3056,9 +3095,19 @@ plot.signs.by.age <- function(data, ...) {
 
 }
 
-#' @export plot.blood.results.by.age
-#' @keywords internal
-plot.blood.results.by.age <- function(data, ...) {
+##  Plot vital signs by age  ####
+
+#' @title Box plots for laboratory results within 24 hours of hospital presentation. 
+#
+#' @description Plots the following laboratory results by age group: WCC (10^{9}/L), Lymphocytes (10^{9}/L), Neutrophilis (10^{9}/L), Urea (mmol/L), CRP (mg/L), 
+#' Prothrombin time (s), APTT (s), Bilirubin (\mu mol/L) and ALT (units/L).
+#'
+#' @export blood.results.by.age
+#' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
+#'
+#' @return A plot for each laboratory result, showing box plots by age group. On top of each plot, N (the number of individuals 
+#' whose records are included in the plot) is printed (this varies between plots due to data completeness).
+blood.results.by.age <- function(data, ...) {
   # Use a loop to collect data to avoid problems of data too large to process
   for (i in 1:nrow(data)) {
     p <- data$events[i][[1]] %>%

@@ -21,9 +21,14 @@ source.name <- "test"
 #' @param ref.date Date to be taken as the date of the report. Default is today's date.
 #' @param verbose Flag for verbose output
 #'
+#' @return A list with components: \describe{
+#' \item{unembargoed.data}{Data frame containing patients' records up to \code{ref.date}.}
+#' \item{embargo.limit}{Embargo date; i.e. \code{ref.date} - \code{embargo.length}}
+#' \item{detailed.data}{Data frame containing patients' records up to \code{embargo.limit}}
+#' \item{cst.reference}{Data frame containing name and labels of the symptoms, combordities, and treatments considered.}
+#' }
 #' @import readr glue lubridate magrittr purrr stringr tidyr forcats
 #' @export import.and.process.data
-#'
 import.and.process.data <- function(data.file,
                                     data.dict.file,
                                     column.table.file = NULL,
@@ -112,17 +117,20 @@ import.and.process.data <- function(data.file,
   
 }
 
-#' Generate a PDF report from the data
+#' @title
+#' Generate a PDF report from the data.
+#' 
+#' @description
+#' Generates a PDF report containing summaries of the data, including comparison of lengths of hospital stay by sex and age group, outcome by sex,
+#' comorbidity, symptom and treatment distributions and distribution of vital signs on presentation at hospital. 
 #' @param patient.data.output List output from \code{import.and.process.data}
 #' @param file.name Path to a PDF file for the report
 #' @param site.name Name of the site from which this data is derived
+#' 
+#' @return PDF report containing summaries of the data.
 #' @import rmarkdown psych ggplot2 fitdistrplus boot survival tibble grid gridExtra ggupset viridis filesstrings
 #' @export generate.report
-#'
-
 generate.report <- function(patient.data.output, file.name, site.name){
-  patient.data <- patient.data.output$detailed.data
-  unembargoed.data <- patient.data.output$unembargoed.data
   cst.reference <- patient.data.output$cst.reference
   
   embargo.limit <- patient.data.output$embargo.limit
