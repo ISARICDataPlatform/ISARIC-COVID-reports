@@ -2,19 +2,21 @@
 % Please edit documentation in R/plot_functions.R
 \name{onset.adm.plot}
 \alias{onset.adm.plot}
-\title{Plot distribution of time (in days) from symptom onset to admission.
-Plots a Gamma distribution fit to durations (in days) from symptom onset to admission. This includes only patients with
-complete records on the time (in days) between symptom onset and admission.}
+\title{Plot distribution of time (in days) from symptom onset to admission.}
 \usage{
 onset.adm.plot(data, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 }
 \value{
 Plot of the Gamma distribution fit to lengths of hospital stay. The black dashed line indicates the position of the estimated mean of the Gamma distribution.
 }
 \description{
+Plots a Gamma distribution fit to durations (in days) from symptom onset to admission. This includes only patients with
+complete records on the time (in days) between symptom onset and admission.
+}
+\details{
 The estimates of the Gamma distribution were fitted to the observed data were obtained by a maximum likelihood estimation
 procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} package in the \code{fitdistrplus} package.
 }

@@ -7,13 +7,10 @@
 outcomes.by.admission.date(data, embargo.limit, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}. This should be a dataframe which includes columns for the date of admission and  outcome for each patient. See 'Details'.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for the date of admission and  outcome for each patient. See `Details'.}
 }
 \value{
 Bar plot showing the number of patients per country and by outcome (discharge/ongoincg care/death). Bars are annotated with counts.
-
-The variables of \code{data} containing the date and outcome information of patients should be named "start.date" and "outcome" respectively.
-The variable "outcome" should be a factor with levels 'discharge', 'censored' and 'death'; in this case, 'censored' patients are those for whom clinical care is ongoing.
 }
 \description{
 Plots patient numbers and outcomes by epidemiological week (of 2020) of admission (or, for patients infected in hospital, of symptom onset).

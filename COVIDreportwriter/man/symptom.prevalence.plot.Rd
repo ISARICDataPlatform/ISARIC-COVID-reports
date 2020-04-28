@@ -7,7 +7,7 @@
 symptom.prevalence.plot(data, admission.symptoms, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 }
 \value{
 Barplot showing the proportion of patients reporting each symptom.

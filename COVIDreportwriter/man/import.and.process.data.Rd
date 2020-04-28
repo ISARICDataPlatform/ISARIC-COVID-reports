@@ -32,6 +32,14 @@ import.and.process.data(
 
 \item{verbose}{Flag for verbose output}
 }
+\value{
+A list with components: \describe{
+\item{unembargoed.data}{Data frame containing patients' records up to \code{ref.date}.}
+\item{embargo.limit}{Embargo date; i.e. \code{ref.date} - \code{embargo.length}}
+\item{detailed.data}{Data frame containing patients' records up to \code{embargo.limit}}
+\item{cst.reference}{Data frame containing name and labels of the symptoms, combordities, and treatments considered.}
+}
+}
 \description{
 Import data from Redcap .csv output for processing
 }

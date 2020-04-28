@@ -2,22 +2,23 @@
 % Please edit documentation in R/plot_functions.R
 \name{adm.outcome.plot}
 \alias{adm.outcome.plot}
-\title{Plot distribution of time (in days) from admission to an outcome.
-Plots a Gamma distribution fit to the lengths of hospital stay (in days) from admission to an outcome - either death or discharge, accounting for unobserved outcomes. See 'Details'.}
+\title{Plot distribution of time (in days) from admission to an outcome.}
 \usage{
 adm.outcome.plot(data, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 }
 \value{
 Plot of the Gamma distribution fit to lengths of hospital stay. The black dashed line indicates the position of the estimated mean of the Gamma distribution.
 (Note that the expected mean is different from the \emph{observed mean} of lengths of hospital stay, which is estimated using records from patients with observed outcomes only.)
 }
 \description{
+Plots a Gamma distribution fit to the lengths of hospital stay (in days) from admission to an outcome - either death or discharge, accounting for unobserved outcomes. See `Details'.
+}
+\details{
 The estimates of the Gamma distribution were fitted to the observed data were obtained by a maximum likelihood estimation
-procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} package in the \code{fitdistrplus} package.
-The lengths of stay for patients with unobserved outcomes were treated as interval censored data.
+procedure implemented in the \code{\link[fitdistrplus]{fitdistcens}} function in the \code{fitdistrplus} package. The lengths of stay for patients with unobserved outcomes were treated as interval censored data.
 }
 \references{
 Delignette-Muller, M. L., & Dutang, C. (2015).

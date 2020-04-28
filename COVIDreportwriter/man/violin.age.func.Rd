@@ -7,7 +7,7 @@
 violin.age.func(data, embargo.limit, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 }
 \value{
 Violin plots (with box plots) showing the distribution of the total length by age group. Age is plotted in  10-year intervals: 0-9, 10-19, \dots, 70+.

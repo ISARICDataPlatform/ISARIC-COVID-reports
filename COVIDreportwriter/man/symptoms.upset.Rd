@@ -7,14 +7,14 @@
 symptoms.upset(data, max.symptoms, admission.symptoms, ...)
 }
 \arguments{
-\item{data}{Output of \code{\link{process_data}}.}
+\item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
 
 \item{max.symptoms}{The \code{max.symptoms} most frequent symptoms will be included in the plot. Defaults to 4.}
 }
 \value{
 UpSet plot showing the frequency of combinations of the top \code{max.symptoms} symptoms.
 Filled and empty circles below the x-axis of the plot indicate the presence and absence respectively of each symptom.
-The “Any other” category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.symptoms} symptoms.
+The `Any other' category in the upset plot contains all remaining comorbidities which are not included in the top \code{max.symptoms} symptoms.
 }
 \description{
 Plots the distribution of combinations of the most common symptoms on admission, amongst all patients for whom these data were recorded.
