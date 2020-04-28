@@ -131,10 +131,13 @@ import.and.process.data <- function(data.file,
 #' @import rmarkdown psych ggplot2 fitdistrplus boot survival tibble grid gridExtra ggupset viridis filesstrings
 #' @export generate.report
 generate.report <- function(patient.data.output, file.name, site.name){
+  patient.data <- patient.data.output$detailed.data
+  unembargoed.data <- patient.data.output$unembargoed.data
+  
   cst.reference <- patient.data.output$cst.reference
   
   embargo.limit <- patient.data.output$embargo.limit
-  embargo.length <- patient.data$embargo.length
+  embargo.length <- patient.data.output$embargo.length
   
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
