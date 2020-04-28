@@ -3190,10 +3190,13 @@ blood.results.by.age <- function(data, ...) {
 
 }
 
+#' @export insufficient.data.plot
+#' @keywords internal
 
-
-
-
+insufficient.data.plot <- function(){
+  ggplot() + annotate(geom="text", label = "Insufficient data to display this plot", x=0, y=0) + theme_void()
+  
+}
 
 
 
