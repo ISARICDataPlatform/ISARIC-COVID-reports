@@ -27,7 +27,10 @@
 #' \item{detailed.data}{Data frame containing patients' records up to \code{embargo.limit}}
 #' \item{cst.reference}{Data frame containing name and labels of the symptoms, combordities, and treatments considered.}
 #' }
-#' @import readr glue lubridate magrittr purrr stringr tidyr forcats
+#' @import readr purrr stringr tidyr forcats
+#' @importFrom glue glue
+#' @importFrom lubridate ymd is.Date today
+#' @importFrom magrittr not
 #' @export import.and.process.data
 import.and.process.data <- function(data.file,
                                     data.dict.file,
@@ -128,7 +131,11 @@ import.and.process.data <- function(data.file,
 #' @param site.name Name of the site from which this data is derived
 #' 
 #' @return PDF report containing summaries of the data.
-#' @import rmarkdown psych ggplot2 fitdistrplus boot survival tibble grid gridExtra ggupset viridis filesstrings
+#' @import rmarkdown ggplot2 fitdistrplus boot survival tibble grid ggupset viridis
+#' @importFrom filesstrings file.move
+#' @importFrom gridExtra arrangeGrob
+#' @importFrom psych phi
+#' @importFrom lubridate epiweek
 #' @export generate.report
 generate.report <- function(patient.data.output, file.name, site.name){
   patient.data <- patient.data.output$detailed.data
