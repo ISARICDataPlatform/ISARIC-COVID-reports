@@ -3,7 +3,7 @@
 # d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
 # c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
 # verbose <- TRUE
-# ref.date <- today()
+# # ref.date <- today()
 # embargo.length <- 14
 # message.out.file <- "messages.csv"
 # source.name <- "test"
@@ -147,7 +147,7 @@ generate.report <- function(patient.data.output, file.name, site.name){
 
   report.rmd.file <- system.file("rmd", "COV-report.Rmd", package = "COVIDreportwriter")
   render(report.rmd.file, output_file=file.name)
-  file.move(system.file("rmd", file.name, package = "COVIDreportwriter"), getwd())
+  file.move(system.file("rmd", file.name, package = "COVIDreportwriter"), getwd(), overwrite = TRUE)
   
 }
 
@@ -1019,8 +1019,7 @@ process.data <- function(data,
                   start.to.exit = as.numeric(difftime(exit.date, start.date,  unit="days"))) %>%
     dplyr::mutate(admission.to.censored = map2_dbl(admission.to.exit, admission.date, function(x,y){
       if(is.na(x)){
-        # censored until today
-        as.numeric(difftime(ref.date, y,  unit="days"))
+        as.numeric(difftime(embargo.limit, y,  unit="days"))
       }
       else {
         NA
@@ -1028,7 +1027,7 @@ process.data <- function(data,
     })) %>%
     dplyr::mutate(start.to.censored = map2_dbl(admission.to.exit, start.date, function(x,y){
       if(is.na(x)){
-        as.numeric(difftime(ref.date, y,  unit="days"))
+        as.numeric(difftime(embargo.limit, y,  unit="days"))
       }
       else {
         NA
