@@ -15,53 +15,90 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   embargo.length <- embargo.length
   
   # Summaries
-
+  
   N.cases <- nrow(data)      # total embargoed
   N.cases.full <- nrow(datafull)
   N.var <- ncol(data)  # number of variables
   N.sites.full <- length(unique(datafull$site.name)) # number of sites
   N.countries.full <- length(unique(datafull$Country)) # number of countries
-  median.age <- round(median(data$consolidated.age, na.rm = T), 1) # median age (observed)
-  mean.age <-  mean(data$consolidated.age, na.rm = T)  # mean age
-  sd.age <- sd(data$consolidated.age, na.rm = T)
-
-  min.age <- ceiling(min(data$consolidated.age, na.rm=T)) # minimum age
-  max.age <- ceiling(max(data$consolidated.age, na.rm=T)) # maximum age
-   
+  
+  
   transfer.outcome <- sum(summary(data$exit.code)[['transfer']],  summary(data$exit.code)[['transfer.palliative']])
   unk.outcome <-  sum(summary(data$exit.code)[['hospitalisation']], summary(data$exit.code)[['unknown']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed
-
-
-  # ages by sex
-  m <- data[data$sex=='1', ]
-  f <-  data[data$sex=='2', ]
-
-  m.age.mean <- mean(m$consolidated.age, na.rm=T)
-  m.age.sd <- sd(m$consolidated.age, na.rm=T)
-  f.age.mean <- mean(f$consolidated.age, na.rm=T)
-  f.age.sd <-  sd(f$consolidated.age, na.rm=T)
-
-
-  N.males <- summary(as.factor(data$sex))[[1]] # males-count
-  N.females <- summary(as.factor(data$sex))[[2]] # females-count
-  N.sex.unknown <- N.cases - N.males - N.females # unknown-count
+  
+  
+  
   N.censored <- summary(as.factor(data$outcome))[[1]]  # censored-count
   N.deaths <- summary(as.factor(data$outcome))[[2]]    # deaths-count
   N.recoveries <- summary(as.factor(data$outcome))[[3]]   # recoveries -count
   N.outcomes <- N.deaths+N.recoveries         # outcomes-count (deaths+recoveries)
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
   N.healthworkers <- summary(as.factor(data$healthwork_erterm))[[1]]
-
-
-
-  # Outcome by age and sex
-
-  age.out.tab <- table( data$agegp10, data$outcome)
-  sex.out.tab <- table(data$sex, data$outcome)
-
-  age.out.tab2 <-  table( data$agegp10, data$exit.code)
-  sex.out.tab2 <- table(data$sex, data$exit.code)
-
+  
+  
+  
+  # Some sites do not have access to sex and/or age data
+  if(!all(is.na(data$sex))){ # if age data is available
+    
+    N.males <- summary(as.factor(data$sex))[[1]] # males-count
+    N.females <- summary(as.factor(data$sex))[[2]] # females-count
+    N.sex.unknown <- N.cases - N.males - N.females # unknown-count
+    
+    # ages by sex
+    m <- data[data$sex=='1', ]
+    f <-  data[data$sex=='2', ]
+    
+    # Outcome by sex
+    sex.out.tab <- table(data$sex, data$outcome)
+    sex.out.tab2 <- table(data$sex, data$exit.code)
+  
+  }else{
+    N.males <- NA
+    N.females <- NA
+    N.sex.unknown <- NA
+    m <- NA
+    f <- NA
+    
+    sex.out.tab <- matrix(nrow=3, ncol = 3)
+    sex.out.tab2 <- matrix(nrow=3, ncol = 6)
+  }
+  
+  
+  if(!all(is.na(data$age_estimateyears))){  # if age data is available
+    
+    median.age <- round(median(data$consolidated.age, na.rm = T), 1) # median age (observed)
+    mean.age <-  mean(data$consolidated.age, na.rm = T)  # mean age
+    sd.age <- sd(data$consolidated.age, na.rm = T)
+    
+    min.age <- ceiling(min(data$consolidated.age, na.rm=T)) # minimum age
+    max.age <- ceiling(max(data$consolidated.age, na.rm=T)) # maximum age
+    
+    m.age.mean <- mean(m$consolidated.age, na.rm=T)
+    m.age.sd <- sd(m$consolidated.age, na.rm=T)
+    f.age.mean <- mean(f$consolidated.age, na.rm=T)
+    f.age.sd <-  sd(f$consolidated.age, na.rm=T)
+    
+    age.out.tab <- table(data$consolidated.age, data$outcome)
+    age.out.tab2<-  table(data$consolidated.age, data$exit.code)
+    
+  }else{
+    median.age <- NA
+    mean.age <- NA
+    sd.age <- NA
+    
+    min.age <- NA
+    max.age <- NA
+    m.age.mean <- NA
+    m.age.sd <- NA
+    f.age.mean <- NA
+    f.age.sd <- NA
+    
+    age.out.tab <- matrix(nrow=8,ncol = 3)
+    age.out.tab2<- matrix(nrow = 8, ncol = 6)
+  }
+  
+    
+ 
 
   # COV status
 
@@ -263,26 +300,26 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   # CFR
 
   cfr <- round(casefat2(data, embargo.limit)$cfr,  2)
-  cfr.lower <-round(casefat2(data, embargo.limit)$lcfr, 2)
-  cfr.upper <-  round(casefat2(data, embargo.limit)$ucfr, 2)
+  # cfr.lower <-round(casefat2(data, embargo.limit)$lcfr, 2)
+  # cfr.upper <-  round(casefat2(data, embargo.limit)$ucfr, 2)
+  # 
+  # # CFR for ICU/non-ICU
+  # 
+  # cfr.icu <-  icu.cfr.func(data, embargo.limit)$cfr.icu
+  # cfr.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.icu.l
+  # cfr.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.icu.u
+  # 
+  # cfr.non.icu <-  icu.cfr.func(data, embargo.limit)$cfr.non.icu
+  # cfr.non.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.l
+  # cfr.non.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.u
+  # 
 
-  # CFR for ICU/non-ICU
 
-  cfr.icu <-  icu.cfr.func(data, embargo.limit)$cfr.icu
-  cfr.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.icu.l
-  cfr.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.icu.u
-
-  cfr.non.icu <-  icu.cfr.func(data, embargo.limit)$cfr.non.icu
-  cfr.non.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.l
-  cfr.non.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.u
-
-
-
-  # HFR
-  db <- hospital.fatality.ratio(data)$db
-  hfr <- round(db[nrow(db), 'mean'], 2)
-  hfr.upper <- round(db[nrow(db), 'upper'], 2)
-  hfr.lower <- round(db[nrow(db), 'lower'], 2)
+  # # HFR
+  # db <- hospital.fatality.ratio(data)$db
+  # hfr <- round(db[nrow(db), 'mean'], 2)
+  # hfr.upper <- round(db[nrow(db), 'upper'], 2)
+  # hfr.lower <- round(db[nrow(db), 'lower'], 2)
 
   # Treatments data
   df <- make.props.treats(data)
@@ -464,23 +501,23 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
 
 
               cfr = cfr,
-              cfr.lower = cfr.lower,
-              cfr.upper = cfr.upper,
+              # cfr.lower = cfr.lower,
+              # cfr.upper = cfr.upper,
+              # 
+              # 
+              # cfr.icu = cfr.icu,
+              # cfr.icu.l = cfr.icu.l,
+              # cfr.icu.u = cfr.icu.u,
+              # 
+              # 
+              # cfr.non.icu = cfr.non.icu,
+              # cfr.non.icu.l = cfr.non.icu.l,
+              # cfr.non.icu.u = cfr.non.icu.u,
 
-
-              cfr.icu = cfr.icu,
-              cfr.icu.l = cfr.icu.l,
-              cfr.icu.u = cfr.icu.u,
-
-
-              cfr.non.icu = cfr.non.icu,
-              cfr.non.icu.l = cfr.non.icu.l,
-              cfr.non.icu.u = cfr.non.icu.u,
-
-              hfr = hfr,
-              hfr.lower = hfr.lower,
-              hfr.upper =  hfr.upper,
-              #N.ICU = N.ICU
+              # hfr = hfr,
+              # hfr.lower = hfr.lower,
+              # hfr.upper =  hfr.upper,
+              # #N.ICU = N.ICU
 
               n.treat = n.treat,
               # p.none = p.none,
