@@ -1796,6 +1796,15 @@ samp.median <- function(x,i){median(x[i])}
 #' @keywords internal
 
 fit.summary.gamma <- function(fit){
+  
+  if(is.character(fit)){
+    
+    return(list(m=NA, lower.m = NA, upper.m = NA,  v=NA,
+                lower.v = NA, upper.v = NA, bmed = NA, lower.med = NA,
+                upper.med = NA))
+    
+  }else{
+    
 
   m <- fit$estimate[['shape']]/fit$estimate[['rate']]       # mean
   v <- fit$estimate[['shape']]/(fit$estimate[['rate']])^2   # variance
@@ -1824,6 +1833,8 @@ fit.summary.gamma <- function(fit){
               lower.v = lower.v, upper.v = upper.v, bmed = bmed, lower.med = lower.med,
               upper.med = upper.med))
 
+  }
+  
 }
 
 
@@ -2384,12 +2395,17 @@ adm.outcome <- function(data, plt = F){
   left <- c(admit.discharge)
   right <- replace(admit.discharge, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
-  fit <- fitdistcens(censored_df, dist = 'gamma')
-
-
   obs <- right[!(is.na(right))] # cases with completed duration days.
+  
+  if(sum(is.na(right)) > !sum(is.na(right))){
+    fit <- "Cannot be computed, insufficient data"
+  }else{
+    
+    fit <- fitdistcens(censored_df, dist = 'gamma')
+    
+  }
 
-  if(plt == T){
+  if(!is.character(fit) & plt == T){
     t <- data.frame(x = admit.discharge)
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
@@ -2406,9 +2422,11 @@ adm.outcome <- function(data, plt = F){
     return(list(plt=plt, fit=fit, obs = obs))
 
   }else{
-    return(list(fit=fit, obs = obs))
+    
+    plt <- insufficient.data.plot(data)
+    return(list(plt = plt, fit=fit, obs = obs))
   }
-
+  
 }
 
 
@@ -2584,17 +2602,21 @@ dur.niv <- function(data,plt = F, ...){
   pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
-  fit <- fitdistcens(censored_df, dist = 'gamma')
-
-
   pos.n.cens <- which(data2$event.censoring == 0)
   obs <- left[pos.n.cens]
-
-
+  
+  
+  if(sum(is.na(right)) > !sum(is.na(right))){
+    fit <- "Cannot be computed, insufficient data"
+  }else{
+    
+    fit <- fitdistcens(censored_df, dist = 'gamma')
+    
+  }
 
   # Plt
 
-  if(plt == T){
+  if(!is.character(fit) & plt == T){
 
     t <- data.frame(x = left)
 
@@ -2613,7 +2635,10 @@ dur.niv <- function(data,plt = F, ...){
     return(list(plt=plt, fit=fit, obs = obs))
 
   }else{
-    return(list(fit=fit, obs = obs))
+    
+    plt <- insufficient.data.plot(data)
+    return(list(plt = plt, fit=fit, obs = obs))
+    
   }
 }
 
@@ -2688,14 +2713,20 @@ dur.icu <- function(data, plt = F, ...) {
   pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
-  fit <- fitdistcens(censored_df, dist = 'gamma')
 
   pos.n.cens <- which(data2$event.censoring == 0)
   obs <- left[pos.n.cens]
+  
+  if(sum(is.na(right)) > !sum(is.na(right))){
+    fit <- "Cannot be computed, insufficient data"
+  }else{
+    
+    fit <- fitdistcens(censored_df, dist = 'gamma')
+  }
+  
 
 
-
-  if(plt==T){
+  if(!is.character(fit) & plt==T){
 
     t <- data.frame(x = left)
 
@@ -2712,11 +2743,14 @@ dur.icu <- function(data, plt = F, ...) {
       labs(y = 'Density', x = 'Time (in days) spent in ICU', title = '')
 
     return(list(plt=plt, fit=fit, obs = obs))
-
   }else{
-    return(list(fit=fit, obs = obs))
+    
+    plt <- insufficient.data.plot(data)
+    return(list(plt = plt, fit=fit, obs = obs))
+    
   }
 }
+
 
 #' @export
 #' @keywords internal
@@ -2791,12 +2825,22 @@ dur.imv <- function(data, plt=F, ...) {
   pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
-  fit <- fitdistcens(censored_df, dist = 'gamma')
-
   pos.n.cens <- which(data2$event.censoring == 0)
   obs <- left[pos.n.cens]
+  
+  
+  if(sum(is.na(right)) > !sum(is.na(right))){
+    fit <- "Cannot be computed, insufficient data"
+  }else{
+    
+    fit <- fitdistcens(censored_df, dist = 'gamma')
+    
+    
+  }
 
-  if(plt ==T){
+  
+
+  if(!is.character(fit) & plt ==T){
 
     t <- data.frame(x = left)
 
@@ -2814,9 +2858,13 @@ dur.imv <- function(data, plt=F, ...) {
 
     return(list(plt=plt, fit=fit, obs = obs))
   }else{
-    return(list(fit=fit, obs = obs))
+    
+    plt <- insufficient.data.plot(data)
+    return(list(plt = plt, fit=fit, obs = obs))
   }
+  
 }
+
 
 #' @export
 #' @keywords internal
