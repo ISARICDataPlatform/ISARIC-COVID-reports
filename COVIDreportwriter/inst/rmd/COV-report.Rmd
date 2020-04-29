@@ -183,7 +183,7 @@ treatment.use.plot.icu(patient.data, treatments)
 <!-- The distribution of combinations of treatments administered during  hospital stay for patients who were admitted to an Intensive Care Unit . Filled and empty circles below the x-axis indicate treatments that were and were not administered. -->
 
 ```{r treatment2icu, echo=FALSE}
-icu.treatment.upset(patient.data, treat)
+icu.treatment.upset(patient.data)
 ```
 
 
