@@ -2009,8 +2009,9 @@ icu.cfr.func <- function(data, embargo.limit){
 round.zeros <- function(x){
   
   for (i in 1: length(x)){
+
     
-    if (x[i]==0){
+    if (!is.na(x[i] & x[i]==0){
       x[i] <- 0.5
     }
   }
@@ -2041,7 +2042,7 @@ violin.sex.func <- function(data, embargo.limit, ...){
     data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3) %>% filter(start.to.exit > 0) # Exclude negative values for length of stay - indication of issue with data entry
     
     data2 <- data2%>%
-      mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
+      mutate(length.of.stay = round.zeros(start.to.exit))  %>%
       mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
       mutate(sex = factor(sex, levels = c("Male", "Female")))  %>%
       filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
@@ -2085,7 +2086,7 @@ violin.sex.func.discharge <- function(data, ...){
   
   
   data2 <- data2%>%
-    mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
+    mutate(length.of.stay = round.zeros(start.to.exit))  %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
@@ -2124,7 +2125,7 @@ violin.sex.func.death <- function(data, ...){
   
   
   data2 <- data2%>%
-    mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
+    mutate(length.of.stay = round.zeros(start.to.exit))  %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
@@ -2163,7 +2164,7 @@ violin.sex.func.hospital <- function(data, ...){
   
   
   data2 <- data2%>%
-    mutate(length.of.stay = round.zeros((start.to.exit)))  %>%
+    mutate(length.of.stay = round.zeros(start.to.exit))  %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   

@@ -330,12 +330,12 @@ import.patient.data <- function(data.file,
     }
   }
   
-  data.dict <- read_csv(data.dict.file)
+  data.dict <- read_csv(data.dict.file, col_types = cols())
   
   column.types <- data.dict %>% dplyr::select(1, 4) %>%
     dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
   
-  data <- read_csv(data.file, guess_max = 100000)
+  data <- read_csv(data.file, col_types = cols(), guess_max = 100000)
   
   # Columns that should be text
   text.columns.temp <- column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
@@ -378,7 +378,7 @@ import.patient.data <- function(data.file,
 rename.and.drop.columns <- function(data, column.table.file, cst.reference){
   
   if(!is.null(column.table.file)){
-    column.table     <- read_csv(column.table.file)
+    column.table     <- read_csv(column.table.file, col_types = cols())
     required.columns <- column.table$report.column.name
   } else {
     required.columns <- c('dsstdat', 'daily_dsstdat', 'daily_lbdat', 'hostdat', 'cestdat', 'dsstdtc', 'daily_fio2_lborres', 'age_estimateyears',
@@ -449,7 +449,7 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
 #' @keywords internal
 process.symptoms.comorbidities.treatments <- function(data.dict.file){
   
-  d.dict <- read_csv(data.dict.file) %>%
+  d.dict <- read_csv(data.dict.file, col_types = cols()) %>%
     dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
     dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
   
