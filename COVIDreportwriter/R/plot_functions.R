@@ -2370,7 +2370,8 @@ adm.outcome <- function(data, plt = F){
   data2 <- data2 %>%
     mutate(length.of.stay = map2_dbl(start.to.exit, start.to.censored, function(x,y){
       max(x, y, na.rm = T)
-    }))
+    })) %>%
+    filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
   
   
   # Exclude negative values for length of stay - indication of issue with data entry
@@ -2387,15 +2388,13 @@ adm.outcome <- function(data, plt = F){
   censored_df <- data.frame(left, right)
   obs <- right[!(is.na(right))] # cases with completed duration days.
   
-  if(sum(is.na(right)) > !sum(is.na(right))){
+  if(sum(is.na(right)) > 0.8*length(right)){
     fit <- "Cannot be computed, insufficient data"
   }else{
     
     fit <- fitdistcens(censored_df, dist = 'gamma')
     
   }
-  
-  
   
   if(!is.character(fit) & plt == T){
     
@@ -2410,7 +2409,7 @@ adm.outcome <- function(data, plt = F){
       ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
       theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                             colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '') + xlim(c(0,100))
+      labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '') + xlim(c(0,max(admit.discharge)))
     
     return(list(plt=plt, fit=fit, obs = obs))
     
@@ -2421,6 +2420,9 @@ adm.outcome <- function(data, plt = F){
   }
   
 }
+
+
+
 
 
 ##  Admission to outcome plot (accounting for censorship) ####
