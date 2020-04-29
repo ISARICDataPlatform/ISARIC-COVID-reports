@@ -1114,7 +1114,7 @@ process.data <- function(data,
                                               # Patients get here if:
                                               # 1) They have a negative SARS-CoV-2 test
                                               # OR 2) They have an NA entry for SARS-CoV-2 test result
-                                              # OR 3)They have a weak or strong positive test for SARS-CoV-2 AND
+                                              # OR 3) They have a weak or strong positive test for a coronavirus other than SARS-CoV-2 AND
                                               #   3A) The entry for virus species is NA
                                               #   OR 3B) The entry for virus species is "MERS"
                                               #   OR 3C) The free text is missing or says that virus is not SARS-CoV-2
@@ -1143,22 +1143,13 @@ process.data <- function(data,
   
   if(verbose) cat("Imposing the embargo...\n")
   
-  
   patient.data <-  patient.data %>%
     filter(dsstdat <= embargo.limit)
-  
-  # Save to disk
-  
-  # Remove cases with problematic outcome code-date matches
-  
+
   # Temporary fix! #
   
   patient.data<- patient.data %>% filter(!(is.na(exit.code) & !is.na(exit.date)))
-  
-  # Detach the events table
-  
-  # patient.data <- patient.data %>% dplyr::select(-events)
-  
+
   list(unembargoed.data = unembargoed.data, detailed.data = patient.data)
   
 }
