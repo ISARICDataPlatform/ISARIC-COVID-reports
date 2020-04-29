@@ -2426,7 +2426,7 @@ adm.outcome <- function(data, plt = F){
     
   }else{
     
-    plt <- insufficient.data.plot(data)
+    plt <- insufficient.data.plot()
     return(list(plt = plt, fit=fit, obs = obs))
   }
   
@@ -2639,7 +2639,7 @@ dur.niv <- function(data,plt = F, ...){
     
   }else{
     
-    plt <- insufficient.data.plot(data)
+    plt <- insufficient.data.plot()
     return(list(plt = plt, fit=fit, obs = obs))
     
   }
@@ -2750,7 +2750,7 @@ dur.icu <- function(data, plt = F, ...) {
 
   }else{
     
-    plt <- insufficient.data.plot(data)
+    plt <- insufficient.data.plot()
     return(list(plt = plt, fit=fit, obs = obs))
     
   }
@@ -2864,7 +2864,7 @@ dur.imv <- function(data, plt=F, ...) {
     return(list(plt=plt, fit=fit, obs = obs))
   }else{
     
-    plt <- insufficient.data.plot(data)
+    plt <- insufficient.data.plot()
     return(list(plt = plt, fit=fit, obs = obs))
   }
   
