@@ -207,7 +207,7 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
   ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), col = "black", width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
-    # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2$hostdat), na.rm = TRUE), by=2)) +
+    # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week of admission/symptom onset (2020)") +
     ylab("Cases") +
     ylim(c(0,peak.cases)) +
@@ -2011,7 +2011,7 @@ round.zeros <- function(x){
   for (i in 1: length(x)){
 
     
-    if (!is.na(x[i] & x[i]==0){
+    if (!is.na(x[i]) & x[i]==0){
       x[i] <- 0.5
     }
   }
