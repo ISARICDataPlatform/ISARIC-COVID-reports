@@ -2894,7 +2894,7 @@ plot.by.age.make.zeroandone <- function(var, ...) {
 
 #' @export plot.prop.by.age
 #' @keywords internal
-plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 500, ...) {
+plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 750, ...) {
   data2 <- data
   summ <- data2 %>%
     add_column(a = var) %>%
@@ -2911,7 +2911,8 @@ plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 500, ...) {
   d$lbl[d$x <= 5] <- censored.lbl[d$x <= 5]
   d$size <- d$n / sz
   xlabs <- c(
-    "<20",
+    "<10",
+    "10-",
     "20-",
     "30-",
     "40-",
@@ -2971,13 +2972,13 @@ plot.by.age.grouping <- function(data, ...) {
     dplyr::select(-consolidated.age, -agedat, -start.date, -agegp10) %>%
     filter(!is.na(Age))
   data$AgeGrp <- 0
-  thr <- c(0, 20, 30, 40, 50, 60, 70, 80, 999)
+  thr <- c(0, 10, 20, 30, 40, 50, 60, 70, 80, 999)
   for (i in thr) data$AgeGrp[data$Age >= i] <- i
   data$AgeGrp[is.na(data$Age) == TRUE] <- 999
   data$AgeGrp <- factor(
     data$AgeGrp,
     levels = thr,
-    labels = c("<20", "20-", "30-", "40-","50-","60-", "70-", ">=80", "NR")
+    labels = c("<10", "10-", "20-", "30-", "40-","50-","60-", "70-", ">=80", "NR")
   )
   
   return(data)
@@ -3032,7 +3033,7 @@ comorb.by.age <- function(data, ...) {
     pg <- plot.prop.by.age(df, df$smoking_mhyn,
                            "Proportion who\nsmoke", ymax = .4)
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 3)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
     
   }
   
@@ -3089,7 +3090,7 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     pd <- plot.prop.by.age(df, df$confusion_ceoccur_v2, "Confusion")
     pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal symptoms")
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 3)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 2)
   }
   return(p)
   
@@ -3114,7 +3115,8 @@ plot.bw.by.age <- function(data, var, name, ...) {
   N <- paste("N = ", nrow(summ), sep = "", collapse = NULL)
   
   xlabs <- c(
-    "<20",
+    "<10",
+    "10-",
     "20-",
     "30-",
     "40-",
@@ -3187,7 +3189,7 @@ signs.by.age <- function(data, ...) {
     pe_name <- expression("Temperature " (degree*C))
     pe <- plot.bw.by.age(df, df$Temp, pe_name)
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 3)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, ncol = 2)
   }
   return(p)
   
@@ -3287,7 +3289,7 @@ blood.results.by.age <- function(data, ...) {
     
     # Omit AST as N much lower than for ALT
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 3)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 2)
     
   }
   return(p)
