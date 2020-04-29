@@ -24,7 +24,7 @@
 
 age.pyramid <- function(data, ...){
   
-  if( all(is.na(data$consolidated_age)) | all(is.na(data$sex))){
+  if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
     plt <- insufficient.data.plot()
   }else{
     
@@ -2206,7 +2206,7 @@ violin.sex.func.hospital <- function(data, ...){
 violin.age.func <- function(data, embargo.limit,...){
   
   
-  if(all(is.na(data$consolidated_age))){
+  if(all(is.na(data$consolidated.age))){
     plt <- insufficient.data.plot()
   }else{
     
@@ -2962,11 +2962,11 @@ plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 500, ...) {
 plot.by.age.grouping <- function(data, ...) {
   age.c <- (data$start.date - data$agedat) / 365.25 %>%
     round(0)
-  data$Age <- data$consolidated_age
-  data$Age[is.na(data$consolidated_age) == TRUE] <-
-    age.c[is.na(data$consolidated_age) == TRUE]
+  data$Age <- data$consolidated.age
+  data$Age[is.na(data$consolidated.age) == TRUE] <-
+    age.c[is.na(data$consolidated.age) == TRUE]
   data <- data %>%
-    dplyr::select(-consolidated_age, -agedat, -start.date, -agegp10) %>%
+    dplyr::select(-consolidated.age, -agedat, -start.date, -agegp10) %>%
     filter(!is.na(Age))
   data$AgeGrp <- 0
   thr <- c(0, 20, 30, 40, 50, 60, 70, 80, 999)
@@ -3001,12 +3001,12 @@ plot.by.age.grouping <- function(data, ...) {
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 comorb.by.age <- function(data, ...) {
   
-  if( all(is.na(data$consolidated_age)) | all(is.na(data$sex))){
+  if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
     p <- insufficient.data.plot()
   }else{
     
     df <- data %>%
-      dplyr::select(subjid, consolidated_age, agedat, start.date, agegp10,
+      dplyr::select(subjid, consolidated.age, agedat, start.date, agegp10,
                     asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
                     diabetes, dementia_mhyn, smoking_mhyn,
                     start.to.exit, sex
@@ -3054,13 +3054,13 @@ comorb.by.age <- function(data, ...) {
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 sx.by.age <- function(data, admission.symptoms, ...) {
   
-  if( all(is.na(data$consolidated_age)) | all(is.na(data$sex))){
+  if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
     p <- insufficient.data.plot()
   }else{
     
     
     df <- data %>%
-      dplyr::select(subjid, consolidated_age, agedat, start.date, agegp10,
+      dplyr::select(subjid, consolidated.age, agedat, start.date, agegp10,
                     one_of(admission.symptoms$field), start.to.exit, sex
       )
     df <- plot.by.age.grouping(df)
@@ -3150,12 +3150,12 @@ plot.bw.by.age <- function(data, var, name, ...) {
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 signs.by.age <- function(data, ...) {
   
-  if( all(is.na(data$consolidated_age)) | all(is.na(data$sex))){
+  if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
     p <- insufficient.data.plot()
   }else{
     
     df <- data %>%
-      dplyr::select(subjid, consolidated_age, agedat, start.date, agegp10,
+      dplyr::select(subjid, consolidated.age, agedat, start.date, agegp10,
                     rr_vsorres, oxy_vsorresu, oxy_vsorres, hr_vsorres,
                     sysbp_vsorres, temp_vsorres, temp_vsorresu, start.to.exit,
                     sex
@@ -3205,7 +3205,7 @@ signs.by.age <- function(data, ...) {
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 blood.results.by.age <- function(data, ...) {
   
-  if( all(is.na(data$consolidated_age)) | all(is.na(data$sex))){
+  if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
     p<- insufficient.data.plot()
   }else{
     
@@ -3221,7 +3221,7 @@ blood.results.by.age <- function(data, ...) {
         ) %>%
         add_column(
           subjid = data$subjid[i],
-          consolidated_age = data$consolidated_age[i],
+          consolidated.age = data$consolidated.age[i],
           agedat = data$agedat[i],
           start.date = data$start.date[i],
           agegp10 = data$agegp10[i],
