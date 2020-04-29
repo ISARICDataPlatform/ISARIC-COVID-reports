@@ -64,8 +64,8 @@ age.pyramid <- function(data, ...){
                                   seq(tick.increment, ceiling(max.count/tick.increment)*tick.increment, by= tick.increment)))
     
     
-    plt <- ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp5, y=count, fill = outcome), stat = "identity", col = "black") +
-      geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity", col = "black") +
+    plt <- ggplot() + geom_bar(data = (data2 %>% filter(sex == "M")), aes(x=agegp5, y=count, fill = outcome), stat = "identity") +
+      geom_bar(data = data2 %>% filter(sex == "F"), aes(x=agegp5, y=count, fill = outcome),  stat = "identity") +
       coord_flip(clip = 'off') +
       theme_bw() +
       scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
@@ -204,7 +204,7 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
   
   peak.cases <- data2 %>% group_by(two.digit.epiweek) %>% dplyr::summarise(count = n()) %>% pull(count) %>% max()
   
-  ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), col = "black", width = 0.95) +
+  ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2), na.rm = TRUE), by=2)) +
@@ -334,7 +334,7 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
   
   
   ggplot(top.n.conditions.tbl, aes(x = conditions.present)) +
-    geom_bar(aes(y=..count../sum(..count..)), fill = "indianred3", col = "black") +
+    geom_bar(aes(y=..count../sum(..count..)), fill = "indianred3") +
     theme_bw() +
     xlab("Comorbidities present at admission") +
     ylab("Proportion of patients") +
@@ -457,7 +457,7 @@ symptoms.upset <- function(data, max.symptoms, admission.symptoms, ...){
   
   
   ggplot(top.n.symptoms.tbl, aes(x = conditions.present)) +
-    geom_bar(aes(y=..count../sum(..count..)), fill = "deepskyblue3", col = "black") +
+    geom_bar(aes(y=..count../sum(..count..)), fill = "deepskyblue3") +
     theme_bw() +
     xlab("Symptoms present at admission") +
     ylab("Proportion of patients") +
@@ -567,7 +567,7 @@ symptom.heatmap <- function(data, admission.symptoms, ...){
   
   ggplot(combinations.tibble.2) +
     geom_tile(aes(x=label.x, y=label.y, fill=phi.correlation)) +
-    scale_fill_gradient2(low = "indianred3", mid = "white", high =  "deepskyblue3",
+    scale_fill_gradient2(low = "deepskyblue3", mid = "white", high = "indianred3",
                          name = "phi coefficient", limits = c(-1,1)) +
     theme_bw() +
     theme(panel.grid.major = element_blank(),
@@ -1152,7 +1152,7 @@ treatment.upset <- function(data, ...) {
     })) %>%
     dplyr::select(-Treatments, -Presence)
   p <- ggplot(treatments2, aes(x = treatments.used)) +
-    geom_bar(aes(y=..count../sum(..count..)), fill = "chartreuse3", col = "black") +
+    geom_bar(aes(y=..count../sum(..count..)), fill = "chartreuse3") +
     theme_bw() +
     xlab("Treatments used during hospital admission") +
     ylab("Proportion of patients") +
@@ -1204,7 +1204,7 @@ treatment.upset.ventilation <- function(data, ...) {
     })) %>%
     dplyr::select(-Treatments, -Presence)
   vent.plt <- ggplot(treatments2, aes(x = treatments.used)) +
-    geom_bar(aes(y=..count../sum(..count..)), fill = "blue", col = "black") +
+    geom_bar(aes(y=..count../sum(..count..)), fill = "blue") +
     theme_bw() +
     xlab("Oxygen therapies used during hospital admission") +
     ylab("Proportion of patients") +
@@ -1501,7 +1501,7 @@ antiviral.use.upset <- function(data, ...){
   
   
   ggplot(data2, aes(x = antivirals.used)) +
-    geom_bar(aes(y=..count../sum(..count..)), fill = "deepskyblue3", col = "black") +
+    geom_bar(aes(y=..count../sum(..count..)), fill = "deepskyblue3") +
     theme_bw() +
     xlab("Antivirals used") +
     ylab("Proportion of patients") +
@@ -1703,7 +1703,7 @@ icu.treatment.upset <- function(data, ...) {
     })) %>%
     dplyr::select(-Treatments, -Presence)
   p <- ggplot(treatments2, aes(x = treatments.used)) +
-    geom_bar(aes(y=..count../sum(..count..)), fill = "darkorchid4", col = "black") +
+    geom_bar(aes(y=..count../sum(..count..)), fill = "darkorchid4") +
     theme_bw() +
     xlab("Treatments used") +
     ylab("Proportion of patients \n admitted to intensive care") +
