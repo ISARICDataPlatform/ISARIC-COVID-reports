@@ -1735,6 +1735,7 @@ icu.violin.plot  <- function(data, ...){
   d$type <- 1
   
   dur <- data$ICU.duration
+  dur <- dur[-(which(dur<0))]
   d.2 <- data.frame(dur)
   d.2$type <- 2
   
@@ -2149,7 +2150,7 @@ violin.sex.func.hospital <- function(data, ...){
   # Analysis to be run on only cases with admission.to.exit entries & sex entries (i.e. cases with completed outcomes)
   
   
-  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3)%>% filter(outcome == 'censored')
+  data2 <- data %>% filter(!is.na(start.to.exit) & start.to.exit > 0) %>% filter(!is.na(sex) & sex!=3)%>% filter(outcome == 'censored')
   
   
   data2 <- data2%>%
@@ -2288,7 +2289,7 @@ violin.age.func.death <- function(data, ...){
   
   # Analysis to be run on only entries with start.to.exit entries
   
-  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(outcome == "death")
+  data2 <- data %>% filter(!is.na(start.to.exit) & start.to.exit > 0) %>% filter(!is.na(agegp10)) %>% filter(outcome == "death")
   
   data2 <- data2 %>%
     mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))
@@ -2325,7 +2326,7 @@ violin.age.func.hospital <- function(data, ...){
   
   # Analysis to be run on only entries with start.to.exit entries
   
-  data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(outcome == "censored")
+  data2 <- data %>% filter(!is.na(start.to.exit & start.to.exit > 0)) %>% filter(!is.na(agegp10)) %>% filter(outcome == "censored")
   
   data2 <- data2 %>%
     mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))
