@@ -1805,35 +1805,35 @@ fit.summary.gamma <- function(fit){
     
   }else{
     
-  m <- fit$estimate[['shape']]/fit$estimate[['rate']]       # mean
-  v <- fit$estimate[['shape']]/(fit$estimate[['rate']])^2   # variance
-  
-  set.seed(101)
-  # Sample
-  X = rgamma(1e3, shape = fit$estimate[['shape']], rate = fit$estimate[['rate']] )
-  # Bootstrap (mean)
-  bm <- boot(data = X , statistic = samp.mean, R=1000)
-  # CI
-  lower.m <-  boot.ci(bm, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
-  upper.m <-  boot.ci(bm, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
-  # Bootstrap (variance)
-  bv <- boot(data = X, statistic = samp.var, R=1000 )
-  # CI
-  lower.v <- boot.ci(bv, type = 'bca')$bca[4]       # lower bound of confidence interval for variance
-  upper.v <- boot.ci(bv, type = 'bca')$bca[5]       # upper bound of confidence interval for variance
-  # Bootstrap (median)
-  bmed <- boot(data = X, statistic = samp.median, R=1000 )
-  # CI
-  lower.med <- boot.ci(bmed, type = 'bca')$bca[4]       # lower bound of confidence interval for variance
-  upper.med <- boot.ci(bmed, type = 'bca')$bca[5]       # upper bound of confidence interval for variance
-  
-  
-  return(list(m=m, lower.m = lower.m, upper.m = upper.m,  v=v,
-              lower.v = lower.v, upper.v = upper.v, bmed = bmed, lower.med = lower.med,
-              upper.med = upper.med))
-
+    m <- fit$estimate[['shape']]/fit$estimate[['rate']]       # mean
+    v <- fit$estimate[['shape']]/(fit$estimate[['rate']])^2   # variance
+    
+    set.seed(101)
+    # Sample
+    X = rgamma(1e3, shape = fit$estimate[['shape']], rate = fit$estimate[['rate']] )
+    # Bootstrap (mean)
+    bm <- boot(data = X , statistic = samp.mean, R=1000)
+    # CI
+    lower.m <-  boot.ci(bm, type = 'bca')$bca[4]       # lower bound of confidence interval for mean
+    upper.m <-  boot.ci(bm, type = 'bca')$bca[5]       # upper bound of confidence interval for mean
+    # Bootstrap (variance)
+    bv <- boot(data = X, statistic = samp.var, R=1000 )
+    # CI
+    lower.v <- boot.ci(bv, type = 'bca')$bca[4]       # lower bound of confidence interval for variance
+    upper.v <- boot.ci(bv, type = 'bca')$bca[5]       # upper bound of confidence interval for variance
+    # Bootstrap (median)
+    bmed <- boot(data = X, statistic = samp.median, R=1000 )
+    # CI
+    lower.med <- boot.ci(bmed, type = 'bca')$bca[4]       # lower bound of confidence interval for variance
+    upper.med <- boot.ci(bmed, type = 'bca')$bca[5]       # upper bound of confidence interval for variance
+    
+    
+    return(list(m=m, lower.m = lower.m, upper.m = upper.m,  v=v,
+                lower.v = lower.v, upper.v = upper.v, bmed = bmed, lower.med = lower.med,
+                upper.med = upper.med))
+    
   }
-
+  
   
 }
 
@@ -2406,9 +2406,9 @@ adm.outcome <- function(data, plt = F){
   }
   
   
-
+  
   if(!is.character(fit) & plt == T){
-
+    
     t <- data.frame(x = admit.discharge)
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
@@ -2426,7 +2426,7 @@ adm.outcome <- function(data, plt = F){
     
   }else{
     
-    plt <- insufficient.data.plot(data)
+    plt <- insufficient.data.plot()
     return(list(plt = plt, fit=fit, obs = obs))
   }
   
@@ -2616,11 +2616,11 @@ dur.niv <- function(data,plt = F, ...){
     fit <- fitdistcens(censored_df, dist = 'gamma')
     
   }
-
+  
   # Plt
-
+  
   if(!is.character(fit) & plt == T){
-
+    
     t <- data.frame(x = left)
     
     plt <- ggplot(data = t) +
@@ -2639,7 +2639,7 @@ dur.niv <- function(data,plt = F, ...){
     
   }else{
     
-    plt <- insufficient.data.plot(data)
+    plt <- insufficient.data.plot()
     return(list(plt = plt, fit=fit, obs = obs))
     
   }
@@ -2716,7 +2716,7 @@ dur.icu <- function(data, plt = F, ...) {
   pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
   right <-  replace(left, pos.cens, values=NA )
   censored_df <- data.frame(left, right)
-
+  
   pos.n.cens <- which(data2$event.censoring == 0)
   obs <- left[pos.n.cens]
   
@@ -2728,9 +2728,9 @@ dur.icu <- function(data, plt = F, ...) {
     fit <- fitdistcens(censored_df, dist = 'gamma')
   }
   
-
+  
   if(!is.character(fit) & plt==T){
-
+    
     
     t <- data.frame(x = left)
     
@@ -2747,10 +2747,10 @@ dur.icu <- function(data, plt = F, ...) {
       labs(y = 'Density', x = 'Time (in days) spent in ICU', title = '')
     
     return(list(plt=plt, fit=fit, obs = obs))
-
+    
   }else{
     
-    plt <- insufficient.data.plot(data)
+    plt <- insufficient.data.plot()
     return(list(plt = plt, fit=fit, obs = obs))
     
   }
@@ -2842,11 +2842,11 @@ dur.imv <- function(data, plt=F, ...) {
     
     
   }
-
   
-
+  
+  
   if(!is.character(fit) & plt ==T){
-
+    
     t <- data.frame(x = left)
     
     plt <- ggplot(data = t) +
@@ -2864,7 +2864,7 @@ dur.imv <- function(data, plt=F, ...) {
     return(list(plt=plt, fit=fit, obs = obs))
   }else{
     
-    plt <- insufficient.data.plot(data)
+    plt <- insufficient.data.plot()
     return(list(plt = plt, fit=fit, obs = obs))
   }
   
