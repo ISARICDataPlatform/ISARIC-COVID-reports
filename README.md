@@ -7,7 +7,7 @@ Data contributors are invited to input on the methods and contents of these repo
 
 ## Installation
 
-The R code is provided as a package called "COVIDreportwriter". To install this, first download the Github repository, either by using the links on this page or using the command line (in the MacOS/Linux/Unix terminal or [git bash](https://gitforwindows.org/)):
+The R code is provided as a package called "COVIDreportwriter". To install this, first download the GitHub repository, either by using the links on this page or using the command line (in the MacOS/Linux/Unix terminal or [git bash](https://gitforwindows.org/)):
 
     git clone https://github.com/ISARICDataPlatform/ISARIC-COVID-reports.git
 
@@ -17,6 +17,11 @@ With the respository downloaded, navigate to the directory containing it using t
 
     library(devtools)
     install("COVIDreportwriter", dependencies = TRUE)
+    
+Alternatively, the repository can be downloaded and installed directly from GitHub within R:
+
+    library(devtools)
+    install_github('ISARICDataPlatform/ISARIC-COVID-reports/COVIDreportwriter')
     
 For basic operation, you require two files from REDCap output: a data file and a data dictionary file. Supposing the file name of the former is data.csv and the latter data_dict.csv, a basic report can be generated using the R commands:
 
