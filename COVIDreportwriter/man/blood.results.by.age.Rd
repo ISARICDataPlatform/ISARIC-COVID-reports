@@ -15,5 +15,5 @@ whose records are included in the plot) is printed (this varies between plots du
 }
 \description{
 Plots the following laboratory results by age group: WCC (10^{9}/L), Lymphocytes (10^{9}/L), Neutrophilis (10^{9}/L), Urea (mmol/L), CRP (mg/L),
-Prothrombin time (s), APTT (s), Bilirubin (\mu mol/L) and ALT (units/L).
+Prothrombin time (s), APTT (s), Bilirubin (\eqn{\mu} mol/L) and ALT (units/L).
 }

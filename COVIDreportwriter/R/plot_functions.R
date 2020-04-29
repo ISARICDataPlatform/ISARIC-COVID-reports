@@ -2006,18 +2006,7 @@ icu.cfr.func <- function(data, embargo.limit){
 #' @export round.zeros
 #' @keywords internal
 
-round.zeros <- function(x){
-  
-  for (i in 1: length(x)){
-
-    
-    if (!is.na(x[i]) & x[i]==0){
-      x[i] <- 0.5
-    }
-  }
-  
-  return(x)
-}
+round.zeros <- function(x) ifelse (!is.na(x) & x==0, 0.5, x)
 
 ## Violin plot by sex (length of hospital stay by sex) ####
 
@@ -2042,7 +2031,7 @@ violin.sex.func <- function(data, embargo.limit, ...){
     data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(sex) & sex!=3) %>% filter(start.to.exit > 0) # Exclude negative values for length of stay - indication of issue with data entry
     
     data2 <- data2%>%
-      mutate(length.of.stay = round.zeros(start.to.exit))  %>%
+      mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))  %>%
       mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
       mutate(sex = factor(sex, levels = c("Male", "Female")))  %>%
       filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
@@ -2086,7 +2075,7 @@ violin.sex.func.discharge <- function(data, ...){
   
   
   data2 <- data2%>%
-    mutate(length.of.stay = round.zeros(start.to.exit))  %>%
+    mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))  %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
@@ -2125,7 +2114,7 @@ violin.sex.func.death <- function(data, ...){
   
   
   data2 <- data2%>%
-    mutate(length.of.stay = round.zeros(start.to.exit))  %>%
+    mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))  %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
@@ -2164,7 +2153,7 @@ violin.sex.func.hospital <- function(data, ...){
   
   
   data2 <- data2%>%
-    mutate(length.of.stay = round.zeros(start.to.exit))  %>%
+    mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))  %>%
     mutate(sex = map_chr(sex, function(x)  c('Male', 'Female')[x])) %>%
     mutate(sex = factor(sex, levels = c("Male", "Female")))
   
@@ -2209,14 +2198,14 @@ violin.age.func <- function(data, embargo.limit,...){
   
   if(all(is.na(data$consolidated.age))){
     plt <- insufficient.data.plot()
-  }else{
+  } else {
     
     # Analysis to be run on only entries with start.to.exit entries
     
     data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(start.to.exit > 0) # Exclude negative values for length of stay - indication of issue with data entry
     
     data2 <- data2 %>%
-      mutate(length.of.stay = round.zeros(start.to.exit)) %>%
+      mutate(length.of.stay = map_dbl(start.to.exit, round.zeros)) %>%
       filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
     
     
@@ -2260,7 +2249,7 @@ violin.age.func.discharge <- function(data, ...){
   data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(outcome == 'discharge')
   
   data2 <- data2 %>%
-    mutate(length.of.stay = round.zeros(start.to.exit))
+    mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))
   
   # Exclude negative values for length of stay - indication of issue with data entry
   data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
@@ -2302,7 +2291,7 @@ violin.age.func.death <- function(data, ...){
   data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(outcome == "death")
   
   data2 <- data2 %>%
-    mutate(length.of.stay = round.zeros(start.to.exit))
+    mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))
   
   # Exclude negative values for length of stay - indication of issue with data entry
   data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
@@ -2339,7 +2328,7 @@ violin.age.func.hospital <- function(data, ...){
   data2 <- data %>% filter(!is.na(start.to.exit)) %>% filter(!is.na(agegp10)) %>% filter(outcome == "censored")
   
   data2 <- data2 %>%
-    mutate(length.of.stay = round.zeros(start.to.exit))
+    mutate(length.of.stay = map_dbl(start.to.exit, round.zeros))
   
   # Exclude negative values for length of stay - indication of issue with data entry
   data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
@@ -2389,7 +2378,7 @@ adm.outcome <- function(data, plt = F){
   
   admit.discharge <- data2$length.of.stay
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge <- round.zeros(admit.discharge)
+  admit.discharge <- map_dbl(admit.discharge, round.zeros)
   
   pos.cens <- which(data2$censored == 'TRUE')
   
@@ -2463,7 +2452,7 @@ onset.adm <- function(data, plt = F){
   
   admit.discharge <- data$onset.to.admission
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- round.zeros(admit.discharge)
+  admit.discharge.2 <- map_dbl(admit.discharge, round.zeros)
   # admit.discharge.2 <- admit.discharge.2[-which(admit.discharge.2>160)]
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
   
@@ -2548,7 +2537,7 @@ adm.to.niv <- function(data,plt = F,...){
   
   admit.discharge <- data2$admission.to.NIMV
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- round.zeros(admit.discharge)
+  admit.discharge.2 <- map_dbl(admit.discharge, round.zeros)
   
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
   
@@ -2598,8 +2587,11 @@ adm.to.niv.plot <- function(data,...){
 dur.niv <- function(data,plt = F, ...){
   data2 <- data %>% filter(!is.na(NIMV.start.date)) %>% mutate(event.start.date = NIMV.start.date) %>% mutate(event.end.date = NIMV.end.date)
   
-  data2 <- data2  %>% mutate(event.duration = abs(round.zeros(calculate.durations(data2)$durs)))  %>%
-    mutate(event.censoring = calculate.durations(data2)$cens)
+  temp <- calculate.durations(data2)
+  
+  data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
+    mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
+    mutate(event.censoring = temp$cens)
   
   
   left <- data2$event.duration   # all duration dates
@@ -2664,7 +2656,7 @@ adm.to.icu <- function(data, plt = F,...){
   
   admit.discharge <- data2$admission.to.ICU
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- round.zeros(admit.discharge)
+  admit.discharge.2 <- map_dbl(admit.discharge, round.zeros)
   
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
   
@@ -2709,9 +2701,15 @@ dur.icu <- function(data, plt = F, ...) {
   
   data2 <- data %>% filter(!is.na(ICU.admission.date)) %>% mutate(event.start.date = ICU.admission.date) %>% mutate(event.end.date = ICU.discharge.date)
   
-  data2 <- data2  %>% mutate(event.duration = abs(round.zeros(calculate.durations(data2)$durs)))  %>%
-    mutate(event.censoring = calculate.durations(data2)$cens)
+  temp <- calculate.durations(data2)
   
+  data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
+    mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
+    mutate(event.censoring = temp$cens)
+
+  mutate(event.duration = map_dbl(durs, function(x) calculate.durations(x)$durs)) %>%
+    mutate(event.duration = map_dbl(event.duration, function(x) abs(round.zeros(x)))) %>%
+    mutate(event.censoring = map_dbl(cens, calculate.durations(x)$cens))
   
   left <- data2$event.duration   # all duration dates
   pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
@@ -2777,7 +2775,7 @@ adm.to.imv <- function(data, plt = F, ...){
   
   admit.discharge <- data2$admission.to.IMV
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- round.zeros(admit.discharge)
+  admit.discharge.2 <- map_dbl(admit.discharge, round.zeros)
   
   fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
   
@@ -2823,8 +2821,11 @@ dur.imv <- function(data, plt=F, ...) {
   
   data2 <- data %>% filter(!is.na(IMV.start.date)) %>% mutate(event.start.date = IMV.start.date) %>% mutate(event.end.date = IMV.end.date)
   
-  data2 <- data2  %>% mutate(event.duration = abs(round.zeros(calculate.durations(data2)$durs)))  %>%
-    mutate(event.censoring = calculate.durations(data2)$cens)
+  temp <- calculate.durations(data2)
+  
+  data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
+    mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
+    mutate(event.censoring = temp$cens)
   
   
   left <- data2$event.duration   # all duration dates
@@ -3002,7 +3003,7 @@ plot.by.age.grouping <- function(data, ...) {
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 comorb.by.age <- function(data, ...) {
   
-  if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
+  if(all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
     p <- insufficient.data.plot()
   }else{
     
@@ -3197,7 +3198,7 @@ signs.by.age <- function(data, ...) {
 #' @title Box plots for laboratory results within 24 hours of hospital presentation. 
 #
 #' @description Plots the following laboratory results by age group: WCC (10^{9}/L), Lymphocytes (10^{9}/L), Neutrophilis (10^{9}/L), Urea (mmol/L), CRP (mg/L), 
-#' Prothrombin time (s), APTT (s), Bilirubin (\mu mol/L) and ALT (units/L).
+#' Prothrombin time (s), APTT (s), Bilirubin (\eqn{\mu} mol/L) and ALT (units/L).
 #'
 #' @export blood.results.by.age
 #' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..

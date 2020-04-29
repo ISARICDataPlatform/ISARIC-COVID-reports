@@ -7,9 +7,9 @@
 # embargo.length <- 14
 # message.out.file <- "messages.csv"
 # source.name <- "test"
+# # #
 # #
-#
-# import.and.process.data(d.file, d.dict.file, c.table, s.list, "test", "messages.csv", verbose = TRUE)
+# test <- import.and.process.data(d.file, d.dict.file, c.table, "test", "messages.csv", verbose = TRUE)
 
 #' Import data from Redcap .csv output for processing
 #' @param data.file Path of the data file
@@ -41,9 +41,15 @@ import.and.process.data <- function(data.file,
                                     ref.date = today(),
                                     verbose = F){
 
+  if(verbose) cat("Reading data...\n")
+  
   raw.data <- import.patient.data(data.file, data.dict.file, source.name, verbose)
   
+  if(verbose) cat("Identifying symptoms, comorbidities and treatments...\n")
+  
   cst.reference <- process.symptoms.comorbidities.treatments(data.dict.file)
+  
+  if(verbose) cat("Renaming columns...\n")
   
   temp <- rename.and.drop.columns(raw.data, column.table.file, cst.reference)
   raw.data <- temp$data
@@ -131,7 +137,7 @@ import.and.process.data <- function(data.file,
 #' @param site.name Name of the site from which this data is derived
 #' 
 #' @return PDF report containing summaries of the data.
-#' @import rmarkdown ggplot2 fitdistrplus boot survival tibble grid ggupset viridis
+#' @import rmarkdown ggplot2 fitdistrplus boot survival tibble grid ggupset viridis binom
 #' @importFrom filesstrings file.move
 #' @importFrom gridExtra arrangeGrob
 #' @importFrom psych phi
@@ -330,12 +336,12 @@ import.patient.data <- function(data.file,
     }
   }
   
-  data.dict <- read_csv(data.dict.file, col_types = cols())
+  data.dict <- read_csv(data.dict.file, col_types = cols(), progress = FALSE)
   
   column.types <- data.dict %>% dplyr::select(1, 4) %>%
     dplyr::rename(col.name = `Variable / Field Name`, type = `Field Type`)
   
-  data <- read_csv(data.file, col_types = cols(), guess_max = 100000)
+  data <- read_csv(data.file, col_types = cols(), guess_max = 100000, progress = FALSE)
   
   # Columns that should be text
   text.columns.temp <- column.types %>% filter(type %in% c("text", "descriptive", "notes", "file")) %>% pull(col.name)
@@ -378,7 +384,7 @@ import.patient.data <- function(data.file,
 rename.and.drop.columns <- function(data, column.table.file, cst.reference){
   
   if(!is.null(column.table.file)){
-    column.table     <- read_csv(column.table.file, col_types = cols())
+    column.table     <- read_csv(column.table.file, col_types = cols(), progress = FALSE)
     required.columns <- column.table$report.column.name
   } else {
     required.columns <- c('dsstdat', 'daily_dsstdat', 'daily_lbdat', 'hostdat', 'cestdat', 'dsstdtc', 'daily_fio2_lborres', 'age_estimateyears',
@@ -449,7 +455,7 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
 #' @keywords internal
 process.symptoms.comorbidities.treatments <- function(data.dict.file){
   
-  d.dict <- read_csv(data.dict.file, col_types = cols()) %>%
+  d.dict <- read_csv(data.dict.file, col_types = cols(), progress= FALSE) %>%
     dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
     dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
   
