@@ -118,7 +118,7 @@ sites.by.country <- function(data, ...){
   
   nudge <- max(data2$n.sites)/30
   
-  ggplot(data2) + geom_col(aes(x = Country, y = n.sites), col = "black", fill = "deepskyblue3") +
+  ggplot(data2) + geom_col(aes(x = Country, y = n.sites), fill = "deepskyblue3") +
     theme_bw() +
     xlab("Country") +
     ylab("Sites") +
@@ -160,7 +160,7 @@ outcomes.by.country <- function(data, ...){
   
   plot1 <- ggplot() +
     geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=4) +
-    geom_col(data = data2, aes(x = Country, y=count,  fill = outcome), col = "black") +
+    geom_col(data = data2, aes(x = Country, y=count,  fill = outcome)) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # facet_wrap (~ uk, scales = "free") +
@@ -635,7 +635,7 @@ symptom.prevalence.plot <- function(data, admission.symptoms, ...){
     dplyr::select(-total)
   
   plt <- ggplot(data2) +
-    geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    geom_col(aes(x = Condition, y = Proportion, fill = affected)) +
     geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
     theme_bw() +
     coord_flip() +
@@ -738,7 +738,7 @@ comorbidity.prevalence.plot <- function(data, comorbidities, ...){
     dplyr::select(-total)
   
   plt <- ggplot(data2) +
-    geom_col(aes(x = Condition, y = Proportion, fill = affected), col = "black") +
+    geom_col(aes(x = Condition, y = Proportion, fill = affected)) +
     geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
     theme_bw() +
     coord_flip() +
@@ -861,7 +861,7 @@ treatment.use.plot <- function(data, treatments, ...){
     dplyr::select(-total)
   
   plt<-  ggplot(data2) +
-    geom_col(aes(x = Treatment, y = Proportion, fill = affected), col = "black") +
+    geom_col(aes(x = Treatment, y = Proportion, fill = affected)) +
     geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
     theme_bw() +
     coord_flip() +
@@ -1313,7 +1313,7 @@ plot_nosocomial <- function(data, ...){
     summarise(perc = sum(value)/n())
   
   ggplot(data2) +
-    geom_col(aes(name, perc*100), fill = "orange3", col = "black") +
+    geom_col(aes(name, perc*100), fill = "orange3") +
     scale_x_discrete(labels = c("At least 7 days", "At least 14 days"), name = "Time of symptom onset after admission") +
     ylab("Percentage of patients") +
     theme_bw()
