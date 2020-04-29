@@ -19,9 +19,10 @@ Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$
 
 <!-- Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr*100`% (95% CI: `r de$hfr.lower*100`%, `r de$hfr.upper*100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed. -->
 
-A total of `r de$cases.full.adm.outcome` cases had complete information on length of hospital stay. Of these, the observed mean number of days from hospital admission to outcome (death or discharge) was `r de$obs.mean.adm.outcome`, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome` days and a median of `r de$obs.median.adm.outcome` days. 
 
 The observed mean number of days from (first) symptom onset to hospital admission was `r de$obs.mean.onset.adm`, with a SD of `r de$obs.sd.onset.adm` days and a median of `r de$obs.median.onset.adm` days. 
+
+A total of `r de$cases.full.adm.outcome` cases had complete information on length of hospital stay. Of these, the observed mean number of days from hospital admission to outcome (death or discharge) was `r de$obs.mean.adm.outcome`, with a standard deviation (SD) of `r  de$obs.sd.adm.outcome` days and a median of `r de$obs.median.adm.outcome` days. 
 
 The symptoms on admission represent the policy for hospital admission and containment at this site. The four most common symptoms at admission were fatigue and malaise alongside cough, history of fever and shortness of breath.
 
