@@ -160,7 +160,11 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
     filter(!is.na(Country)) %>%
     group_by(Country) %>%
     summarise(count = n()) %>%
-    mutate(uk = ifelse(Country == "UK", "UK", "Rest of world"))
+    mutate(uk = Country == "UK")
+  
+  if(!include.uk){
+    data3 <- data3 %>% filter(!uk)
+  }
   
   nudge <- max(data3$count)/30
   
@@ -1141,7 +1145,7 @@ treatment.upset <- function(data, ...) {
     mutate(Present = as.logical(Present))
   # Change labels
   treatments2$Treatment[treatments2$Treatment == "O2.ever"] <-
-    "Oxygen supplementation"
+    "Any oxygen provision"
   treatments2$Treatment[treatments2$Treatment == "antiviral.any"] <-
     "Antiviral"
   treatments2$Treatment[treatments2$Treatment == "antibiotic.any"] <-
@@ -1690,7 +1694,7 @@ icu.treatment.upset <- function(data, ...) {
     mutate(Present = as.logical(Present))
   # Change labels
   treatments2$Treatment[treatments2$Treatment == "O2.ever"] <-
-    "Oxygen supplementation"
+    "Any oxygen provision"
   treatments2$Treatment[treatments2$Treatment == "any.antimicrobial"] <-
     "Any antimicrobials"
   treatments2$Treatment[treatments2$Treatment == "IMV.ever"] <-
