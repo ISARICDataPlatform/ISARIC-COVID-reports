@@ -137,16 +137,22 @@ sites.by.country <- function(data, ...){
 #' @export outcomes.by.country
 #' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for the country and outcome associated with each patient. See `Details'.
 #' @return  Bar plot showing the number of patients per country and by outcome (discharge/ongoing care/death). Actual counts of the total number of patients for each country are printed on top of each bar.
-outcomes.by.country <- function(data, ...){
+outcomes.by.country <- function(data, include.uk = TRUE, ...){
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country)) %>%
-    mutate(uk = ifelse(Country == "UK", "UK", "Rest of world")) %>%
+    mutate(uk = Country == "UK")
+    
+  if(!include.uk){
+    data2 <- data2 %>% filter(!uk)
+  }
+  
+  data2 <- data2 %>%
     group_by(Country, outcome, uk) %>%
     summarise(count = n()) %>%
     ungroup()
-  
+
   
   data3 <- data %>%
     filter(!is.na(outcome)) %>%
