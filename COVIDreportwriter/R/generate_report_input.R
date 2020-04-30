@@ -344,10 +344,10 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   icu.p.In.Ven <- paste(sprintf("%.1f", 100 * df$n.IMV / df$n.O2))
   # Putcomes for ICU patient
   icu.d <- get_icu_pts(data)
-  N.icu.censored <- summary(as.factor(icu.d$outcome))[[1]]  # censored-count
-  N.icu.deaths <- summary(as.factor(icu.d$outcome))[[2]]    # deaths-count
-  N.icu.recoveries <- summary(as.factor(icu.d$outcome))[[3]]   # recoveries -count
-  N.icu.NA <- summary(as.factor(icu.d$outcome))[[4]]      # ICU NA
+  N.icu.censored = icu.d %>% filter(outcome == "censored") %>% nrow()   # censored-count
+  N.icu.deaths <- icu.d %>% filter(outcome == "death") %>% nrow()   # deaths-count
+  N.icu.recoveries <- icu.d %>% filter(outcome == "discharge") %>% nrow()   # recoveries -count
+  N.icu.NA <- icu.d %>% filter(is.na(outcome)) %>% nrow()      # ICU NA
   # outcomes
 
   # Symptoms
