@@ -1740,12 +1740,12 @@ icu.violin.plot  <- function(data, ...){
   data <- get_icu_pts(data)
   # Use available data for each measure
   dur <- data$admission.to.exit
-  dur <- dur[-(which(dur<0))]  # Exclude negative times
+  dur <- dur[which(dur>=0)]  # Exclude negative times
   d <- data.frame(dur = dur)
   d$type <- 1
   
   dur <- data$ICU.duration
-  dur <- dur[-(which(dur<0))]
+  dur <- dur[which(dur>=0)]
   d.2 <- data.frame(dur)
   d.2$type <- 2
   
