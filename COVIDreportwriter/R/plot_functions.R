@@ -137,16 +137,22 @@ sites.by.country <- function(data, ...){
 #' @export outcomes.by.country
 #' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for the country and outcome associated with each patient. See `Details'.
 #' @return  Bar plot showing the number of patients per country and by outcome (discharge/ongoing care/death). Actual counts of the total number of patients for each country are printed on top of each bar.
-outcomes.by.country <- function(data, ...){
+outcomes.by.country <- function(data, include.uk = TRUE, ...){
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country)) %>%
-    mutate(uk = ifelse(Country == "UK", "UK", "Rest of world")) %>%
+    mutate(uk = Country == "UK")
+    
+  if(!include.uk){
+    data2 <- data2 %>% filter(!uk)
+  }
+  
+  data2 <- data2 %>%
     group_by(Country, outcome, uk) %>%
     summarise(count = n()) %>%
     ungroup()
-  
+
   
   data3 <- data %>%
     filter(!is.na(outcome)) %>%
@@ -154,7 +160,11 @@ outcomes.by.country <- function(data, ...){
     filter(!is.na(Country)) %>%
     group_by(Country) %>%
     summarise(count = n()) %>%
-    mutate(uk = ifelse(Country == "UK", "UK", "Rest of world"))
+    mutate(uk = Country == "UK")
+  
+  if(!include.uk){
+    data3 <- data3 %>% filter(!uk)
+  }
   
   nudge <- max(data3$count)/30
   
@@ -524,7 +534,13 @@ symptom.heatmap <- function(data, admission.symptoms, ...){
       twobytwo <- table(restricted.df[[c1]], restricted.df[[c2]])
       # print(twobytwo)
       
-      return(phi(twobytwo))
+      if(nrow(twobytwo) == 2){
+        return(phi(twobytwo))
+      } else {
+        return(NA)
+      }
+      
+      
     }
   }
   
@@ -1135,7 +1151,7 @@ treatment.upset <- function(data, ...) {
     mutate(Present = as.logical(Present))
   # Change labels
   treatments2$Treatment[treatments2$Treatment == "O2.ever"] <-
-    "Oxygen supplementation"
+    "Any oxygen provision"
   treatments2$Treatment[treatments2$Treatment == "antiviral.any"] <-
     "Antiviral"
   treatments2$Treatment[treatments2$Treatment == "antibiotic.any"] <-
@@ -1684,7 +1700,7 @@ icu.treatment.upset <- function(data, ...) {
     mutate(Present = as.logical(Present))
   # Change labels
   treatments2$Treatment[treatments2$Treatment == "O2.ever"] <-
-    "Oxygen supplementation"
+    "Any oxygen provision"
   treatments2$Treatment[treatments2$Treatment == "any.antimicrobial"] <-
     "Any antimicrobials"
   treatments2$Treatment[treatments2$Treatment == "IMV.ever"] <-
@@ -1730,12 +1746,12 @@ icu.violin.plot  <- function(data, ...){
   data <- get_icu_pts(data)
   # Use available data for each measure
   dur <- data$admission.to.exit
-  dur <- dur[-(which(dur<0))]  # Exclude negative times
+  dur <- dur[which(dur>=0)]  # Exclude negative times
   d <- data.frame(dur = dur)
   d$type <- 1
   
   dur <- data$ICU.duration
-  dur <- dur[-(which(dur<0))]
+  dur <- dur[which(dur>=0)]
   d.2 <- data.frame(dur)
   d.2$type <- 2
   

@@ -4,7 +4,7 @@
 \alias{outcomes.by.country}
 \title{Plot the distribution of patients by country and outcome}
 \usage{
-outcomes.by.country(data, ...)
+outcomes.by.country(data, include.uk = TRUE, ...)
 }
 \arguments{
 \item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}.. This should be a dataframe which includes columns for the country and outcome associated with each patient. See `Details'.}

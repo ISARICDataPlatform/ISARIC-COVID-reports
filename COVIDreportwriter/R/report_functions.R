@@ -4,7 +4,7 @@
 # c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
 # verbose <- TRUE
 # # ref.date <- today()
-# embargo.length <- 14
+# embargo.length <- 0
 # message.out.file <- "messages.csv"
 # source.name <- "test"
 # # #
