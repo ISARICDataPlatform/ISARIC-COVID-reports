@@ -2426,7 +2426,7 @@ adm.outcome <- function(data, plt = F){
       ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
       theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                             colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '') + xlim(c(0,max(admit.discharge)))
+      labs(y = 'Density', x = 'Time (in days) from admission to death or recovery', title = '') + xlim(c(0,max(admit.discharge) - 20))
     
     return(list(plt=plt, fit=fit, obs = obs))
     
