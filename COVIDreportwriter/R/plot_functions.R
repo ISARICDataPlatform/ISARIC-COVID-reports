@@ -1745,7 +1745,11 @@ icu.treatment.upset <- function(data, ...) {
 icu.violin.plot  <- function(data, ...){
   data <- get_icu_pts(data)
   # Use available data for each measure
-  dur <- data$admission.to.exit
+ # dur <- data$start.to.exit
+  
+  data <- data %>% filter(start.to.exit < as.numeric(as.Date(ref.date) - as.Date("2019-12-01"))) %>% 
+                filter(ICU.duration < as.numeric(as.Date(ref.date) - as.Date("2019-12-01"))) 
+  
   dur <- dur[which(dur>=0)]  # Exclude negative times
   d <- data.frame(dur = dur)
   d$type <- 1
