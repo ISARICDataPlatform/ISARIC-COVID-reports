@@ -534,7 +534,7 @@ symptom.heatmap <- function(data, admission.symptoms, ...){
       twobytwo <- table(restricted.df[[c1]], restricted.df[[c2]])
       # print(twobytwo)
       
-      if(nrow(twobytwo) == 2){
+      if(nrow(twobytwo) == 2 & ncol(twobytwo) == 2){
         return(phi(twobytwo))
       } else {
         return(NA)
