@@ -777,7 +777,7 @@ treatment.use.calc <- function(data, treatments){
   
   treatment.columns <- map(1:nrow(data), function(i){
     data$events[i][[1]] %>%
-      filter(startsWith(redcap_event_name, "dischargeoutcome")) %>%
+      filter(startsWith(redcap_event_name, "discharge")) %>%
       dplyr::select( one_of(treatments$field)) %>%
       add_column(subjid = data$subjid[i]) %>%
       slice(1)
@@ -831,7 +831,7 @@ treatment.use.plot <- function(data, treatments, ...){
   
   treatment.columns <- map(1:nrow(data), function(i){
     data$events[i][[1]] %>%
-      filter(startsWith(redcap_event_name, "dischargeoutcome")) %>%
+      filter(startsWith(redcap_event_name, "discharge")) %>%
       dplyr::select( one_of(treatments$field)) %>%
       add_column(subjid = data$subjid[i]) %>%
       slice(1)
