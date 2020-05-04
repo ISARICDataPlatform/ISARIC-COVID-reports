@@ -1750,6 +1750,7 @@ icu.violin.plot  <- function(data, ...){
   data <- data %>% filter(start.to.exit < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) %>% 
                 filter(ICU.duration < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) 
   
+  dur <- data$start.to.exit
   dur <- dur[which(dur>=0)]  # Exclude negative times
   d <- data.frame(dur = dur)
   d$type <- 1
