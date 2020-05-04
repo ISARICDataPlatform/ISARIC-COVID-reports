@@ -11,9 +11,13 @@ The R code is provided as a package called "COVIDreportwriter". To install this,
 
     git clone https://github.com/ISARICDataPlatform/ISARIC-COVID-reports.git
 
-You may also need to install [pandoc](https://pandoc.org/) and the R library "devtools".
+You may also need to install [pandoc](https://pandoc.org/) and the R library "devtools". A LaTeX installation is also required. One option is to use the R package "tinytex". With that installed the command
 
-With the respository downloaded, navigate to the directory containing it using the R command line and type:
+    tinytex::install_tinytex()
+
+will install the software required to run the reports.
+
+With the ISARIC-COVID-reports respository downloaded, navigate to the directory containing it using the R command line and type:
 
     library(devtools)
     install("COVIDreportwriter", dependencies = TRUE)
