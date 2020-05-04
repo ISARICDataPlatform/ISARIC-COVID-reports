@@ -1747,8 +1747,8 @@ icu.violin.plot  <- function(data, ...){
   # Use available data for each measure
  # dur <- data$start.to.exit
   
-  data <- data %>% filter(start.to.exit < as.numeric(as.Date(ref.date) - as.Date("2019-12-01"))) %>% 
-                filter(ICU.duration < as.numeric(as.Date(ref.date) - as.Date("2019-12-01"))) 
+  data <- data %>% filter(start.to.exit < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) %>% 
+                filter(ICU.duration < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) 
   
   dur <- dur[which(dur>=0)]  # Exclude negative times
   d <- data.frame(dur = dur)
@@ -2529,7 +2529,7 @@ onset.adm.plot <- function(data,...){
 
 
 # Function to calculate NIMV durations for all cases with reported NIMV.start dates.
-# Durations are calculated for cases that are still in NIMV by the ref.date (i.e. date of the data).
+# Durations are calculated for cases that are still in NIMV by  today() (i.e. date of the data).
 #' @export
 #' @keywords internal
 calculate.durations <- function(data){
