@@ -7,7 +7,7 @@
 # embargo.length <- 0
 # message.out.file <- "messages.csv"
 # source.name <- "test"
-# # #
+# # # #
 # #
 # test <- import.and.process.data(d.file, d.dict.file, c.table, "test", "messages.csv", verbose = TRUE)
 
@@ -118,6 +118,7 @@ import.and.process.data <- function(data.file,
   patient.data.output <- process.data(patient.data, cst.reference, ref.date - embargo.length, verbose)
   
   patient.data.output$cst.reference <- cst.reference
+  patient.data.output$ref.date <- ref.date
   patient.data.output$embargo.limit <- ref.date - embargo.length
   
   patient.data.output$embargo.length <- embargo.length
@@ -149,6 +150,7 @@ generate.report <- function(patient.data.output, file.name, site.name){
   
   cst.reference <- patient.data.output$cst.reference
   
+  ref.date <- patient.data.output$ref.date
   embargo.limit <- patient.data.output$embargo.limit
   embargo.length <- patient.data.output$embargo.length
   
