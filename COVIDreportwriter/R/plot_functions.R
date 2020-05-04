@@ -169,7 +169,7 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
   nudge <- max(data3$count)/30
   
   plot1 <- ggplot() +
-    geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=4) +
+    geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=2) +
     geom_col(data = data2, aes(x = Country, y=count,  fill = outcome)) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
@@ -299,7 +299,7 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
       c[which(p)]
     })) %>%
     dplyr::select(-Conditions, -Presence)
-  
+
   other.conditions.tbl <- data %>%
     dplyr::select(subjid, one_of(comorbidities %>% filter(!(field %in% most.common)) %>% pull(field)))
   
@@ -346,7 +346,7 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
   ggplot(top.n.conditions.tbl, aes(x = conditions.present)) +
     geom_bar(aes(y=..count../sum(..count..)), fill = "indianred3") +
     theme_bw() +
-    xlab("Comorbidities present at admission") +
+    xlab("Conditions present at admission") +
     ylab("Proportion of patients") +
     scale_x_upset()
 }
@@ -654,6 +654,7 @@ symptom.prevalence.plot <- function(data, admission.symptoms, ...){
     geom_col(aes(x = Condition, y = Proportion, fill = affected)) +
     geom_text(data = data2 %>% filter(affected), aes(x=Condition, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
     theme_bw() +
+    xlab("Symptom") +
     coord_flip() +
     ylim(0, 1) +
     scale_fill_manual(values = c("deepskyblue1", "deepskyblue4"), name = "Symptom\npresent", labels = c("No", "Yes")) +
@@ -759,7 +760,7 @@ comorbidity.prevalence.plot <- function(data, comorbidities, ...){
     theme_bw() +
     coord_flip() +
     ylim(0, 1) +
-    scale_fill_manual(values = c("indianred1", "indianred4"), name = "Comorbidity\npresent", labels = c("No", "Yes")) +
+    scale_fill_manual(values = c("indianred1", "indianred4"), name = "Condition\npresent", labels = c("No", "Yes")) +
     theme(axis.text.y = element_text(size = 7))
   
   plt
@@ -1742,7 +1743,7 @@ icu.treatment.upset <- function(data, ...) {
 #' @return Violin plots (with box plots) showing the distribution of the total length of hospital stay for patients who were admitted to ICU/HDU and the
 #' distribution of the lengths of stay within ICU/HDU. The coloured areas of the plot indicate the kernel probability density of the observed data
 #' and the box plots show the median and interquartile range of the lengths of stay.
-icu.violin.plot  <- function(data, ...){
+icu.violin.plot  <- function(data, ref.date, ...){
   data <- get_icu_pts(data)
   # Use available data for each measure
  # dur <- data$start.to.exit
@@ -1750,6 +1751,7 @@ icu.violin.plot  <- function(data, ...){
   data <- data %>% filter(start.to.exit < as.numeric(as.Date(ref.date) - as.Date("2019-12-01"))) %>% 
                 filter(ICU.duration < as.numeric(as.Date(ref.date) - as.Date("2019-12-01"))) 
   
+  dur <- data$start.to.exit
   dur <- dur[which(dur>=0)]  # Exclude negative times
   d <- data.frame(dur = dur)
   d$type <- 1
