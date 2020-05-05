@@ -8,12 +8,8 @@
 # Main function d.e (dynamic.estimates) calculates estimates and confidence intervals, to be incorporated into report. #
 d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms, treatments, site.name, embargo.length, ...){
 
-  
-  # For site-specific reports
-  
-  site.name <- site.name
-  embargo.length <- embargo.length
-  
+
+
   # Summaries
   
   N.cases <- nrow(data)      # total embargoed
@@ -35,7 +31,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
   N.healthworkers <- summary(as.factor(data$healthwork_erterm))[[1]]
   
-  
+
   
   # Some sites do not have access to sex and/or age data
   if(!all(is.na(data$sex))){ # if age data is available
@@ -111,7 +107,6 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   IMV.ab <- sum(data$IMV.ever=='FALSE', na.rm=T)
   IMV.un <- N.cases -IMV.pr - IMV.ab
 
-
   NIMV.pr <- sum(data$NIMV.ever=='TRUE', na.rm=T)
   NIMV.ab <- sum(data$NIMV.ever=='FALSE', na.rm=T)
   NIMV.un <- N.cases - NIMV.pr - NIMV.ab
@@ -124,12 +119,11 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   ECMO.ab <-  sum(data$ECMO.ever=='FALSE', na.rm=T)
   ECMO.un <-  N.cases -  ECMO.pr -   ECMO.ab
 
-
   # Distribution estimates - EXPECTED
 
   # Admission to outcome
 
-  adm.out.func.1 <- adm.outcome(data)
+  adm.out.func.1 <- adm.outcome(data, embargo.limit)
   adm.out.summ <- fit.summary.gamma(adm.out.func.1$fit)
 
   adm.to.outcome <-  round(adm.out.summ$m, 1)
@@ -150,8 +144,6 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   onset.to.adm <-  round(onset.adm.summ$m, 1)
   onset.to.adm.l <-  round(onset.adm.summ$lower.m, 1)
   onset.to.adm.u <-  round(onset.adm.summ$upper.m, 1)
-
-
 
   # Admission to ICU
 
@@ -242,7 +234,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   obs.mean.adm.outcome.lower <- round( x_mean-1.96*(x_sd/sqrt(length(x))), 1)
   obs.mean.adm.outcome.upper <- round( x_mean+1.96*(x_sd/sqrt(length(x))), 1)
   obs.sd.adm.outcome <- round(x_sd, 1)
-  cases.full.adm.outcome <- length(adm.outcome(data)$obs)
+  cases.full.adm.outcome <- length(adm.out.func.1$obs)
   obs.median.adm.outcome <- round(x_median, 1)
   obs.iqr.adm.outcome <- round(IQR(x, na.rm = T), 1)
 

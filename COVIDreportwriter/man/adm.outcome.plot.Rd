@@ -4,7 +4,7 @@
 \alias{adm.outcome.plot}
 \title{Plot distribution of time (in days) from admission to an outcome.}
 \usage{
-adm.outcome.plot(data, ...)
+adm.outcome.plot(data, embargo.limit, ...)
 }
 \arguments{
 \item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}

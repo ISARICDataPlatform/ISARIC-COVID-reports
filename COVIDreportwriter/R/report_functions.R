@@ -1,12 +1,12 @@
 # #
 # d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
 # d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
-# c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
-# verbose <- TRUE
-# # ref.date <- today()
-# embargo.length <- 0
-# message.out.file <- "messages.csv"
-# source.name <- "test"
+c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
+verbose <- TRUE
+# ref.date <- today()
+embargo.length <- 0
+message.out.file <- "messages.csv"
+source.name <- "test"
 # # # #
 # #
 # test <- import.and.process.data(d.file, d.dict.file, c.table, "test", "messages.csv", verbose = TRUE)
@@ -145,15 +145,16 @@ import.and.process.data <- function(data.file,
 #' @importFrom lubridate epiweek
 #' @export generate.report
 generate.report <- function(patient.data.output, file.name, site.name){
+
   patient.data <- patient.data.output$detailed.data
   unembargoed.data <- patient.data.output$unembargoed.data
   
   cst.reference <- patient.data.output$cst.reference
-  
+
   ref.date <- patient.data.output$ref.date
   embargo.limit <- patient.data.output$embargo.limit
   embargo.length <- patient.data.output$embargo.length
-  
+
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
   treatments <- cst.reference %>% filter(type == "treatment")
@@ -332,7 +333,7 @@ import.patient.data <- function(data.file,
   
   if(verbose) {
     if(!is.na(source.name)){
-      cat(glue("Importing data from source {source.name}...\n"))
+      cat(glue("Importing data from source {source.name}... \n"))
     } else {
       cat("Importing data...\n")
     }

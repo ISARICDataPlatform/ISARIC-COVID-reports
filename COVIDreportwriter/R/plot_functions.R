@@ -1819,7 +1819,7 @@ samp.median <- function(x,i){median(x[i])}
 #' @keywords internal
 
 fit.summary.gamma <- function(fit){
-  
+
   if(is.character(fit)){
     
     return(list(m=NA, lower.m = NA, upper.m = NA,  v=NA,
@@ -2386,7 +2386,7 @@ violin.age.func.hospital <- function(data, ...){
 
 #' @export
 #' @keywords internal
-adm.outcome <- function(data, plt = F){
+adm.outcome <- function(data, embargo.limit, plt = F){
   
   data2 <- data %>% filter(!is.na(start.to.exit) | !is.na(start.to.censored))
   
@@ -2465,8 +2465,8 @@ adm.outcome <- function(data, plt = F){
 #' @references
 #' Delignette-Muller, M. L., & Dutang, C. (2015).
 #' fitdistrplus: An R package for fitting distributions. *Journal of statistical software*, **64**(4), 1-34.
-adm.outcome.plot <- function(data,...){
-  adm.outcome(data, plt=T)$plt
+adm.outcome.plot <- function(data, embargo.limit, ...){
+  adm.outcome(data, embargo.limit, plt=T)$plt
 }
 
 ########## Onset to admission #####

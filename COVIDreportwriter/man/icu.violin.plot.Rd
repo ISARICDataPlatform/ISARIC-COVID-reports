@@ -4,7 +4,7 @@
 \alias{icu.violin.plot}
 \title{Plot lengths of hospital stay for patients admitted into Intensive Care Unit (ICU)/High Dependency Unit (HDU).}
 \usage{
-icu.violin.plot(data, ...)
+icu.violin.plot(data, ref.date, ...)
 }
 \arguments{
 \item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}

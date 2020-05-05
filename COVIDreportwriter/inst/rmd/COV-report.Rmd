@@ -204,7 +204,7 @@ onset.adm.plot(patient.data)
 
 ```{r  admoutcome, out.width = '80%'}
 
-adm.outcome.plot(patient.data)
+adm.outcome.plot(patient.data, embargo.limit)
 
 ```
 

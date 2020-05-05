@@ -37,7 +37,7 @@ output: html_document
 | `r levels(patient.data$agegp10)[6]` | `r summary(patient.data$agegp10)[[6]]` (`r round(summary(patient.data$agegp10)[[6]]/de$N.cases, 2)`)              |
 | `r levels(patient.data$agegp10)[7]` | `r summary(patient.data$agegp10)[[7]]` (`r round(summary(patient.data$agegp10)[[7]]/de$N.cases, 2)`)              |
 | `r levels(patient.data$agegp10)[8]` | `r summary(patient.data$agegp10)[[8]]` (`r round(summary(patient.data$agegp10)[[8]]/de$N.cases, 2)`)             |
-| Unknown                      | `r summary(patient.data$agegp10)[[9]]` (`r round(summary(patient.data$agegp10)[[9]]/de$N.cases, 2)`)              |
+<!-- | Unknown                      | `r summary(patient.data$agegp10)[[9]]` (`r round(summary(patient.data$agegp10)[[9]]/de$N.cases, 2)`)              | -->
             
 
 \newpage             
