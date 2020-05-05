@@ -77,6 +77,21 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
     age.out.tab <- table(data$consolidated.age, data$outcome)
     age.out.tab2<-  table(data$consolidated.age, data$exit.code)
     
+    # Age group
+    
+    age.summ <- summary(data$agegp10)
+    
+    c0 <- age.summ[[1]]
+    c10 <- age.summ[[2]]
+    c20 <- age.summ[[3]]
+    c30 <- age.summ[[4]]
+    c40 <- age.summ[[5]]
+    c50 <- age.summ[[6]]
+    c60 <- age.summ[[7]]
+    c70 <- age.summ[[8]]
+    cunk <- N.cases - sum(c0, c10, c20, c30, c40, c50, c60, c70)
+    
+    
   }else{
     median.age <- NA
     mean.age <- NA
@@ -91,9 +106,20 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
     
     age.out.tab <- matrix(nrow=8,ncol = 3)
     age.out.tab2<- matrix(nrow = 8, ncol = 6)
+    
+    c0 <- NA
+    c10 <- NA
+    c20 <- NA
+    c30 <- NA
+    c40 <- NA
+    c50 <- NA
+    c60 <-NA
+    c70 <- NA
+    cunk <- NA
+    
+    
   }
   
-    
  
 
   # COV status
@@ -388,7 +414,16 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
               N.recoveries = N.recoveries,
               N.outcomes = N.outcomes,
               N.healthworkers = N.healthworkers,
-
+              
+              c0 = c0,
+              c10 =  c10,
+              c20 =  c20,
+              c30 = c30,
+              c40 =  c40,
+              c50 =  c50,
+              c60 =  c60,
+              c70 =  c70,
+              cunk = cunk,
 
               m.age.mean =  m.age.mean,
               m.age.sd  =   m.age.sd,
