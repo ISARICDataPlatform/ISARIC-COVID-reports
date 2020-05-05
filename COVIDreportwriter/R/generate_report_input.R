@@ -379,12 +379,25 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   
   # Symptoms 
   # Remove cough row & add combined cough variable
-  s.dat <- rbind(symptom.prev.calc(data, admission.symptoms)%>% filter(!grepl("Cough", label)), combined_cough)%>% 
-    mutate(present = as.numeric(present)) %>% 
-    mutate(absent = as.numeric(absent)) %>% 
-    mutate(unknown = as.numeric(unknown))
-  s.dat <- s.dat[order(-s.dat$present), ] 
+  # s.dat <- symptom.prev.calc(data, admission.symptoms)%>% filter(!grepl("Cough", label))
+  # 
   
+  # # Symptoms 
+  # # Remove cough row & add combined cough variable
+  # s.dat <- rbind(s.dat, combined_cough)
+  # s.dat <- s.dat %>% 
+  #   mutate(present = as.numeric(present)) %>% 
+  #   mutate(absent = as.numeric(absent)) %>% 
+  #   mutate(unknown = as.numeric(unknown))
+  # 
+  # 
+  
+   s.dat <-  rbind(symptom.prev.calc(data, admission.symptoms)%>% filter(!grepl("Cough", label)), combined_cough)%>%
+    mutate(present = as.numeric(present)) %>%
+    mutate(absent = as.numeric(absent)) %>%
+    mutate(unknown = as.numeric(unknown))
+  s.dat <- s.dat[order(-s.dat$present), ]
+
   
   # Comorbidities
   
@@ -403,7 +416,11 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
                                label = c('Extracorporeal membrane oxygenation (ECMO)',
                                          'Invasive ventilation',
                                          'Non-invasive ventilation',
-                                         'Oxygen therapy'))
+                                         'Oxygen therapy'),
+                               
+                               derived = rep(TRUE, 4),
+                               type = rep('treatment', 4))
+                               
   
   t.dat <- rbind(treatment.use.calc(data, treatments)%>% filter(!grepl("vasive|support|Oxygen", label)), oxy.treatments)%>% 
     mutate(present = as.numeric(present)) %>% 
@@ -608,8 +625,5 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   
   
 }
-
-
-
 
 
