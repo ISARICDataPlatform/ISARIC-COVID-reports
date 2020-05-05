@@ -372,8 +372,9 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   cough_pre <- data %>% filter(cough.any == 1) %>% nrow()
   cough_abs <- data %>% filter(cough.any == 2) %>% nrow()
   cough_unk <- data %>% filter(is.na(cough.any)) %>% nrow()
-  combined_cough <- data.frame(Condition = 'cough_combined', present = as.character(cough_pre),
-                               absent = as.character(cough_abs), unknown = as.character(cough_unk), label = 'Cough' )
+  combined_cough <- tibble(Condition = 'cough_combined', present = as.integer(cough_pre),
+                               absent = as.integer(cough_abs), unknown = as.integer(cough_unk), label = 'Cough',
+                               derived = TRUE, type = "symptom")
   
   
   # Symptoms 
@@ -607,3 +608,8 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   
   
 }
+
+
+
+
+
