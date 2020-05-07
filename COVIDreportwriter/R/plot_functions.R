@@ -2065,7 +2065,7 @@ violin.sex.func <- function(data, embargo.limit, ...){
     # by sex
     
     plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) +
-      geom_violin(trim=TRUE)+
+      geom_violin(trim=F)+
       geom_boxplot(width=0.1, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
       scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
       labs(title=" ", x="Sex", y = "Length of hospital stay") +
@@ -2073,7 +2073,7 @@ violin.sex.func <- function(data, embargo.limit, ...){
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
         axis.title.y = element_text( size=12)
-      ) +  ylim(c(0,max(vd$length.of.stay) - 20)) +
+      ) +  ylim(c(0,max(vd$length.of.stay))) +
       theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                             colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
     
@@ -2246,7 +2246,7 @@ violin.age.func <- function(data, embargo.limit,...){
       ) + #ylim(0, length(0, max(vdx$length_of_stay))+5) +
       scale_fill_viridis(option = "magma", discrete = T, drop = F, begin = 0.4, end = 1) +
       scale_x_discrete(drop = F) +
-      ylim(c(0,max(vdx$length_of_stay) - 20)) +
+      ylim(c(0,max(vdx$length_of_stay))) +
       theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
                                             colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
     
