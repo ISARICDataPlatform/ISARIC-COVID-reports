@@ -3042,21 +3042,22 @@ comorb.by.age <- function(data, ...) {
     df <- plot.by.age.grouping(df)
     for (i in 2:9) df[, i] <- plot.by.age.make.zeroandone(df[, i])
     df$All <- 1
+    size <- nrow(df) / 20
     
     pa <- plot.prop.by.age(df, df$asthma_mhyn,
-                           "Proportion with\nasthma", ymax = .4)
+                           "Proportion with\nasthma", ymax = .4, sz = size)
     pb <- plot.prop.by.age(df, df$malignantneo_mhyn,
-                           "Proportion with\nmalignancy", ymax = .4)
+                           "Proportion with\nmalignancy", ymax = .4, sz = size)
     pc <- plot.prop.by.age(df, df$aidshiv_mhyn,
-                           "Proportion with\nHIV", ymax = .4)
+                           "Proportion with\nHIV", ymax = .4, sz = size)
     pd <- plot.prop.by.age(df, df$obesity_mhyn,
-                           "Proportion with\nobesity", ymax = .4)
+                           "Proportion with\nobesity", ymax = .4, sz = size)
     pe <- plot.prop.by.age(df, df$diabetes,
-                           "Proportion with\ndiabetes mellitus", ymax = .4)
+                           "Proportion with\ndiabetes mellitus", ymax = .4, sz = size)
     pf <- plot.prop.by.age(df, df$dementia_mhyn,
-                           "Proportion with\ndementia", ymax = .4)
+                           "Proportion with\ndementia", ymax = .4, sz = size)
     pg <- plot.prop.by.age(df, df$smoking_mhyn,
-                           "Proportion who\nsmoke", ymax = .4)
+                           "Proportion who\nsmoke", ymax = .4, sz = size)
     
     p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
     
@@ -3145,16 +3146,16 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     } else {
       df$Systemic <- NA 
     }       
+    size <- nrow(df) / 20
     
-    
-    pa <- plot.prop.by.age(df, df$fever_ceoccur_v2, "Fever")
-    pb <- plot.prop.by.age(df, df$Cough, "Cough")
-    pc <- plot.prop.by.age(df, df$Low.Resp, "Lower respiratory symptoms")
-    pd <- plot.prop.by.age(df, df$Upper.Resp, "Upper respiratory symptoms")
-    pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal symptoms")
-    pf <- plot.prop.by.age(df, df$Neuro, "Neurological symptoms")
-    pg <- plot.prop.by.age(df, df$Const, "Constitutional symptoms")
-    ph <- plot.prop.by.age(df, df$chestpain_ceoccur_v2, "Chest pain")
+    pa <- plot.prop.by.age(df, df$fever_ceoccur_v2, "Fever", sz = size)
+    pb <- plot.prop.by.age(df, df$Cough, "Cough", sz = size)
+    pc <- plot.prop.by.age(df, df$Low.Resp, "Lower respiratory symptoms", sz = size)
+    pd <- plot.prop.by.age(df, df$Upper.Resp, "Upper respiratory symptoms", sz = size)
+    pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal symptoms", sz = size)
+    pf <- plot.prop.by.age(df, df$Neuro, "Neurological symptoms", sz = size)
+    pg <- plot.prop.by.age(df, df$Const, "Constitutional symptoms", sz = size)
+    ph <- plot.prop.by.age(df, df$chestpain_ceoccur_v2, "Chest pain", sz = size)
     
     p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
   }
