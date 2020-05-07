@@ -16,7 +16,7 @@ The analysis detailed in this report only includes individuals for whom data col
 
 The cohort comprises **`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females -- sex is unreported for `r de$N.sex.unknown` cases. SARS-COV-2 infection has been **confirmed by laboratory testing in `r de$cov.19.confirmed` of these individuals**. `r de$cov.19.suspected` individuals are recorded as suspected of SARS-COV-2 infection, without laboratory confirmation at the time of data analysis. 
 
-The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
+The median age (calculated based on reported ages) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
 
 Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. Outcome records are unavailable for `r sum(de$transfer.outcome, de$unk.outcome)` patient(s).
 
