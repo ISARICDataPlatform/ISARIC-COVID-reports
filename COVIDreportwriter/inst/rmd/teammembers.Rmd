@@ -1,31 +1,11 @@
 ---
-title: "ISARIC Team Members"
+title: "Acknowledgements"
 output: html_document
 ---
 
-*	All those who contributed the data, which enabled this report.
-*	Kenneth Bailie
-* Gail Carson
-* Emmanuelle A. Dankwa
-* Annemarie Docherty 
-* Christl A. Donnelly
-* Christophe Fraser
-* Matthew Hall
-* Hayley Hardwick
-*	Ewen Harrison
-* Karl Holden
-* Peter Horby
-* Kalynn Kennon
-* James Lee
-* Deborah Malden 
-* Laura Merson
-* Sarah Moore
-* Katherine Newell
-* Piero Olliaro
-* Daniel Plotkin
-* Mark Pritchard
-*	Clark Russell
-* Calum Semple 
-*	Louise Sigfrid
+
+This report is made possible through the efforts and expertise of the staff collecting data at our partner institutions across the globe, and the ISARIC Team. For a list of partners and team members, please visit [https://isaric.tghn.org/covid-19-data-management-hosting-contributors/](https://isaric.tghn.org/covid-19-data-management-hosting-contributors/).
+
+
 
 

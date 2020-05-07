@@ -9,13 +9,16 @@ Up to the date of this report, data have been entered for **`r de$N.cases.full`*
 
 Please note the following caveats. Information is incomplete for the many patients who are still being treated. Furthermore, it is likely that we received more cases of severely ill individuals than those with relatively less severe illness; outcomes from these data, such as the proportion dying, must therefore not be used to infer outcomes for the entire population of people who might become infected. Some patients may be participants in clinical trials of experimental interventions. Additional caveats are provided in the in the ‘Caveats’ section below. 
 
-The analysis detailed in this report only includes individuals for whom data collection commenced on or before **`r format(embargo.limit, "%d %B %Y")`**. We have applied a `r de$embargo.length`-day rule to focus analysis on individuals who are more likely to have a recorded outcome. By excluding patients enrolled during the last `r de$embargo.length` days, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. However, this limits our analysis to this restricted cohort despite the much larger volumes of data held in the database.  
+The analysis detailed in this report only includes individuals for whom data collection commenced on or before **`r format(embargo.limit, "%d %B %Y")`**. 
+
+
+<!-- We have applied a `r de$embargo.length`-day rule to focus analysis on individuals who are more likely to have a recorded outcome. By excluding patients enrolled during the last `r de$embargo.length` days, we aim to reduce the number of incomplete data records and thus improve the generalisability of the results and the accuracy of the outcomes. However, this limits our analysis to this restricted cohort despite the much larger volumes of data held in the database.   -->
 
 The cohort comprises **`r de$N.cases`** individuals, including `r de$N.males` males and `r de$N.females` females -- sex is unreported for `r de$N.sex.unknown` cases. SARS-COV-2 infection has been **confirmed by laboratory testing in `r de$cov.19.confirmed` of these individuals**. `r de$cov.19.suspected` individuals are recorded as suspected of SARS-COV-2 infection, without laboratory confirmation at the time of data analysis. 
 
 The median age (calculated based on reported age) is `r de$median.age` years. The minimum and maximum observed ages are `r de$min.age`  and `r de$max.age` years respectively. 
 
-Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. Outcome records are unavailable for `r sum(de$transfer.outcome, de$unk.outcome)` patients.
+Outcomes have been recorded for `r de$N.outcomes` patients, consisting of `r de$N.recoveries` recoveries and `r de$N.deaths` deaths. Follow-up is ongoing for `r de$N.censored` patients. Outcome records are unavailable for `r sum(de$transfer.outcome, de$unk.outcome)` patient(s).
 
 <!-- Using only completed outcomes, the case fatality ratio (CFR) was estimated as `r de$hfr*100`% (95% CI: `r de$hfr.lower*100`%, `r de$hfr.upper*100`%). When cases with unobserved outcomes are taken into consideration, the CFR estimate is  `r de$cfr*100`% (95% CI: `r de$cfr.lower*100`%, `r de$cfr.upper*100`%). It must be noted that these CFR estimates should not be considered as final, as they are subject to change as more outcomes are observed. -->
 
