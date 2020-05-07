@@ -96,7 +96,6 @@ output: html_document
 |                                    |                                                                                  |                                                                            |                                      |                         
 
 
-\newpage
 
 **Table 3:** Prevalence of Comorbidities
 
