@@ -3148,14 +3148,14 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     }       
     size <- nrow(df) / 20
     
-    pa <- plot.prop.by.age(df, df$fever_ceoccur_v2, "Fever", sz = size)
-    pb <- plot.prop.by.age(df, df$Cough, "Cough", sz = size)
-    pc <- plot.prop.by.age(df, df$Low.Resp, "Lower respiratory symptoms", sz = size)
-    pd <- plot.prop.by.age(df, df$Upper.Resp, "Upper respiratory symptoms", sz = size)
-    pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal symptoms", sz = size)
-    pf <- plot.prop.by.age(df, df$Neuro, "Neurological symptoms", sz = size)
-    pg <- plot.prop.by.age(df, df$Const, "Constitutional symptoms", sz = size)
-    ph <- plot.prop.by.age(df, df$chestpain_ceoccur_v2, "Chest pain", sz = size)
+    pa <- plot.prop.by.age(df, df$fever_ceoccur_v2, "\nFever", sz = size)
+    pb <- plot.prop.by.age(df, df$Cough, "\nCough", sz = size)
+    pc <- plot.prop.by.age(df, df$Low.Resp, "Lower respiratory\nsymptoms", sz = size)
+    pd <- plot.prop.by.age(df, df$Upper.Resp, "Upper respiratory\nsymptoms", sz = size)
+    pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal\nsymptoms", sz = size)
+    pf <- plot.prop.by.age(df, df$Neuro, "Neurological\nsymptoms", sz = size)
+    pg <- plot.prop.by.age(df, df$Const, "Constitutional\nsymptoms", sz = size)
+    ph <- plot.prop.by.age(df, df$chestpain_ceoccur_v2, "\nChest pain", sz = size)
     
     p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
   }
