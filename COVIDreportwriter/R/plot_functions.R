@@ -3093,7 +3093,7 @@ sx.by.age <- function(data, admission.symptoms, ...) {
                     one_of(admission.symptoms$field), start.to.exit, sex
       )
     df <- plot.by.age.grouping(df)
-    for (i in 2:29) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    for (i in 2: ncol(df) - 4) df[, i] <- plot.by.age.make.zeroandone(df[, i])
     df$All <- 1
     if(length(intersect(colnames(df), c("cough.bloodysputum", "cough.nosputum", 
                                         "cough.sputum") )) != 0){
