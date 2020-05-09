@@ -2988,13 +2988,9 @@ plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 750, ...) {
 #' @export plot.by.age.grouping
 #' @keywords internal
 plot.by.age.grouping <- function(data, ...) {
-  age.c <- (data$start.date - data$agedat) / 365.25 %>%
-    round(0)
   data$Age <- data$consolidated.age
-  data$Age[is.na(data$consolidated.age) == TRUE] <-
-    age.c[is.na(data$consolidated.age) == TRUE]
   data <- data %>%
-    dplyr::select(-consolidated.age, -agedat, -start.date, -agegp10) %>%
+    dplyr::select(-consolidated.age) %>%
     filter(!is.na(Age))
   data$AgeGrp <- 0
   thr <- c(0, 10, 20, 30, 40, 50, 60, 70, 80, 999)
@@ -3089,7 +3085,7 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     
     
     df <- data %>%
-      dplyr::select(subjid, consolidated.age, agedat, start.date, agegp10,
+      dplyr::select(subjid, consolidated.age,
                     one_of(admission.symptoms$field), start.to.exit, sex
       )
     df <- plot.by.age.grouping(df)
