@@ -3030,14 +3030,14 @@ comorb.by.age <- function(data, ...) {
     p <- insufficient.data.plot()
   }else{
     
-    df <- data %>%
-      dplyr::select(subjid, consolidated.age, agedat, start.date, agegp10,
+    df <- patient.data %>%
+      dplyr::select(subjid, consolidated.age, 
                     asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
                     diabetes, dementia_mhyn, smoking_mhyn,
                     start.to.exit, sex
       )
     df <- plot.by.age.grouping(df)
-    for (i in 5: ncol(df) - 4) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    for (i in 2: ncol(df) - 4) df[, i] <- plot.by.age.make.zeroandone(df[, i])
     df$All <- 1
     size <- nrow(df) / 20
     
