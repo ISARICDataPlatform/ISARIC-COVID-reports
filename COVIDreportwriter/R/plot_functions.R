@@ -3037,7 +3037,7 @@ comorb.by.age <- function(data, ...) {
                     start.to.exit, sex
       )
     df <- plot.by.age.grouping(df)
-    for (i in 2:9) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    for (i in 5: ncol(df) - 4) df[, i] <- plot.by.age.make.zeroandone(df[, i])
     df$All <- 1
     size <- nrow(df) / 20
     
