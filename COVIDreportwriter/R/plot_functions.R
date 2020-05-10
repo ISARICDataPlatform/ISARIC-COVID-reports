@@ -2465,7 +2465,8 @@ adm.outcome <- function(data, embargo.limit, plt = F){
 #' @references
 #' Delignette-Muller, M. L., & Dutang, C. (2015).
 #' fitdistrplus: An R package for fitting distributions. *Journal of statistical software*, **64**(4), 1-34.
-adm.outcome.plot <- function(data, embargo.limit, ...){
+
+adm.outcome.plot <- function(data, ...){
   adm.outcome(data, embargo.limit, plt=T)$plt
 }
 
