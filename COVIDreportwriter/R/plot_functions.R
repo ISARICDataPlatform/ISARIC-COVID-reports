@@ -3030,7 +3030,7 @@ comorb.by.age <- function(data, ...) {
     p <- insufficient.data.plot()
   }else{
     
-    df <- patient.data %>%
+    df <- data %>%
       dplyr::select(subjid, consolidated.age, 
                     asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
                     diabetes, dementia_mhyn, smoking_mhyn,
