@@ -3050,8 +3050,6 @@ comorb.by.age <- function(data, ...) {
                            "Proportion with\nasthma", ymax = .4, sz = size)
     pb <- plot.prop.by.age(df, df$malignantneo_mhyn,
                            "Proportion with\nmalignancy", ymax = .4, sz = size)
-    pc <- plot.prop.by.age(df, df$aidshiv_mhyn,
-                           "Proportion with\nHIV", ymax = .4, sz = size)
     pd <- plot.prop.by.age(df, df$obesity_mhyn,
                            "Proportion with\nobesity", ymax = .4, sz = size)
     pe <- plot.prop.by.age(df, df$diabetes,
