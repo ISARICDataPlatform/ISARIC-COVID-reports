@@ -3157,9 +3157,8 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal\nsymptoms", sz = size)
     pf <- plot.prop.by.age(df, df$Neuro, "Neurological\nsymptoms", sz = size)
     pg <- plot.prop.by.age(df, df$Const, "Constitutional\nsymptoms", sz = size)
-    ph <- plot.prop.by.age(df, df$chestpain_ceoccur_v2, "\nChest pain", sz = size)
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
   }
   return(p)
   
