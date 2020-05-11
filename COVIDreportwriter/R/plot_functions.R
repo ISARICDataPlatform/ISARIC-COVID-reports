@@ -297,13 +297,13 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
     filter(!is.na(Present)) %>%
     dplyr::mutate(Present = map_lgl(Present, function(x){
       if(is.na(x)){
-        NA
+        FALSE
       } else if(x == 1){
         TRUE
       } else if(x == 2){
         FALSE
       } else {
-        NA
+        FALSE
       }
     })) %>%
     group_by(subjid) %>%
@@ -324,16 +324,16 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
     group_by(subjid) %>%
     dplyr::summarise(Present = any(Present == 1)) %>%
     add_column(label = "Any other") %>%
-    filter(!is.na(Present)) %>%
+    # filter(!is.na(Present)) %>%
     dplyr::mutate(Present = map_lgl(Present, function(x){
       if(is.na(x)){
-        NA
+        FALSE
       } else if(x == 1){
         TRUE
       } else if(x == 2){
         FALSE
       } else {
-        NA
+        FALSE
       }
     })) %>%
     group_by(subjid) %>%
@@ -419,16 +419,16 @@ symptoms.upset <- function(data, max.symptoms, admission.symptoms, ...){
     pivot_longer(2:(length(most.common)+1), names_to = "Condition", values_to = "Present") %>%
     left_join(admission.symptoms, by = c("Condition" = "field")) %>%
     dplyr::select(-Condition) %>%
-    filter(!is.na(Present)) %>%
+    # filter(!is.na(Present)) %>%
     dplyr::mutate(Present = map_lgl(Present, function(x){
       if(is.na(x)){
-        NA
+        FALSE
       } else if(x == 1){
         TRUE
       } else if(x == 2){
         FALSE
       } else {
-        NA
+        FALSE
       }
     })) %>%
     group_by(subjid) %>%
@@ -452,13 +452,13 @@ symptoms.upset <- function(data, max.symptoms, admission.symptoms, ...){
     filter(!is.na(Present)) %>%
     dplyr::mutate(Present = map_lgl(Present, function(x){
       if(is.na(x)){
-        NA
+        FALSE
       } else if(x == 1){
         TRUE
       } else if(x == 2){
         FALSE
       } else {
-        NA
+        FALSE
       }
     })) %>%
     group_by(subjid) %>%
