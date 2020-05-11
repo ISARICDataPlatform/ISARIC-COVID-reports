@@ -344,7 +344,7 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
     dplyr::select(-Conditions, -Presence)
   
   # just get rid of individuals from the top n table that have NAs in the other table
-  
+  comorbidities$label[which(comorbidities$label == "Hypertension" )] <- "Hypertension*" 
   label.order = c(unique(comorbidities %>% filter(field %in% most.common ) %>% pull(label)), "Any other")
   
   top.n.conditions.tbl <- top.n.conditions.tbl %>%
