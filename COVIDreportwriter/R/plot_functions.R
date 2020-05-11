@@ -2982,7 +2982,7 @@ plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 750, ...) {
   )
   ya <- scale_y_continuous(
     name = name,
-    limits = c(0, ymax + .05)
+    limits = c(0, ymax)
   )
   #  lbls <- geom_text(
   #    data = d,
@@ -3046,32 +3046,49 @@ comorb.by.age <- function(data, ...) {
   }else{
     
     df <- data %>%
-      dplyr::select(subjid, consolidated.age, agedat, start.date, agegp10,
+      dplyr::select(subjid, consolidated.age, 
                     asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
                     diabetes, dementia_mhyn, smoking_mhyn,
                     start.to.exit, sex
       )
+    # chroniccard_mhyn is all NA in patient.data
+    # chrincard does not exist in most datasets.
+    # hypertension_mhyn does not exist in some datasets.
+    # Therefore chronic cardiac disease currently omitted.
     df <- plot.by.age.grouping(df)
-    for (i in 5: ncol(df) - 4) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    for (i in 2: ncol(df) - 5) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    # Coding for smoking differs between datasets. For some, 3 = unknown, for
+    # others 3 = former.
+    df$CurrentSmoke <- 0
+    df$CurrentSmoke[df$smoking_mhyn == 1] <- 1
+    df$CurrentSmoke[is.na(df$smoking_mhyn) == TRUE] <- NA
     df$All <- 1
     size <- nrow(df) / 20
+    ylimit <- .4
+    # ylimit may need to go up when adding cardiac comorbidities and hypertension
+    # back in
     
     pa <- plot.prop.by.age(df, df$asthma_mhyn,
-                           "Proportion with\nasthma", ymax = .4, sz = size)
+                           "Proportion with\nasthma", ymax = ylimit, sz = size)
     pb <- plot.prop.by.age(df, df$malignantneo_mhyn,
-                           "Proportion with\nmalignancy", ymax = .4, sz = size)
-    pc <- plot.prop.by.age(df, df$aidshiv_mhyn,
-                           "Proportion with\nHIV", ymax = .4, sz = size)
-    pd <- plot.prop.by.age(df, df$obesity_mhyn,
-                           "Proportion with\nobesity", ymax = .4, sz = size)
-    pe <- plot.prop.by.age(df, df$diabetes,
-                           "Proportion with\ndiabetes mellitus", ymax = .4, sz = size)
-    pf <- plot.prop.by.age(df, df$dementia_mhyn,
-                           "Proportion with\ndementia", ymax = .4, sz = size)
-    pg <- plot.prop.by.age(df, df$smoking_mhyn,
-                           "Proportion who\nsmoke", ymax = .4, sz = size)
+                           "Proportion with\nmalignancy", ymax = ylimit, sz = size)
+    pc <- plot.prop.by.age(df, df$obesity_mhyn,
+                           "Proportion with\nobesity", ymax = ylimit, sz = size)
+    pd <- plot.prop.by.age(df, df$diabetes,
+                           "Proportion with\ndiabetes mellitus", ymax = ylimit, sz = size)
+    pe <- plot.prop.by.age(df, df$dementia_mhyn,
+                           "Proportion with\ndementia", ymax = ylimit, sz = size)
+  # Chronic cardiac disease omitted as described above.
+    # pf <- plot.prop.by.age(df, df$chrincard,
+   #                        "Proportion with\nchronic cardiac disease", ymax = ylimit, sz = size)
+    # Most have missing for hypertension - leave out until resolved
+  #  pg <- plot.prop.by.age(df, df$hypertension_mhyn,
+  #                         "Proportion with\nhypertension", ymax = ylimit, sz = size)
+    ph <- plot.prop.by.age(df, df$CurrentSmoke,
+                           "Proportion who\ncurrently smoke", ymax = ylimit, sz = size)
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
+  #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, ph, ncol = 2)
     
   }
   
@@ -3167,9 +3184,8 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal\nsymptoms", sz = size)
     pf <- plot.prop.by.age(df, df$Neuro, "Neurological\nsymptoms", sz = size)
     pg <- plot.prop.by.age(df, df$Const, "Constitutional\nsymptoms", sz = size)
-    ph <- plot.prop.by.age(df, df$chestpain_ceoccur_v2, "\nChest pain", sz = size)
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
   }
   return(p)
   
