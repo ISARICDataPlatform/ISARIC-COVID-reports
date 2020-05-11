@@ -3059,7 +3059,7 @@ comorb.by.age <- function(data, ...) {
     pf <- plot.prop.by.age(df, df$dementia_mhyn,
                            "Proportion with\ndementia", ymax = .4, sz = size)
     pg <- plot.prop.by.age(df, df$CurrentSmoke,
-                           "Proportion who\nsmoke", ymax = .4, sz = size)
+                           "Proportion who\ncurrently smoke", ymax = .4, sz = size)
     
     p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
     
