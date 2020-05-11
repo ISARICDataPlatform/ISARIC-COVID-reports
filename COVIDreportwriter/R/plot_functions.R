@@ -3033,11 +3033,12 @@ comorb.by.age <- function(data, ...) {
     df <- data %>%
       dplyr::select(subjid, consolidated.age, 
                     asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
-                    diabetes, dementia_mhyn, hypertension_mhyn, smoking_mhyn,
+                    diabetes, dementia_mhyn, smoking_mhyn,
                     start.to.exit, sex
       )
     # chroniccard_mhyn is all NA in patient.data
     # chrincard does not exist in most datasets.
+    # hypertension_mhyn does not exist in some datasets.
     # Therefore chronic cardiac disease currently omitted.
     df <- plot.by.age.grouping(df)
     for (i in 2: ncol(df) - 5) df[, i] <- plot.by.age.make.zeroandone(df[, i])
