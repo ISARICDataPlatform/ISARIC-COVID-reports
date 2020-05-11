@@ -3033,9 +3033,12 @@ comorb.by.age <- function(data, ...) {
     df <- data %>%
       dplyr::select(subjid, consolidated.age, 
                     asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
-                    diabetes, dementia_mhyn, chrincard, hypertension_mhyn, smoking_mhyn,
+                    diabetes, dementia_mhyn, hypertension_mhyn, smoking_mhyn,
                     start.to.exit, sex
       )
+    # chroniccard_mhyn is all NA in patient.data
+    # chrincard does not exist in most datasets.
+    # Therefore chronic cardiac disease currently omitted.
     df <- plot.by.age.grouping(df)
     for (i in 2: ncol(df) - 5) df[, i] <- plot.by.age.make.zeroandone(df[, i])
     # Coding for smoking differs between datasets. For some, 3 = unknown, for
@@ -3056,8 +3059,9 @@ comorb.by.age <- function(data, ...) {
                            "Proportion with\ndiabetes mellitus", ymax = .6, sz = size)
     pe <- plot.prop.by.age(df, df$dementia_mhyn,
                            "Proportion with\ndementia", ymax = .6, sz = size)
-    pf <- plot.prop.by.age(df, df$chrincard,
-                           "Proportion with\nchronic cardiac disease", ymax = .6, sz = size)
+  # Chronic cardiac disease omitted as described above.
+    # pf <- plot.prop.by.age(df, df$chrincard,
+   #                        "Proportion with\nchronic cardiac disease", ymax = .6, sz = size)
     # Most have missing for hypertension - leave out until resolved
   #  pg <- plot.prop.by.age(df, df$hypertension_mhyn,
   #                         "Proportion with\nhypertension", ymax = 1, sz = size)
