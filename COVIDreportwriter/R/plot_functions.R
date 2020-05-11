@@ -162,25 +162,38 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
     summarise(count = n()) %>%
     mutate(uk = Country == "UK")
   
-  if(!include.uk){
-    data3 <- data3 %>% filter(!uk)
-  }
-  
-  nudge <- max(data3$count)/30
+  nudge <- max(data3$count)/1500
   
   plot1 <- ggplot() +
-    geom_text(data = data3, aes(x=Country, y= count + nudge, label=count), size=2) +
-    geom_col(data = data2, aes(x = Country, y=count,  fill = outcome)) +
+    geom_text(data = data3 %>% filter(!uk), aes(x=Country, y= count + nudge, label=count), size=2) +
+    geom_col(data = data2 %>% filter(!uk), aes(x = Country, y=count,  fill = outcome)) +
     theme_bw() +
+    scale_x_discrete(expand = c(0,1.5))+
+    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death"), guide = F) +
+    # facet_wrap (~ uk, scales = "free") +
+    # xlab("Country") +
+    ylab("Cases") +
+    # coord_fixed(ratio = 0.23) +
+    theme(axis.text.x = element_text(angle = 45, hjust=1), axis.title.x=element_blank())
+  nudge2 <- max(data3$count)/30
+  
+  
+  plot2 <- ggplot() +
+    geom_text(data = data3 %>% filter(uk), aes(x=Country, y= count + nudge2, label=count), size=2) +
+    geom_col(data = data2%>% filter(uk), aes(x = Country, y=count,  fill = outcome), width=1) +
+    theme_bw() +
+    scale_x_discrete(expand = c(0,1.5))+
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # facet_wrap (~ uk, scales = "free") +
     # xlab("Country") +
     ylab("Cases") +
-    theme(axis.text.x = element_text(angle = 45, hjust=1))
+    # coord_fixed(ratio = 0.1) +
+    theme(axis.text.x = element_text(angle = 45, hjust=1), axis.title.y=element_blank(), axis.title.x=element_blank())
   
   
-  plot1
+  out <- plot_grid(plot1, plot2, ncol = , align = "h", rel_widths = c(1.8,1))
   
+  out <- add_sub(out, "Country", vpadding=grid::unit(0,"lines"),y=5, x=0.5, vjust=4.5)
 }
 
 ##### Outcomes by epi-week #####
@@ -255,15 +268,15 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
     pivot_longer(2:(n.comorb+1), names_to = "Condition", values_to = "Present") %>%
     dplyr::mutate(Present = map_lgl(Present, function(x){
       if(is.na(x)){
-        NA
+        FALSE
       } else if(x == 1){
         TRUE
       } else if(x == 2){
         FALSE
       } else {
-        NA
+        FALSE
       }
-    }))
+    })) 
   
   # get the most common
   
@@ -381,13 +394,13 @@ symptoms.upset <- function(data, max.symptoms, admission.symptoms, ...){
     pivot_longer(2:(n.symp+1), names_to = "Condition", values_to = "Present") %>%
     dplyr::mutate(Present = map_lgl(Present, function(x){
       if(is.na(x)){
-        NA
+        FALSE
       } else if(x == 1){
         TRUE
       } else if(x == 2){
         FALSE
       } else {
-        NA
+        FALSE
       }
     }))
   
@@ -568,6 +581,8 @@ symptom.heatmap <- function(data, admission.symptoms, ...){
                  "Cough (bloody sputum / haemoptysis)",
                  "Chest pain",
                  "Lymphadenopathy",
+                 "Disturbance or loss of taste",
+                 "Disturbance or loss of smell",
                  "Conjunctivitis",
                  "Bleeding",
                  "Skin ulcers",
