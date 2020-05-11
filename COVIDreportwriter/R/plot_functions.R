@@ -3049,25 +3049,28 @@ comorb.by.age <- function(data, ...) {
     df$CurrentSmoke[is.na(df$smoking_mhyn) == TRUE] <- NA
     df$All <- 1
     size <- nrow(df) / 20
+    ylimit <- .4
+    # ylimit may need to go up when adding cardiac comorbidities and hypertension
+    # back in
     
     pa <- plot.prop.by.age(df, df$asthma_mhyn,
-                           "Proportion with\nasthma", ymax = .6, sz = size)
+                           "Proportion with\nasthma", ymax = ylimit, sz = size)
     pb <- plot.prop.by.age(df, df$malignantneo_mhyn,
-                           "Proportion with\nmalignancy", ymax = .6, sz = size)
+                           "Proportion with\nmalignancy", ymax = ylimit, sz = size)
     pc <- plot.prop.by.age(df, df$obesity_mhyn,
-                           "Proportion with\nobesity", ymax = .6, sz = size)
+                           "Proportion with\nobesity", ymax = ylimit, sz = size)
     pd <- plot.prop.by.age(df, df$diabetes,
-                           "Proportion with\ndiabetes mellitus", ymax = .6, sz = size)
+                           "Proportion with\ndiabetes mellitus", ymax = ylimit, sz = size)
     pe <- plot.prop.by.age(df, df$dementia_mhyn,
-                           "Proportion with\ndementia", ymax = .6, sz = size)
+                           "Proportion with\ndementia", ymax = ylimit, sz = size)
   # Chronic cardiac disease omitted as described above.
     # pf <- plot.prop.by.age(df, df$chrincard,
-   #                        "Proportion with\nchronic cardiac disease", ymax = .6, sz = size)
+   #                        "Proportion with\nchronic cardiac disease", ymax = ylimit, sz = size)
     # Most have missing for hypertension - leave out until resolved
   #  pg <- plot.prop.by.age(df, df$hypertension_mhyn,
-  #                         "Proportion with\nhypertension", ymax = 1, sz = size)
+  #                         "Proportion with\nhypertension", ymax = ylimit, sz = size)
     ph <- plot.prop.by.age(df, df$CurrentSmoke,
-                           "Proportion who\ncurrently smoke", ymax = .6, sz = size)
+                           "Proportion who\ncurrently smoke", ymax = ylimit, sz = size)
     
   #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
     p <- arrangeGrob(pa, pb, pc, pd, pe, ph, ncol = 2)
