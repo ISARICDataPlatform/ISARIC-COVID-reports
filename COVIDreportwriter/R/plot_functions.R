@@ -3038,8 +3038,11 @@ comorb.by.age <- function(data, ...) {
       )
     df <- plot.by.age.grouping(df)
     for (i in 2: ncol(df) - 5) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    # Coding for smoking differs between datasets. For some, 3 = unknown, for
+    # others 3 = former.
     df$CurrentSmoke <- 0
     df$CurrentSmoke[df$smoking_mhyn == 1] <- 1
+    df$CurrentSmoke[is.na(df$smoking_mhyn) == TRUE] <- NA
     df$All <- 1
     size <- nrow(df) / 20
     
