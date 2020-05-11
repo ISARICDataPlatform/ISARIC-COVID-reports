@@ -2967,7 +2967,7 @@ plot.prop.by.age <- function(data, var, name, ymax = 1, sz = 750, ...) {
   )
   ya <- scale_y_continuous(
     name = name,
-    limits = c(0, ymax + .05)
+    limits = c(0, ymax)
   )
   #  lbls <- geom_text(
   #    data = d,
@@ -3033,7 +3033,7 @@ comorb.by.age <- function(data, ...) {
     df <- data %>%
       dplyr::select(subjid, consolidated.age, 
                     asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
-                    diabetes, dementia_mhyn, smoking_mhyn,
+                    diabetes, dementia_mhyn, chrincard, hypertension_mhyn, smoking_mhyn,
                     start.to.exit, sex
       )
     df <- plot.by.age.grouping(df)
@@ -3047,19 +3047,25 @@ comorb.by.age <- function(data, ...) {
     size <- nrow(df) / 20
     
     pa <- plot.prop.by.age(df, df$asthma_mhyn,
-                           "Proportion with\nasthma", ymax = .4, sz = size)
+                           "Proportion with\nasthma", ymax = .6, sz = size)
     pb <- plot.prop.by.age(df, df$malignantneo_mhyn,
-                           "Proportion with\nmalignancy", ymax = .4, sz = size)
-    pd <- plot.prop.by.age(df, df$obesity_mhyn,
-                           "Proportion with\nobesity", ymax = .4, sz = size)
-    pe <- plot.prop.by.age(df, df$diabetes,
-                           "Proportion with\ndiabetes mellitus", ymax = .4, sz = size)
-    pf <- plot.prop.by.age(df, df$dementia_mhyn,
-                           "Proportion with\ndementia", ymax = .4, sz = size)
-    pg <- plot.prop.by.age(df, df$CurrentSmoke,
-                           "Proportion who\ncurrently smoke", ymax = .4, sz = size)
+                           "Proportion with\nmalignancy", ymax = .6, sz = size)
+    pc <- plot.prop.by.age(df, df$obesity_mhyn,
+                           "Proportion with\nobesity", ymax = .6, sz = size)
+    pd <- plot.prop.by.age(df, df$diabetes,
+                           "Proportion with\ndiabetes mellitus", ymax = .6, sz = size)
+    pe <- plot.prop.by.age(df, df$dementia_mhyn,
+                           "Proportion with\ndementia", ymax = .6, sz = size)
+    pf <- plot.prop.by.age(df, df$chrincard,
+                           "Proportion with\nchronic cardiac disease", ymax = .6, sz = size)
+    # Most have missing for hypertension - leave out until resolved
+  #  pg <- plot.prop.by.age(df, df$hypertension_mhyn,
+  #                         "Proportion with\nhypertension", ymax = 1, sz = size)
+    ph <- plot.prop.by.age(df, df$CurrentSmoke,
+                           "Proportion who\ncurrently smoke", ymax = .6, sz = size)
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
+  #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, ph, ncol = 2)
     
   }
   
