@@ -3037,7 +3037,9 @@ comorb.by.age <- function(data, ...) {
                     start.to.exit, sex
       )
     df <- plot.by.age.grouping(df)
-    for (i in 2: ncol(df) - 4) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    for (i in 2: ncol(df) - 5) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    df$CurrentSmoke <- 0
+    df$CurrentSmoke[df$smoking_mhyn == 1] <- 1
     df$All <- 1
     size <- nrow(df) / 20
     
@@ -3053,7 +3055,7 @@ comorb.by.age <- function(data, ...) {
                            "Proportion with\ndiabetes mellitus", ymax = .4, sz = size)
     pf <- plot.prop.by.age(df, df$dementia_mhyn,
                            "Proportion with\ndementia", ymax = .4, sz = size)
-    pg <- plot.prop.by.age(df, df$smoking_mhyn,
+    pg <- plot.prop.by.age(df, df$CurrentSmoke,
                            "Proportion who\nsmoke", ymax = .4, sz = size)
     
     p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
