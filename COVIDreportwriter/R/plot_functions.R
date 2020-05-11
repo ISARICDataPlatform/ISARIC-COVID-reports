@@ -3070,7 +3070,7 @@ comorb.by.age <- function(data, ...) {
                            "Proportion who\ncurrently smoke", ymax = .6, sz = size)
     
   #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, ph, ncol = 2)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, ph, ncol = 2)
     
   }
   
