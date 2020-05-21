@@ -3056,7 +3056,7 @@ comorb.by.age <- function(data, ...) {
     # hypertension_mhyn does not exist in some datasets.
     # Therefore chronic cardiac disease currently omitted.
     df <- plot.by.age.grouping(df)
-    for (i in 2: ncol(df) - 5) df[, i] <- plot.by.age.make.zeroandone(df[, i])
+    for (i in 2: ncol(df)) df[, i] <- plot.by.age.make.zeroandone(df[, i])
     # Coding for smoking differs between datasets. For some, 3 = unknown, for
     # others 3 = former.
     df$CurrentSmoke <- 0
@@ -3398,6 +3398,52 @@ insufficient.data.plot <- function(){
   ggplot() + annotate(geom="text", label = "Insufficient data to display this plot", x=0, y=0) + theme_void()
   
 }
+
+
+
+
+histogram.admission.to.ICU<- function(data, embargo.limit, ...){
+  
+   if(all(is.na(data$admission.to.ICU)) ){
+    plt <- insufficient.data.plot()
+  } else {
+    
+    # Analysis to be run on only entries with admission.to.ICU entries
+    
+    data2 <- data %>% filter(!is.na(admission.to.ICU)) %>% filter(admission.to.ICU >= 0) # Exclude negative values for length of stay - indication of issue with data entry
+    
+    data2 <- data2 %>%
+      mutate(length.of.stay = admission.to.ICU) %>%
+      filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
+    
+    
+    
+    vdx<- data.frame(subjid = data2$subjid, length_of_stay = data2$length.of.stay )
+    
+    
+    plt <-  ggplot(vdx, aes(x = length_of_stay)) +
+      geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue", binwidth = 1)  +
+      labs(title="  ", x="Time (in days) from admission to ICU", y = "Density") +
+      theme(
+        plot.title = element_text( size=14, face="bold", hjust = 0.5),
+        axis.title.x = element_text( size=12),
+        axis.title.y = element_text( size=12)
+      ) +
+      scale_x_continuous(limits = c(-1,20), breaks =  seq(0,20,1)) +
+      # 
+      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+    
+  }
+  
+  return(plt)
+}
+
+
+
+
+
+
 
 
 
