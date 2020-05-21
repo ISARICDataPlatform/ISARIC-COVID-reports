@@ -3112,11 +3112,9 @@ comorb.by.age <- function(data, ...) {
 #' whose records are included in the plot) is printed (this varies between plots due to data completeness).
 sx.by.age <- function(data, admission.symptoms, ...) {
   
-  if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
-    p <- insufficient.data.plot()
-  }else{
-    
-    
+  if(all(is.na(data$consolidated.age)) | all(is.na(data$sex))) {
+    df <- tibble(data = "Insufficient")
+  } else {
     df <- data %>%
       dplyr::select(subjid, consolidated.age,
                     one_of(admission.symptoms$field), start.to.exit, sex
@@ -3131,13 +3129,8 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     } else {
       df$Cough <- NA 
     }
-    if(length(intersect(colnames(df), c("wheeze_ceoccur_v2", "df$shortness.breath") )) != 0){
-      df$Low.Resp <- pmax(df$wheeze_ceoccur_v2, df$shortness.breath,
-                          na.rm = TRUE)
-    } else {
-      df$Low.Resp <- NA 
-    }
-    if(length(intersect(colnames(df), c("sorethroat_ceoccur_v2", "runnynose_ceoccur_v2", 
+    if(length(intersect(colnames(df), c("sorethroat_ceoccur_v2", 
+                                        "runnynose_ceoccur_v2", 
                                         "earpain_ceoccur_v2") )) != 0){
       df$Upper.Resp <- pmax(df$sorethroat_ceoccur_v2, df$runnynose_ceoccur_v2, 
                             df$earpain_ceoccur_v2,
@@ -3145,50 +3138,81 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     } else {
       df$Upper.Resp <- NA 
     }
-    if(length(intersect(colnames(df), c("abdopain_ceoccur_v2", "vomit_ceoccur_v2", 
-                                        "diarrhoea_ceoccur_v2") )) != 0){
-      df$GI <- pmax(df$abdopain_ceoccur_v2, df$vomit_ceoccur_v2,
-                    df$diarrhoea_ceoccur_v2, na.rm = TRUE)
-    } else {
-      df$GI <- NA
-    }
-    if(length(intersect(colnames(df), c("confusion_ceoccur_v2", "seizures_cecoccur_v2") )) != 0){
-      df$Neuro <- pmax(df$confusion_ceoccur_v2, df$seizures_cecoccur_v2,
-                       na.rm = TRUE)
-    } else {
-      df$Neuro <- NA 
-    }    
-    if(length(intersect(colnames(df), c("myalgia_ceoccur_v2", "jointpain_ceoccur_v2", 
-                                        "fatigue_ceoccur_v2", "headache_ceoccur_v2") )) != 0){
-      df$Const <- pmax(df$myalgia_ceoccur_v2, df$jointpain_ceoccur_v2, df$fatigue_ceoccur_v2,
-                       df$headache_ceoccur_v2,
+    if(length(intersect(colnames(df), c("myalgia_ceoccur_v2", 
+                                        "jointpain_ceoccur_v2", 
+                                        "fatigue_ceoccur_v2", 
+                                        "headache_ceoccur_v2") )) != 0){
+      df$Const <- pmax(df$myalgia_ceoccur_v2, df$jointpain_ceoccur_v2, 
+                       df$fatigue_ceoccur_v2, df$headache_ceoccur_v2,
                        na.rm = TRUE)
     } else {
       df$Const <- NA 
-    }    
-    if(length(intersect(colnames(df), c("rash_ceoccur_v2", "conjunct_ceoccur_v2",
-                                        "skinulcers_ceoccur_v2", "lymp_ceoccur_v2", 
-                                        "bleed_ceoccur_v2") )) != 0){
-      df$Systemic <- pmax(df$rash_ceoccur_v2, df$conjunct_ceoccur_v2,
-                          df$skinulcers_ceoccur_v2, df$lymp_ceoccur_v2, df$bleed_ceoccur_v2,
-                          na.rm = TRUE)
-    } else {
-      df$Systemic <- NA 
     }       
+    # Cough or fever
+    if(length(intersect(colnames(df), c("Cough", 
+                                        "df$fever_ceoccur_v2") )) != 0){
+      df$Cough.Fever <- pmax(df$Cough, df$fever_ceoccur_v2,
+                             na.rm = TRUE)
+    } else {
+      df$Cough.Fever <- NA 
+    }    
+    # Cough, fever or short of breath
+    if(length(intersect(colnames(df), c("Cough.Fever", 
+                                        "df$shortness.breath") )) != 0){
+      df$Cough.Fever.SOB <- pmax(df$Cough.Fever, df$shortness.breath,
+                                 na.rm = TRUE)
+    } else {
+      df$Cough.Fever.SOB <- NA 
+    }    
+  }
+  
+  return(df)
+}
+
+sx.by.age.a <- function(data, admission.symptoms, ...) {
+  df <- sx.by.age(patient.data, admission.symptoms)
+  if (df[1, 1] == "Insufficient") {
+    p <- insufficient.data.plot()
+  } else {
     size <- nrow(df) / 20
     
-    pa <- plot.prop.by.age(df, df$fever_ceoccur_v2, "\nFever", sz = size)
-    pb <- plot.prop.by.age(df, df$Cough, "\nCough", sz = size)
-    pc <- plot.prop.by.age(df, df$Low.Resp, "Lower respiratory\nsymptoms", sz = size)
-    pd <- plot.prop.by.age(df, df$Upper.Resp, "Upper respiratory\nsymptoms", sz = size)
-    pe <- plot.prop.by.age(df, df$GI, "Gastrointestinal\nsymptoms", sz = size)
-    pf <- plot.prop.by.age(df, df$Neuro, "Neurological\nsymptoms", sz = size)
-    pg <- plot.prop.by.age(df, df$Const, "Constitutional\nsymptoms", sz = size)
+    p1a <- plot.prop.by.age(df, df$fever_ceoccur_v2, "\nFever", sz = size)
+    p2a <- plot.prop.by.age(df, df$Cough, "\nCough", sz = size)
+    p2b <- plot.prop.by.age(df, df$Cough.Fever, "Cough or\nfever", sz = size)
+    p3a <- plot.prop.by.age(df, df$shortness.breath, 
+                            "\nShort of breath", sz = size)
+    p3b <- plot.prop.by.age(df, df$Cough.Fever.SOB, 
+                            "Cough, fever or\nshort of breath", sz = size)
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ncol = 2)
+    r.b <- grid.rect(gp = gpar(col = NA))
+    
+    p <- arrangeGrob(p1a, r.b, p2a, p2b, p3a, p3b, ncol = 2)
   }
   return(p)
-  
+}
+
+sx.by.age.b <- function(data, admission.symptoms, ...) {
+  df <- sx.by.age(patient.data, admission.symptoms)
+  if (df[1, 1] == "Insufficient") {
+    p <- insufficient.data.plot()
+  } else {
+    size <- nrow(df) / 20
+    
+    p1 <- plot.prop.by.age(df, df$Upper.Resp, "Upper respiratory\nsymptoms", 
+                           sz = size)
+    p2 <- plot.prop.by.age(df, df$confusion_ceoccur_v2, 
+                           "\nConfusion", sz = size)
+    p3 <- plot.prop.by.age(df, df$Const, "Constitutional\nsymptoms", sz = size)
+    p4 <- plot.prop.by.age(df, df$vomit_ceoccur_v2, "Nausea or\nvomiting", 
+                           sz = size)
+    p5 <- plot.prop.by.age(df, df$diarrhoea_ceoccur_v2, "\nDiarrhoea", 
+                           sz = size)
+    p6 <- plot.prop.by.age(df, df$abdopain_ceoccur_v2, "Abdominal\npain", 
+                           sz = size)
+    
+    p <- arrangeGrob(p1, p2, p3, p4, p5, p6, ncol = 2)
+  }
+  return(p)
 }
 
 #' @export plot.bw.by.age
