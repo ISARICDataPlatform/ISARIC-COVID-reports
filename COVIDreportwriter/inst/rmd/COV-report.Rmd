@@ -88,8 +88,14 @@ grid.draw(comorb.by.age(patient.data))
 **Figure 5**: Symptoms recorded at hospital presentation stratified by age group. Boxes show the proportion of individuals with each symptom, with error bars showing 95% confidence intervals.  The size of each box is proportional to the number of individuals represented.  N is the number of individuals included in the plot (this may vary between plots due to data completeness).
 The following symptoms are grouped: lower respiratory is either wheeze or shortness of breath; upper respiratory is any of runny nose, sore throat or ear pain; gastrointestinal is any of abdominal pain, vomiting or diarrhoea; neurological is either seizures or confusion; and constitutional is any of myalgia, joint pain, fatigue or headache.
 
-```{r sxbyage, echo=FALSE, out.width= "100%", fig.height=7, message=FALSE}
-grid.draw(sx.by.age(patient.data, admission.symptoms))
+```{r sxbyagea, echo=FALSE, out.width= "100%", message=FALSE, fig.height=7}
+grid.draw(sx.by.age.a(patient.data, admission.symptoms))
+
+```
+
+\newpage
+```{r sxbyageb, echo=FALSE, out.width= "100%", message=FALSE, fig.height=7}
+grid.draw(sx.by.age.b(patient.data, admission.symptoms))
 
 ```
 \newpage

@@ -1,12 +1,12 @@
 # #
-# d.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Data/2020-04-20/ISARICnCoV_DATA_2020-04-20_0712.csv"
-# d.dict.file <- "/Users/mdhall/Nexus365/Emmanuelle Dankwa - COVID Reports/data/Site List & Data Dictionaries/ISARICnCoV_DataDictionary_2020-03-17.csv"
-c.table <- "/Users/mdhall/ISARIC.COVID.reports/required_columns.csv"
-verbose <- TRUE
-# ref.date <- today()
-embargo.length <- 0
-message.out.file <- "messages.csv"
-source.name <- "test"
+# d.file <- "/Users/mdhall/Downloads/McLeodCOVIDdata.csv"
+# d.dict.file <- "/Users/mdhall/Downloads/ISARICnCoV_DataDictionary_2020-03-27[1].csv"
+# c.table <- "/Users/mdhall/ISARIC-COVID-reports/column_translation.csv"
+# verbose <- TRUE
+# # ref.date <- today()
+# embargo.length <- 0
+# message.out.file <- "messages.csv"
+# source.name <- "test"
 # # # #
 # #
 # test <- import.and.process.data(d.file, d.dict.file, c.table, "test", "messages.csv", verbose = TRUE)
