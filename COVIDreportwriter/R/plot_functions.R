@@ -112,6 +112,7 @@ age.pyramid <- function(data, ...){
 sites.by.country <- function(data, ...){
   data2 <- data %>%
     group_by(Country, site.name) %>%
+    filter(!is.na(site.name)) %>%
     dplyr::summarise(n.sites = 1) %>%
     dplyr::summarise(n.sites = sum(n.sites)) %>%
     filter(!is.na(Country))
