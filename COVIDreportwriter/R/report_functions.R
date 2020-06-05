@@ -1,15 +1,3 @@
-# #
-# d.file <- "/Users/mdhall/Downloads/ISARICCOVID19RAPID-DadosPreliminaresUTI_DATA_2020-05-19_1507.csv"
-# d.dict.file <- "/Users/mdhall/Downloads/ISARICCOVID19COREISARICnCoV_DataDictionary_2020-05-07.csv"
-# c.table <- "/Users/mdhall/ISARIC-COVID-reports/column_translation.csv"
-# verbose <- TRUE
-# ref.date <- today()
-# embargo.length <- 0
-# message.out.file <- "messages.csv"
-# source.name <- "test"
-# # # #
-# #
-# test <- import.and.process.data(d.file, d.dict.file, c.table, "test", "messages.csv", FALSE,  verbose = TRUE)
 
 #' Import data from Redcap .csv output for processing
 #' @param data.file Path of the data file
@@ -500,8 +488,8 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
   comorbidities <- bind_rows(comorbidities, tibble(field = "pregnancy", label = "Pregnancy", derived = TRUE))
   comorbidities <- comorbidities %>% bind_rows(list(field = "liver.disease", label = "Liver disease", derived = TRUE)) %>%
     filter(field != "mildliver" & field != "modliver")
-  comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "Diabetes", derived = TRUE)) 
-  # filter(field != "diabetes_mhyn_2" & field != "diabetescom_mhyn_2")
+  comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "Diabetes", derived = TRUE))  %>%
+    filter(field != "diabetes_mhyn" & field != "diabetes_mhyn_2" & field != "diabetescom_mhyn_2")
   
   comorbidities <- comorbidities %>% mutate(type = "comorbidity")
   
@@ -550,7 +538,7 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     map_chr(function(x) sub("\\s+$", "", x)) %>%
     map_chr(function(x) sub("\\?+$", "", x)) %>%
     map_chr(function(x) sub("\\s+$", "", x)) 
-
+  
   
   treatments <- tibble(field = treatment.colnames, label = treatment.labels, type = "treatment", derived = FALSE)
   
@@ -673,63 +661,92 @@ process.data <- function(data,
   
   # Group diabetes categories
   patient.data <- patient.data %>%
-    mutate(diabetes = map_dbl(diabetes_mhyn_2, function(diab){
-      if(is.na(diab)  | diab == 3){
+    mutate(diabetes = pmap_dbl(list(diabetes_mhyn, diabetes_mhyn_2, diabetescom_mhyn), function(diab1, diab2, diab1c){
+      if(is.na(diab1) & is.na(diab2) & is.na(diab1c)){
         NA
-      } else if(diab == 1 | diab == 4){
+      } else if((!is.na(diab2) & diab2 == 3) | ((!is.na(diab1) & diab1 == 3) & (!is.na(diab1c) & diab1c == 3))){
+        NA
+      } else if( (!is.na(diab1) & diab1 == 1) | (!is.na(diab1c) & diab1c == 1) | (!is.na(diab2) & (diab2 == 1 | diab2 == 4))){
         1
       } else {
         2
       }
     }))
-
+  
   # Cough records may have not been entered coherently, and are recoded to be mutually exclusive.
   # Someone with a cough with sputum does not have a cough without it
   
-  # patient.data <- patient.data %>%
-  #   mutate(cough.cols = pmap(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
-  #     
-  #     if(any(c(x,y,z) == 3) | any(is.na(c(x,y,z)))){
-  #       cough.nosputum <- NA
-  #       cough.sputum <- NA
-  #       cough.bloodysputum <- NA
-  #     } else if(all(c(x,y,z) == 2)){
-  #       cough.nosputum <- 2
-  #       cough.sputum <- 2
-  #       cough.bloodysputum <- 2
-  #     } else if(y == 1){
-  #       cough.nosputum <- 2
-  #       if(z == 1){
-  #         cough.sputum <- 2
-  #         cough.bloodysputum <- 1
-  #       } else {
-  #         cough.sputum <- 1
-  #         cough.bloodysputum <- 2
-  #       }
-  #     } else if(z == 1) {
-  #       cough.nosputum <- 2
-  #       cough.sputum <- 2
-  #       cough.bloodysputum <- 1
-  #     } else {
-  #       cough.nosputum <- x
-  #       cough.sputum <- 2
-  #       cough.bloodysputum <- 2
-  #     }
-  #     list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
-  #   })) %>%
-  #   { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
-  #   dplyr::select(-cough.cols) %>%
-  #   mutate(cough.any = pmap_dbl(list(cough.nosputum, cough.sputum, cough.bloodysputum), function(x,y,z){
-  #     if(is.na(x)){
-  #       NA
-  #     } else {
-  #       if(all(c(x,y,z) == 2)){
-  #         2
-  #       } else {
-  #         1
-  #       }
-  #     }
-  #   }))
+  patient.data <- patient.data %>%
+    mutate(cough.cols = pmap(list(cough_ceoccur_v2_2, cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(c2, c1.c, c1.s, c1.b){
+      if(is.na(c2) & any(is.na(c(c1.c, c1.s, c1.b)))){
+        cough.nosputum <- NA
+        cough.sputum <- NA
+        cough.bloodysputum <- NA
+      } else if(!is.na(c2)){
+        if(c2 == 4){
+          cough.nosputum <- NA
+          cough.sputum <- NA
+          cough.bloodysputum <- NA
+        } else if(c2 == 0){
+          cough.nosputum <- 2
+          cough.sputum <- 2
+          cough.bloodysputum <- 2
+        } else if(c2 == 1){
+          cough.nosputum <- 1
+          cough.sputum <- 2
+          cough.bloodysputum <- 2
+        } else if(c2 == 2){
+          cough.nosputum <- 2
+          cough.sputum <- 1
+          cough.bloodysputum <- 2
+        } else {
+          cough.nosputum <- 2
+          cough.sputum <- 2
+          cough.bloodysputum <- 1
+        } 
+      } else {
+        if(any(c(c1.c, c1.s, c1.b) == 3) | any(is.na(c(c1.c, c1.s, c1.b)))){
+          cough.nosputum <- NA
+          cough.sputum <- NA
+          cough.bloodysputum <- NA
+        } else if(all(c(c1.c, c1.s, c1.b) == 2)){
+          cough.nosputum <- 2
+          cough.sputum <- 2
+          cough.bloodysputum <- 2
+        } else if(c1.s == 1){
+          cough.nosputum <- 2
+          if(c1.b == 1){
+            cough.sputum <- 2
+            cough.bloodysputum <- 1
+          } else {
+            cough.sputum <- 1
+            cough.bloodysputum <- 2
+          }
+        } else if(c1.b == 1) {
+          cough.nosputum <- 2
+          cough.sputum <- 2
+          cough.bloodysputum <- 1
+        } else {
+          cough.nosputum <- c1.c
+          cough.sputum <- 2
+          cough.bloodysputum <- 2
+        }
+      }
+      list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
+    })) %>%
+    { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
+    dplyr::select(-cough.cols) %>%
+    mutate(cough.any = pmap_dbl(list(cough.nosputum, cough.sputum, cough.bloodysputum), function(x,y,z){
+      if(is.na(x)){
+        NA
+      } else {
+        if(all(c(x,y,z) == 2)){
+          2
+        } else {
+          1
+        }
+      }
+    }))
   
   # Group shortness of breath categories
   
