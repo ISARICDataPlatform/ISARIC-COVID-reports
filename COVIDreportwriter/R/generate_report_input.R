@@ -14,21 +14,21 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   N.cases <- nrow(data)      # total embargoed
   N.cases.full <- nrow(datafull)
   N.var <- ncol(data)  # number of variables
-  N.sites.full <- length(unique(datafull$site.name)) # number of sites
-  N.countries.full <- length(unique(datafull$Country)) # number of countries
-  
+  # N.sites.full <- length(unique(datafull$site.name)) # number of sites
+  # N.countries.full <- length(unique(datafull$Country)) # number of countries
+  # 
   
   transfer.outcome <- sum(summary(data$exit.code)[['transfer']],  summary(data$exit.code)[['transfer.palliative']])
   unk.outcome <-  sum(summary(data$exit.code)[['hospitalisation']], summary(data$exit.code)[['unknown']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed
   
   
   
-  N.censored <- summary(as.factor(data$outcome))[[1]]  # censored-count
-  N.deaths <- summary(as.factor(data$outcome))[[2]]    # deaths-count
-  N.recoveries <- summary(as.factor(data$outcome))[[3]]   # recoveries -count
+  N.censored <- data %>% filter(outcome == "censored") %>% nrow()    # censored-count
+  N.deaths <- data %>% filter(outcome == "death") %>% nrow()    # deaths-count
+  N.recoveries <- data %>% filter(outcome == "recovery") %>% nrow()   # recoveries -count
   N.outcomes <- N.deaths+N.recoveries         # outcomes-count (deaths+recoveries)
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
-  N.healthworkers <- summary(as.factor(data$healthwork_erterm))[[1]]
+  N.healthworkers <- data %>% filter(healthwork_erterm == 1) %>% nrow()
   
   
   
@@ -123,8 +123,8 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   
   # COV status
   
-  cov.19.confirmed <- summary(data$positive.COV19.test)[['TRUE']]
-  cov.19.suspected <- summary(data$positive.COV19.test)[['FALSE']]
+  cov.19.confirmed <- data  %>% filter(positive.COV19.test) %>% nrow()
+  cov.19.suspected <- data  %>% filter(!positive.COV19.test) %>% nrow()
   
   # Evers
   

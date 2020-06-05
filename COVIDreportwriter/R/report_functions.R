@@ -1,5 +1,5 @@
 # #
-# d.file <- "/Users/mdhall/Library/Group Containers/2E337YPCZY.airmail/Library/Application Support/it.bloop.airmail2/Airmail/matthew.hall@bdi.ox.ac.uk_1/AttachmentsNg/e2883098b28649f28596c800b8e939df@EXCPMP1L1.hopital.erasme.local/data20200602.csv"
+# d.file <- "/Users/mdhall/Downloads/ISARICCOVID19RAPID-DadosPreliminaresUTI_DATA_2020-05-19_1507.csv"
 # d.dict.file <- "/Users/mdhall/Downloads/ISARICCOVID19COREISARICnCoV_DataDictionary_2020-05-07.csv"
 # c.table <- "/Users/mdhall/ISARIC-COVID-reports/column_translation.csv"
 # verbose <- TRUE
