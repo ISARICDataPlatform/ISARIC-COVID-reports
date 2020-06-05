@@ -1,15 +1,15 @@
 # #
-# d.file <- "/Users/mdhall/Downloads/McLeodCOVIDdata.csv"
-# d.dict.file <- "/Users/mdhall/Downloads/ISARICnCoV_DataDictionary_2020-03-27[1].csv"
-# c.table <- "/Users/mdhall/ISARIC-COVID-reports/column_translation.csv"
-# verbose <- TRUE
-# # ref.date <- today()
-# embargo.length <- 0
-# message.out.file <- "messages.csv"
-# source.name <- "test"
+d.file <- "/Users/mdhall/Library/Group Containers/2E337YPCZY.airmail/Library/Application Support/it.bloop.airmail2/Airmail/matthew.hall@bdi.ox.ac.uk_1/AttachmentsNg/e2883098b28649f28596c800b8e939df@EXCPMP1L1.hopital.erasme.local/data20200602.csv"
+d.dict.file <- "/Users/mdhall/Downloads/ISARICCOVID19COREISARICnCoV_DataDictionary_2020-05-07.csv"
+c.table <- "/Users/mdhall/ISARIC-COVID-reports/column_translation.csv"
+verbose <- TRUE
+ref.date <- today()
+embargo.length <- 0
+message.out.file <- "messages.csv"
+source.name <- "test"
 # # # #
 # #
-# test <- import.and.process.data(d.file, d.dict.file, c.table, "test", "messages.csv", verbose = TRUE)
+# test <- import.and.process.data(d.file, d.dict.file, c.table, "test", "messages.csv", FALSE,  verbose = TRUE)
 
 #' Import data from Redcap .csv output for processing
 #' @param data.file Path of the data file
@@ -37,10 +37,11 @@ import.and.process.data <- function(data.file,
                                     column.table.file = NULL,
                                     source.name = NA,
                                     message.out.file = NULL,
+                                    check.early.dates = TRUE,
                                     embargo.length = 0,
                                     ref.date = today(),
                                     verbose = F){
-
+  
   if(verbose) cat("Reading data...\n")
   
   raw.data <- import.patient.data(data.file, data.dict.file, source.name, verbose)
@@ -61,7 +62,7 @@ import.and.process.data <- function(data.file,
     write("oldvalue,new.value,column.name,subject.id,reason", file = message.out.file, append = FALSE)
   }
   
-  raw.data <- pre.nest.sanity.checks(raw.data, message.out.file, verbose)
+  raw.data <- pre.nest.sanity.checks(raw.data, message.out.file, check.early.dates, verbose)
   
   if(verbose) cat("Making patient data frame...\n")
   
@@ -145,22 +146,22 @@ import.and.process.data <- function(data.file,
 #' @importFrom lubridate epiweek
 #' @export generate.report
 generate.report <- function(patient.data.output, file.name, site.name){
-
+  
   patient.data <- patient.data.output$detailed.data
   unembargoed.data <- patient.data.output$unembargoed.data
   
   cst.reference <- patient.data.output$cst.reference
-
+  
   ref.date <- patient.data.output$ref.date
   embargo.limit <- patient.data.output$embargo.limit
   embargo.length <- patient.data.output$embargo.length
-
+  
   admission.symptoms <- cst.reference %>% filter(type == "symptom")
   comorbidities <- cst.reference %>% filter(type == "comorbidity")
   treatments <- cst.reference %>% filter(type == "treatment")
   
   de <- d.e(patient.data, unembargoed.data, embargo.limit, comorbidities, admission.symptoms, treatments, site.name, embargo.length)
-
+  
   report.rmd.file <- system.file("rmd", "COV-report.Rmd", package = "COVIDreportwriter")
   render(report.rmd.file, output_file=file.name)
   file.move(system.file("rmd", file.name, package = "COVIDreportwriter"), getwd(), overwrite = TRUE)
@@ -333,7 +334,7 @@ import.patient.data <- function(data.file,
   
   if(verbose) {
     if(!is.na(source.name)){
-      cat(glue("Importing data from source {source.name}... \n"))
+      cat(glue("Importing data from source {source.name}..."),"\n")
     } else {
       cat("Importing data...\n")
     }
@@ -394,11 +395,11 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
                           'hodur', 'invasive_prdur', 'subjid', 'liver_mhyn', 'chroniccard_mhyn', 'chronicpul_mhyn', 'asthma_mhyn', 'renal_mhyn',
                           'modliver', 'mildliver', 'chronicneu_mhyn', 'malignantneo_mhyn', 'chronhaemo_mhyn', 'aidshiv_mhyn', 'obesity_mhyn',
                           'diabetescom_mhyn', 'diabetes_mhyn', 'rheumatologic_mhyn', 'dementia_mhyn', 'malnutrition_mhyn', 'smoking_mhyn',
-                          'other_mhyn', 'fever_ceoccur_v2', 'cough_ceoccur_v2', 'coughsput_ceoccur_v2', 'coughhb_ceoccur_v2',
+                          'other_mhyn', 'fever_ceoccur_v2', 'cough_ceoccur_v2', 'cough_ceoccur_v2_2', 'coughsput_ceoccur_v2', 'coughhb_ceoccur_v2',
                           'sorethroat_ceoccur_v2', 'runnynose_ceoccur_v2', 'earpain_ceoccur_v2', 'wheeze_ceoccur_v2', 'chestpain_ceoccur_v2',
                           'myalgia_ceoccur_v2', 'jointpain_ceoccur_v2', 'fatigue_ceoccur_v2', 'shortbreath_ceoccur_v2', 'lowerchest_ceoccur_v2',
                           'headache_ceoccur_v2', 'confusion_ceoccur_v2', 'seizures_cecoccur_v2', 'abdopain_ceoccur_v2', 'vomit_ceoccur_v2',
-                          'diarrhoea_ceoccur_v2', 'conjunct_ceoccur_v2', 'rash_ceoccur_v2', 'skinulcers_ceoccur_v2', 'lymp_ceoccur_v2',
+                          'diarrhoea_ceoccur_v2', 'diabetes_mhyn_2', 'conjunct_ceoccur_v2', 'rash_ceoccur_v2', 'skinulcers_ceoccur_v2', 'lymp_ceoccur_v2',
                           'bleed_ceoccur_v2', 'antiviral_cmyn', 'antibiotic_cmyn', 'corticost_cmyn', 'antifung_cmyn', 'oxygen_cmoccur',
                           'noninvasive_proccur', 'invasive_proccur', 'pronevent_prtrt', 'inhalednit_cmtrt', 'tracheo_prtrt', 'extracorp_prtrt',
                           'rrt_prtrt', 'inotrop_cmtrt', 'other_cmyn', 'agedat', 'pregyn_rptestcd', 'redcap_event_name', 'dsterm', 'dsstdtcyn',
@@ -459,56 +460,67 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
 process.symptoms.comorbidities.treatments <- function(data.dict.file){
   
   d.dict <- read_csv(data.dict.file, col_types = cols(), progress= FALSE) %>%
+    filter(is.na(`Field Annotation`) | `Field Annotation` != "@HIDDEN") %>%
     dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
     dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
   
   
   comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
-  admission.symptoms.colnames <- d.dict %>% filter(form.name == "admission_signs_and_symptoms" & startsWith(field.label, "4") & field.type == "radio" &  field.name != "bleed_ceterm_v2") %>% pull(field.name)
-  treatment.colnames <- d.dict %>% filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
+  
+  admission.symptoms.colnames <- d.dict %>% 
+    filter(form.name == "admission_signs_and_symptoms" &
+             field.type == "radio" &
+             str_detect(field.name, "ceoccur") ) %>%
+    pull(field.name)
+  
+  treatment.colnames <- d.dict %>% filter(form.name == "treatment" & 
+                                            field.type == "radio" &  
+                                            field.name != "oxygen_cmdose" &
+                                            field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
   
   comorbidities.labels <- d.dict %>%
     filter(form.name == "comorbidities" & field.type == "radio") %>%
     pull(field.label) %>%
-    str_match(pattern = "4b\\.\\s?[0-9]+\\.\\s(.*)") %>%
-    as_tibble() %>%
-    pull(2) %>%
-    map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
+    map_chr(function(x) {
+      if(startsWith(x, "<")){
+        temp <- str_replace(x, '\".*\"', "")
+        # print(temp)
+        
+        str_match(temp, '<acronym title=>(.*)</acronym>')[,2]
+      } else {
+        x
+      }
+    }) %>%
+    map_chr(function(x) str_split_fixed(x, " <i>\\(", Inf)[1]) %>%
+    map_chr(function(x) str_split_fixed(x, " \\(", Inf)[1]) %>%
     map_chr(function(x) sub("\\s+$", "", x))
-  
-  comorbidities.labels[1] <- "Chronic cardiac disease"
-  comorbidities.labels[18] <- "Other"
   
   comorbidities <- tibble(field = comorbidities.colnames, label = comorbidities.labels, derived = FALSE)
   
   comorbidities <- bind_rows(comorbidities, tibble(field = "pregnancy", label = "Pregnancy", derived = TRUE))
   comorbidities <- comorbidities %>% bind_rows(list(field = "liver.disease", label = "Liver disease", derived = TRUE)) %>%
     filter(field != "mildliver" & field != "modliver")
-  comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "Diabetes", derived = TRUE)) %>%
-    filter(field != "diabetes_mhyn" & field != "diabetescom_mhyn")
+  comorbidities <- comorbidities %>% bind_rows(list(field = "diabetes", label = "Diabetes", derived = TRUE)) 
+  # filter(field != "diabetes_mhyn_2" & field != "diabetescom_mhyn_2")
   
   comorbidities <- comorbidities %>% mutate(type = "comorbidity")
   
   admission.symptoms.labels <- d.dict %>%
     filter(form.name == "admission_signs_and_symptoms" &
-             startsWith(field.label, "4") &
              field.type == "radio" &
-             field.name != "bleed_ceterm_v2" ) %>%
+             str_detect(field.name, "ceoccur") ) %>%
     pull(field.label) %>%
-    str_match(pattern = "4a\\.[0-9]+\\.[\\.]?[0-9]?\\s(.*)") %>%
-    as_tibble() %>%
-    pull(2) %>%
     map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
     map_chr(function(x) sub("\\s+$", "", x)) 
   
-  admission.symptoms.labels[2] <- "Cough: no sputum"
+  # admission.symptoms.labels[2] <- "Cough: no sputum"
   
   admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels, derived = FALSE)
   
-  admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)", derived = TRUE)) %>%
-    bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)", derived = TRUE)) %>%
-    bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)", derived = TRUE)) %>%
-    filter(field != "cough_ceoccur_v2" & field != "coughsput_ceoccur_v2" & field !="coughhb_ceoccur_v2")
+  # admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)", derived = TRUE)) %>%
+  #   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)", derived = TRUE)) %>%
+  #   bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)", derived = TRUE)) %>%
+  #   filter(field != "cough_ceoccur_v2" & field != "coughsput_ceoccur_v2" & field !="coughhb_ceoccur_v2")
   
   admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "shortness.breath", label = "Shortness of breath", derived = TRUE)) %>%
     filter(field != "shortbreath_ceoccur_v2" & field != "lowerchest_ceoccur_v2")
@@ -516,20 +528,29 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
   admission.symptoms <- admission.symptoms %>% mutate(type = "symptom")
   
   treatment.labels <- d.dict %>%
-    filter(form.name == "treatment" & field.type == "radio" & field.label != "Would you like to add another antibiotic?") %>%
+    filter(form.name == "treatment" & 
+             field.type == "radio" & 
+             field.name != "oxygen_cmdose" &
+             field.label != "Would you like to add another antibiotic?") %>%
     pull(field.label) %>%
-    str_match(pattern = "6\\.[0-9]+[\\.]?[0-9]?[\\.]?\\s(.*)") %>%
-    as_tibble() %>%
-    pull(2) %>%
+    # str_match(pattern = "6\\.[0-9]+[\\.]?[0-9]?[\\.]?\\s(.*)") %>%
+    map_chr(function(x) {
+      if(startsWith(x, "<")){
+        temp <- str_replace(x, '\".*\"', "")
+        # print(temp)
+        
+        str_match(temp, '<acronym title=>(.*)</acronym>')[,2]
+      } else {
+        x
+      }
+    }) %>%
+    map_chr(function(x) str_split_fixed(x, " <i>\\(", Inf)[1]) %>%
     map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
     # I don't know why you can't figure this out nicely. Do it later.
     map_chr(function(x) sub("\\s+$", "", x)) %>%
     map_chr(function(x) sub("\\?+$", "", x)) %>%
     map_chr(function(x) sub("\\s+$", "", x)) 
-  
-  treatment.labels[9] <- "Inhaled nitric oxide"
-  treatment.labels[10] <- "Tracheostomy"
-  treatment.labels[14] <- "Other"
+
   
   treatments <- tibble(field = treatment.colnames, label = treatment.labels, type = "treatment", derived = FALSE)
   
@@ -557,17 +578,28 @@ probable.cov.freetext <- function(text){
     str_detect(text, "[Cc][Oo][Rr][Oo][Nn][Aa]")
 }
 
-
-pre.nest.sanity.checks <- function(data, message.output.file = NULL, verbose = FALSE){
-  if(verbose) cat("Setting future dates to NA...\n")
-  
+#' @export
+#' @keywords internal
+pre.nest.sanity.checks <- function(data, message.output.file = NULL, check.early.dates = TRUE, verbose = FALSE){
+  if(verbose) {
+    if(check.early.dates){
+      cat("Setting future dates and implausibly distant past dates to NA...\n")
+    } else {
+      cat("Setting future dates to NA...\n")
+    }
+  }
   date.columns <- c("dsstdat", "daily_dsstdat", "daily_lbdat", "hostdat", "cestdat", "dsstdtc")
+  
+  for(dc in c(date.columns, "agedat")){
+    data <- data %>% mutate_at(vars(all_of(dc)), function(x) parse_date_time(x, orders = c("ymd", "dmy", "mdy")))
+  }
+  
   
   for(dc in date.columns){
     data <- data %>% mutate_at(vars(all_of(dc)), .funs = ~pcareful.date.check(.,
                                                                               subjid = subjid,
                                                                               colname = dc,
-                                                                              check.early = TRUE,
+                                                                              check.early = check.early.dates,
                                                                               message.out.file = message.output.file))
   }
   
@@ -641,72 +673,63 @@ process.data <- function(data,
   
   # Group diabetes categories
   patient.data <- patient.data %>%
-    mutate(diabetes = pmap_dbl(list(diabetes_mhyn, diabetescom_mhyn, diabetes_mhyn), function(simple, complex, any){
-      if(is.na(simple) & is.na(complex) & is.na(any)){
+    mutate(diabetes = map_dbl(diabetes_mhyn_2, function(diab){
+      if(is.na(diab)  | diab == 3){
         NA
-      } else if(!is.na(any)){
-        # any is from RAPID currently and should not overlap with the others
-        any
-      } else if(is.na(simple)){
-        complex
-      } else if(is.na(complex)){
-        simple
-      } else if(simple == 1 | complex == 1){
+      } else if(diab == 1 | diab == 4){
         1
-      } else if(simple == 2 & complex == 2){
-        2
       } else {
         2
       }
     }))
-  
+
   # Cough records may have not been entered coherently, and are recoded to be mutually exclusive.
   # Someone with a cough with sputum does not have a cough without it
   
-  patient.data <- patient.data %>%
-    mutate(cough.cols = pmap(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
-      
-      if(any(c(x,y,z) == 3) | any(is.na(c(x,y,z)))){
-        cough.nosputum <- NA
-        cough.sputum <- NA
-        cough.bloodysputum <- NA
-      } else if(all(c(x,y,z) == 2)){
-        cough.nosputum <- 2
-        cough.sputum <- 2
-        cough.bloodysputum <- 2
-      } else if(y == 1){
-        cough.nosputum <- 2
-        if(z == 1){
-          cough.sputum <- 2
-          cough.bloodysputum <- 1
-        } else {
-          cough.sputum <- 1
-          cough.bloodysputum <- 2
-        }
-      } else if(z == 1) {
-        cough.nosputum <- 2
-        cough.sputum <- 2
-        cough.bloodysputum <- 1
-      } else {
-        cough.nosputum <- x
-        cough.sputum <- 2
-        cough.bloodysputum <- 2
-      }
-      list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
-    })) %>%
-    { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
-    dplyr::select(-cough.cols) %>%
-    mutate(cough.any = pmap_dbl(list(cough.nosputum, cough.sputum, cough.bloodysputum), function(x,y,z){
-      if(is.na(x)){
-        NA
-      } else {
-        if(all(c(x,y,z) == 2)){
-          2
-        } else {
-          1
-        }
-      }
-    }))
+  # patient.data <- patient.data %>%
+  #   mutate(cough.cols = pmap(list(cough_ceoccur_v2, coughsput_ceoccur_v2, coughhb_ceoccur_v2), function(x,y,z){
+  #     
+  #     if(any(c(x,y,z) == 3) | any(is.na(c(x,y,z)))){
+  #       cough.nosputum <- NA
+  #       cough.sputum <- NA
+  #       cough.bloodysputum <- NA
+  #     } else if(all(c(x,y,z) == 2)){
+  #       cough.nosputum <- 2
+  #       cough.sputum <- 2
+  #       cough.bloodysputum <- 2
+  #     } else if(y == 1){
+  #       cough.nosputum <- 2
+  #       if(z == 1){
+  #         cough.sputum <- 2
+  #         cough.bloodysputum <- 1
+  #       } else {
+  #         cough.sputum <- 1
+  #         cough.bloodysputum <- 2
+  #       }
+  #     } else if(z == 1) {
+  #       cough.nosputum <- 2
+  #       cough.sputum <- 2
+  #       cough.bloodysputum <- 1
+  #     } else {
+  #       cough.nosputum <- x
+  #       cough.sputum <- 2
+  #       cough.bloodysputum <- 2
+  #     }
+  #     list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
+  #   })) %>%
+  #   { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
+  #   dplyr::select(-cough.cols) %>%
+  #   mutate(cough.any = pmap_dbl(list(cough.nosputum, cough.sputum, cough.bloodysputum), function(x,y,z){
+  #     if(is.na(x)){
+  #       NA
+  #     } else {
+  #       if(all(c(x,y,z) == 2)){
+  #         2
+  #       } else {
+  #         1
+  #       }
+  #     }
+  #   }))
   
   # Group shortness of breath categories
   
@@ -1148,11 +1171,11 @@ process.data <- function(data,
   
   patient.data <-  patient.data %>%
     filter(dsstdat <= embargo.limit)
-
+  
   # Temporary fix! #
   
-  patient.data<- patient.data %>% filter(!(is.na(exit.code) & !is.na(exit.date)))
-
+  patient.data <- patient.data %>% filter(!(is.na(exit.code) & !is.na(exit.date)))
+  
   list(unembargoed.data = unembargoed.data, detailed.data = patient.data)
   
 }

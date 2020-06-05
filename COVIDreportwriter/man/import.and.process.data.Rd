@@ -10,6 +10,7 @@ import.and.process.data(
   column.table.file = NULL,
   source.name = NA,
   message.out.file = NULL,
+  check.early.dates = TRUE,
   embargo.length = 0,
   ref.date = today(),
   verbose = F

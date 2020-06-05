@@ -369,9 +369,9 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   
   # Cough
   
-  cough_pre <- data %>% filter(cough.any == 1) %>% nrow()
-  cough_abs <- data %>% filter(cough.any == 2) %>% nrow()
-  cough_unk <- data %>% filter(is.na(cough.any)) %>% nrow()
+  cough_pre <- data %>% filter(cough_ceoccur_v2_2 %in% c(1,2,3)) %>% nrow()
+  cough_abs <- data %>% filter(cough_ceoccur_v2_2 == 0) %>% nrow()
+  cough_unk <- data %>% filter(is.na(cough_ceoccur_v2_2) & cough_ceoccur_v2_2 == 4) %>% nrow()
   combined_cough <- tibble(Condition = 'cough_combined', present = as.integer(cough_pre),
                                absent = as.integer(cough_abs), unknown = as.integer(cough_unk), label = 'Cough',
                                derived = TRUE, type = "symptom")
