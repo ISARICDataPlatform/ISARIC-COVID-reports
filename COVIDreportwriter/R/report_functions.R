@@ -17,7 +17,7 @@
 #' }
 #' @import readr purrr stringr tidyr forcats
 #' @importFrom glue glue
-#' @importFrom lubridate ymd is.Date today
+#' @importFrom lubridate ymd parse_date_time is.Date today
 #' @importFrom magrittr not
 #' @export import.and.process.data
 import.and.process.data <- function(data.file,
