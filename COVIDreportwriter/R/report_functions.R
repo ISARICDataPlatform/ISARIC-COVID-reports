@@ -1,4 +1,7 @@
 
+
+
+
 #' Import data from Redcap .csv output for processing
 #' @param data.file Path of the data file
 #' @param data.dict.file Path of the data dictionary file
@@ -20,6 +23,7 @@
 #' @importFrom lubridate ymd parse_date_time is.Date today
 #' @importFrom magrittr not
 #' @export import.and.process.data
+
 import.and.process.data <- function(data.file,
                                     data.dict.file,
                                     column.table.file = NULL,
@@ -448,7 +452,7 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
 process.symptoms.comorbidities.treatments <- function(data.dict.file){
   
   d.dict <- read_csv(data.dict.file, col_types = cols(), progress= FALSE) %>%
-    filter(is.na(`Field Annotation`) | `Field Annotation` != "@HIDDEN") %>%
+    # filter(is.na(`Field Annotation`) | `Field Annotation` != "@HIDDEN") %>%
     dplyr::select(`Variable / Field Name`,`Form Name`, `Field Type`, `Field Label`) %>%
     dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
   
@@ -501,17 +505,15 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
     map_chr(function(x) sub("\\s+$", "", x)) 
   
-  # admission.symptoms.labels[2] <- "Cough: no sputum"
-  
   admission.symptoms <- tibble(field = admission.symptoms.colnames, label = admission.symptoms.labels, derived = FALSE)
-  
-  # admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)", derived = TRUE)) %>%
-  #   bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)", derived = TRUE)) %>%
-  #   bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)", derived = TRUE)) %>%
-  #   filter(field != "cough_ceoccur_v2" & field != "coughsput_ceoccur_v2" & field !="coughhb_ceoccur_v2")
   
   admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "shortness.breath", label = "Shortness of breath", derived = TRUE)) %>%
     filter(field != "shortbreath_ceoccur_v2" & field != "lowerchest_ceoccur_v2")
+  
+  admission.symptoms <- admission.symptoms %>% bind_rows(list(field = "cough.nosputum", label = "Cough (no sputum)", derived = TRUE)) %>%
+    bind_rows(list(field = "cough.sputum", label = "Cough (with sputum)", derived = TRUE)) %>%
+    bind_rows(list(field = "cough.bloodysputum", label = "Cough (bloody sputum / haemoptysis)", derived = TRUE)) %>%
+    filter(field != "cough_ceoccur_v2" & field != "coughsput_ceoccur_v2" & field !="coughhb_ceoccur_v2")
   
   admission.symptoms <- admission.symptoms %>% mutate(type = "symptom")
   
@@ -734,7 +736,7 @@ process.data <- function(data,
       }
       list(cough.sputum = cough.sputum, cough.nosputum = cough.nosputum, cough.bloodysputum = cough.bloodysputum)
     })) %>%
-    { bind_cols(., bind_rows(!!!.$cough.cols)) } %>%
+    bind_cols(., bind_rows(!!!.$cough.cols)) %>%
     dplyr::select(-cough.cols) %>%
     mutate(cough.any = pmap_dbl(list(cough.nosputum, cough.sputum, cough.bloodysputum), function(x,y,z){
       if(is.na(x)){
