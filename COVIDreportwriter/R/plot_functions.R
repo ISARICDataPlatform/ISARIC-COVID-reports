@@ -144,7 +144,7 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country)) %>%
     mutate(uk = Country == "UK")
-    
+  
   if(!include.uk){
     data2 <- data2 %>% filter(!uk)
   }
@@ -153,7 +153,7 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
     group_by(Country, outcome, uk) %>%
     summarise(count = n()) %>%
     ungroup()
-
+  
   
   data3 <- data %>%
     filter(!is.na(outcome)) %>%
@@ -313,7 +313,7 @@ comorbidities.upset <- function(data, max.comorbidities, comorbidities, ...){
       c[which(p)]
     })) %>%
     dplyr::select(-Conditions, -Presence)
-
+  
   other.conditions.tbl <- data %>%
     dplyr::select(subjid, one_of(comorbidities %>% filter(!(field %in% most.common)) %>% pull(field)))
   
@@ -1762,10 +1762,10 @@ icu.treatment.upset <- function(data, ...) {
 icu.violin.plot  <- function(data, ref.date, ...){
   data <- get_icu_pts(data)
   # Use available data for each measure
- # dur <- data$start.to.exit
+  # dur <- data$start.to.exit
   
   data <- data %>% filter(start.to.exit < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) %>% 
-                filter(ICU.duration < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) 
+    filter(ICU.duration < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) 
   
   dur <- data$start.to.exit
   dur <- dur[which(dur>=0)]  # Exclude negative times
@@ -1835,7 +1835,7 @@ samp.median <- function(x,i){median(x[i])}
 #' @keywords internal
 
 fit.summary.gamma <- function(fit){
-
+  
   if(is.character(fit)){
     
     return(list(m=NA, lower.m = NA, upper.m = NA,  v=NA,
@@ -2748,7 +2748,7 @@ dur.icu <- function(data, plt = F, ...) {
   data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
     mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
     mutate(event.censoring = temp$cens)
-
+  
   mutate(event.duration = map_dbl(durs, function(x) calculate.durations(x)$durs)) %>%
     mutate(event.duration = map_dbl(event.duration, function(x) abs(round.zeros(x)))) %>%
     mutate(event.censoring = map_dbl(cens, calculate.durations(x)$cens))
@@ -3079,16 +3079,16 @@ comorb.by.age <- function(data, ...) {
                            "Proportion with\ndiabetes mellitus", ymax = ylimit, sz = size)
     pe <- plot.prop.by.age(df, df$dementia_mhyn,
                            "Proportion with\ndementia", ymax = ylimit, sz = size)
-  # Chronic cardiac disease omitted as described above.
+    # Chronic cardiac disease omitted as described above.
     # pf <- plot.prop.by.age(df, df$chrincard,
-   #                        "Proportion with\nchronic cardiac disease", ymax = ylimit, sz = size)
+    #                        "Proportion with\nchronic cardiac disease", ymax = ylimit, sz = size)
     # Most have missing for hypertension - leave out until resolved
-  #  pg <- plot.prop.by.age(df, df$hypertension_mhyn,
-  #                         "Proportion with\nhypertension", ymax = ylimit, sz = size)
+    #  pg <- plot.prop.by.age(df, df$hypertension_mhyn,
+    #                         "Proportion with\nhypertension", ymax = ylimit, sz = size)
     ph <- plot.prop.by.age(df, df$CurrentSmoke,
                            "Proportion who\ncurrently smoke", ymax = ylimit, sz = size)
     
-  #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
+    #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
     p <- arrangeGrob(pa, pb, pc, pd, pe, ph, ncol = 2)
     
   }
@@ -3171,7 +3171,7 @@ sx.by.age <- function(data, admission.symptoms, ...) {
 }
 
 sx.by.age.a <- function(data, admission.symptoms, ...) {
-  df <- sx.by.age(patient.data, admission.symptoms)
+  df <- sx.by.age(data, admission.symptoms)
   if (df[1, 1] == "Insufficient") {
     p <- insufficient.data.plot()
   } else {
@@ -3193,7 +3193,7 @@ sx.by.age.a <- function(data, admission.symptoms, ...) {
 }
 
 sx.by.age.b <- function(data, admission.symptoms, ...) {
-  df <- sx.by.age(patient.data, admission.symptoms)
+  df <- sx.by.age(data, admission.symptoms)
   if (df[1, 1] == "Insufficient") {
     p <- insufficient.data.plot()
   } else {
@@ -3429,7 +3429,7 @@ insufficient.data.plot <- function(){
 
 histogram.admission.to.ICU<- function(data, embargo.limit, ...){
   
-   if(all(is.na(data$admission.to.ICU)) ){
+  if(all(is.na(data$admission.to.ICU)) ){
     plt <- insufficient.data.plot()
   } else {
     
