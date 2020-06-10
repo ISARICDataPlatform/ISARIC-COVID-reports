@@ -150,14 +150,14 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
   }
   
   data2 <- data2 %>%
-    group_by(Country, outcome, uk) %>%
+    group_by(Country) %>%
     summarise(count = n()) %>%
     ungroup()
   
   
   data3 <- data %>%
     filter(!is.na(outcome)) %>%
-    dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
+    # dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country)) %>%
     group_by(Country) %>%
     summarise(count = n()) %>%
@@ -166,35 +166,38 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
   nudge <- max(data3$count)/1500
   
   plot1 <- ggplot() +
-    geom_text(data = data3 %>% filter(!uk), aes(x=Country, y= count + nudge, label=count), size=2) +
-    geom_col(data = data2 %>% filter(!uk), aes(x = Country, y=count,  fill = outcome)) +
+    geom_col(data = data2, aes(x = Country, y=count+1), fill="turquoise4") +
+    geom_text(data = data3 , aes(x=Country, y= 0.95*(count+1), label=count), size=3, angle = 90, hjust = 1, col ="white") +
     theme_bw() +
     scale_x_discrete(expand = c(0,1.5))+
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death"), guide = F) +
+    # scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death"), guide = F) +
     # facet_wrap (~ uk, scales = "free") +
     # xlab("Country") +
-    ylab("Cases") +
+    ylab("Patient records (log scale)") +
     # coord_fixed(ratio = 0.23) +
-    theme(axis.text.x = element_text(angle = 45, hjust=1), axis.title.x=element_blank())
-  nudge2 <- max(data3$count)/30
+    theme(axis.text.x = element_text(angle = 45, hjust=1), axis.title.x=element_blank()) +
+    scale_y_log10(expand = c(0,0.1), breaks = c(1, 11, 101, 1001, 10001), labels = c("0", "10", "100", "1000", "10000"))
+  # nudge2 <- max(data3$count)/30
   
   
-  plot2 <- ggplot() +
-    geom_text(data = data3 %>% filter(uk), aes(x=Country, y= count + nudge2, label=count), size=2) +
-    geom_col(data = data2%>% filter(uk), aes(x = Country, y=count,  fill = outcome), width=1) +
-    theme_bw() +
-    scale_x_discrete(expand = c(0,1.5))+
-    scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
-    # facet_wrap (~ uk, scales = "free") +
-    # xlab("Country") +
-    ylab("Cases") +
-    # coord_fixed(ratio = 0.1) +
-    theme(axis.text.x = element_text(angle = 45, hjust=1), axis.title.y=element_blank(), axis.title.x=element_blank())
+  # plot2 <- ggplot() +
+  #   geom_text(data = data3 %>% filter(uk), aes(x=Country, y= count + nudge2, label=count), size=2) +
+  #   geom_col(data = data2%>% filter(uk), aes(x = Country, y=count,  fill = outcome), width=1) +
+  #   theme_bw() +
+  #   scale_x_discrete(expand = c(0,1.5))+
+  #   scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
+  #   # facet_wrap (~ uk, scales = "free") +
+  #   # xlab("Country") +
+  #   ylab("Cases") +
+  #   # coord_fixed(ratio = 0.1) +
+  #   theme(axis.text.x = element_text(angle = 45, hjust=1), axis.title.y=element_blank(), axis.title.x=element_blank())
   
+  # 
+  # out <- plot_grid(plot1, plot2, ncol = , align = "h", rel_widths = c(1.8,1))
+  # 
+  # out <- add_sub(out, "Country", vpadding=grid::unit(0,"lines"),y=5, x=0.5, vjust=4.5)
   
-  out <- plot_grid(plot1, plot2, ncol = , align = "h", rel_widths = c(1.8,1))
-  
-  out <- add_sub(out, "Country", vpadding=grid::unit(0,"lines"),y=5, x=0.5, vjust=4.5)
+  plot1
 }
 
 ##### Outcomes by epi-week #####
@@ -219,25 +222,31 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
       ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
     })) %>%
     filter(!is.na(admission.date)) %>%
-    filter(epiweek(start.date) <= epiweek(embargo.limit))
+    filter(epiweek(start.date) <= epiweek(embargo.limit)) %>%
+    group_by(two.digit.epiweek, outcome) %>%
+    summarise(count = n()) %>%
+    group_by(outcome) %>%
+    mutate(cum.count = cumsum(count))
   
-  ew.labels <- map_chr(min(data2$epiweek):max(data2$epiweek), function(x)ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x)))
   
-  data2 <- data2 %>%
-    mutate(two.digit.epiweek = factor(two.digit.epiweek, levels = ew.labels))
+  # 
+  # ew.labels <- map_chr(min(data2$two.digit.epiweek):max(data2$two.digit.epiweek), function(x)ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x)))
+  # 
+  # data2 <- data2 %>%
+  #   mutate(two.digit.epiweek = factor(two.digit.epiweek, levels = ew.labels))
   
-  peak.cases <- data2 %>% group_by(two.digit.epiweek) %>% dplyr::summarise(count = n()) %>% pull(count) %>% max()
+  peak.cases <- data2 %>% group_by(two.digit.epiweek) %>% dplyr::summarise(count = sum(cum.count)) %>% pull(count) %>% max()
   
-  ggplot(data2) + geom_bar(aes(x = two.digit.epiweek, fill = outcome), width = 0.95) +
+  ggplot(data2) + geom_col(aes(x = two.digit.epiweek, y=cum.count, fill = outcome), width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2), na.rm = TRUE), by=2)) +
     xlab("Epidemiological week of admission/symptom onset (2020)") +
-    ylab("Cases") +
-    ylim(c(0,peak.cases)) +
+    ylab("Cumulative patient records") +
+    ylim(c(0,1.05*peak.cases)) +
     scale_x_discrete(drop = F) +
-    annotate(geom = "text", label = "*", x = max(data2$epiweek) - min(data2$epiweek) + 1,
-             y = nrow(data2 %>% filter(two.digit.epiweek == max(data2$epiweek))), size =15)
+    annotate(geom = "text", label = "*", x = max(data2$two.digit.epiweek),
+             y = peak.cases, size =15)
 }
 
 ##### Comorbidities upset plot #####
