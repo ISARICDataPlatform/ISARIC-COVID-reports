@@ -140,8 +140,8 @@ sites.by.country <- function(data, ...){
 #' @return  Bar plot showing the number of patients per country and by outcome (discharge/ongoing care/death). Actual counts of the total number of patients for each country are printed on top of each bar.
 outcomes.by.country <- function(data, include.uk = TRUE, ...){
   data2 <- data %>%
-    filter(!is.na(outcome)) %>%
-    dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
+    # filter(!is.na(outcome)) %>%
+    # dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country)) %>%
     mutate(uk = Country == "UK")
   
@@ -166,17 +166,17 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
   nudge <- max(data3$count)/1500
   
   plot1 <- ggplot() +
-    geom_col(data = data2, aes(x = Country, y=count+1), fill="turquoise4") +
-    geom_text(data = data3 , aes(x=Country, y= 0.95*(count+1), label=count), size=3, angle = 90, hjust = 1, col ="white") +
+    geom_col(data = data2, aes(x = Country, y=count), fill="turquoise4") +
+    geom_text(data = data3 , aes(x=Country, y= 0.95*(count), label=count), size=3, angle = 90, hjust = 1, col ="white") +
     theme_bw() +
     scale_x_discrete(expand = c(0,1.5))+
     # scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death"), guide = F) +
     # facet_wrap (~ uk, scales = "free") +
     # xlab("Country") +
-    ylab("Patient records (log scale)") +
+    ylab("Patient records (pseudo log scale)") +
     # coord_fixed(ratio = 0.23) +
     theme(axis.text.x = element_text(angle = 45, hjust=1), axis.title.x=element_blank()) +
-    scale_y_log10(expand = c(0,0.1), breaks = c(1, 11, 101, 1001, 10001), labels = c("0", "10", "100", "1000", "10000"))
+    scale_y_continuous( trans = pseudo_log_trans(), expand = c(0,0.1), breaks = c(0,1, 10, 100, 1000, 10000, 100000), minor_breaks = NULL)
   # nudge2 <- max(data3$count)/30
   
   
@@ -591,8 +591,8 @@ symptom.heatmap <- function(data, admission.symptoms, ...){
                  "Cough (bloody sputum / haemoptysis)",
                  "Chest pain",
                  "Lymphadenopathy",
-                 "Disturbance or loss of taste",
-                 "Disturbance or loss of smell",
+                 "Disturbance or loss of taste*",
+                 "Disturbance or loss of smell*",
                  "Conjunctivitis",
                  "Bleeding",
                  "Skin ulcers",
