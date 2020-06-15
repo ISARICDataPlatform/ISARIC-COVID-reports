@@ -601,7 +601,7 @@ symptom.heatmap <- function(data, admission.symptoms, asterisks = vector(), ...)
                  "Altered consciousness / confusion"
   )
   
-  if(length(asterisks) > 0({
+  if(length(asterisks) > 0){
     fct.order[asterisks] <- glue("{fct.order[asterisks]}*")
   }
   
