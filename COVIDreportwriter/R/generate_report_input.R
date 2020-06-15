@@ -91,7 +91,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
     cunk <- N.cases - sum(c0, c10, c20, c30, c40, c50, c60, c70)
     
     
-  }else{
+  } else {
     median.age <- NA
     mean.age <- NA
     sd.age <- NA

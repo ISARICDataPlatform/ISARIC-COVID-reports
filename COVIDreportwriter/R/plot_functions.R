@@ -156,7 +156,7 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
   
   
   data3 <- data %>%
-    filter(!is.na(outcome)) %>%
+    # filter(!is.na(outcome)) %>%
     # dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored","death")))  %>%
     filter(!is.na(Country)) %>%
     group_by(Country) %>%
@@ -537,7 +537,7 @@ symptom.prev.calc <- function(data, admission.symptoms){
 #' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
 #'
 #' @return  Heatmap showing the proportion of patients for each pairwise combination of symptoms.
-symptom.heatmap <- function(data, admission.symptoms, ...){
+symptom.heatmap <- function(data, admission.symptoms, asterisks = vector(), ...){
   
   data2 <- data %>%
     dplyr::select(subjid, one_of(admission.symptoms$field))
@@ -591,8 +591,8 @@ symptom.heatmap <- function(data, admission.symptoms, ...){
                  "Cough (bloody sputum / haemoptysis)",
                  "Chest pain",
                  "Lymphadenopathy",
-                 "Disturbance or loss of taste*",
-                 "Disturbance or loss of smell*",
+                 "Disturbance or loss of taste",
+                 "Disturbance or loss of smell",
                  "Conjunctivitis",
                  "Bleeding",
                  "Skin ulcers",
@@ -600,6 +600,10 @@ symptom.heatmap <- function(data, admission.symptoms, ...){
                  "Seizures",
                  "Altered consciousness / confusion"
   )
+  
+  if(length(asterisks) > 0({
+    fct.order[asterisks] <- glue("{fct.order[asterisks]}*")
+  }
   
   combinations.tibble.2 <- combinations.tibble %>%
     mutate(label.x = factor(label.x, levels = fct.order)) %>%
@@ -2423,7 +2427,7 @@ adm.outcome <- function(data, embargo.limit, plt = F){
   
   
   # Exclude negative values for length of stay - indication of issue with data entry
-  data2 <- data2[-c(which(data2$length.of.stay < 0)), ]
+  data2 <- data2 %>% filter(length.of.stay >= 0)
   
   admit.discharge <- data2$length.of.stay
   admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
