@@ -32,6 +32,10 @@ import.and.process.data <- function(data.file,
                                     check.early.dates = TRUE,
                                     embargo.length = 0,
                                     ref.date = today(),
+                                    yn.field.type = "radio", 
+                                    treatment.field.categories = "treatment",
+                                    comorbidity.categories = "comorbidities",
+                                    admission.symptom.field.categories = "admission_signs_and_symptoms",
                                     verbose = F){
   
   if(verbose) cat("Reading data...\n")
@@ -40,13 +44,14 @@ import.and.process.data <- function(data.file,
   
   if(verbose) cat("Identifying symptoms, comorbidities and treatments...\n")
   
-  cst.reference <- process.symptoms.comorbidities.treatments(data.dict.file)
+  cst.reference <- process.symptoms.comorbidities.treatments(data.dict.file, yn.field.type, treatment.field.categories, comorbidity.categories, admission.symptom.field.categories)
   
   if(verbose) cat("Renaming columns...\n")
   
   temp <- rename.and.drop.columns(raw.data, column.table.file, cst.reference)
   raw.data <- temp$data
   cst.reference <- temp$cst.reference
+  print(tail(cst.reference))
   
   raw.data <- raw.data %>% mutate(site.number = substr(redcap_data_access_group, 1, 3))
   
@@ -449,7 +454,11 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
 
 #' @export
 #' @keywords internal
-process.symptoms.comorbidities.treatments <- function(data.dict.file){
+process.symptoms.comorbidities.treatments <- function(data.dict.file, 
+                                                      yn.field.type = "radio", 
+                                                      treatment.field.categories = "treatment",
+                                                      comorbidity.categories = "comorbidities",
+                                                      admission.symptom.field.categories = "admission_signs_and_symptoms"){
   
   d.dict <- read_csv(data.dict.file, col_types = cols(), progress= FALSE) %>%
     # filter(is.na(`Field Annotation`) | `Field Annotation` != "@HIDDEN") %>%
@@ -457,26 +466,25 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     dplyr::rename(field.name = `Variable / Field Name`, form.name = `Form Name`, field.type = `Field Type`, field.label = `Field Label`)
   
   
-  comorbidities.colnames <- d.dict %>% filter(form.name == "comorbidities" & field.type == "radio") %>% pull(field.name)
+  comorbidities.colnames <- d.dict %>% filter(form.name %in% comorbidity.categories & field.type == yn.field.type) %>% pull(field.name)
   
   admission.symptoms.colnames <- d.dict %>% 
-    filter(form.name == "admission_signs_and_symptoms" &
-             field.type == "radio" &
+    filter(form.name %in% admission.symptom.field.categories &
+             field.type == yn.field.type &
              str_detect(field.name, "ceoccur") ) %>%
     pull(field.name)
   
-  treatment.colnames <- d.dict %>% filter(form.name == "treatment" & 
-                                            field.type == "radio" &  
+  treatment.colnames <- d.dict %>% filter(form.name %in% treatment.field.categories & 
+                                            field.type == yn.field.type &  
                                             field.name != "oxygen_cmdose" &
                                             field.label != "Would you like to add another antibiotic?") %>% pull(field.name)
   
   comorbidities.labels <- d.dict %>%
-    filter(form.name == "comorbidities" & field.type == "radio") %>%
+    filter(form.name %in% comorbidity.categories & field.type == yn.field.type) %>%
     pull(field.label) %>%
     map_chr(function(x) {
       if(startsWith(x, "<")){
         temp <- str_replace(x, '\".*\"', "")
-        # print(temp)
         
         str_match(temp, '<acronym title=>(.*)</acronym>')[,2]
       } else {
@@ -498,8 +506,8 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
   comorbidities <- comorbidities %>% mutate(type = "comorbidity")
   
   admission.symptoms.labels <- d.dict %>%
-    filter(form.name == "admission_signs_and_symptoms" &
-             field.type == "radio" &
+    filter(form.name %in% admission.symptom.field.categories &
+             field.type == yn.field.type &
              str_detect(field.name, "ceoccur") ) %>%
     pull(field.label) %>%
     map_chr(function(x) str_split_fixed(x, "\\(", Inf)[1]) %>%
@@ -518,8 +526,8 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
   admission.symptoms <- admission.symptoms %>% mutate(type = "symptom")
   
   treatment.labels <- d.dict %>%
-    filter(form.name == "treatment" & 
-             field.type == "radio" & 
+    filter(form.name %in% treatment.field.categories & 
+             field.type == yn.field.type & 
              field.name != "oxygen_cmdose" &
              field.label != "Would you like to add another antibiotic?") %>%
     pull(field.label) %>%
@@ -527,7 +535,6 @@ process.symptoms.comorbidities.treatments <- function(data.dict.file){
     map_chr(function(x) {
       if(startsWith(x, "<")){
         temp <- str_replace(x, '\".*\"', "")
-        # print(temp)
         
         str_match(temp, '<acronym title=>(.*)</acronym>')[,2]
       } else {
