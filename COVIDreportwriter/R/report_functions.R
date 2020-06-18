@@ -51,7 +51,6 @@ import.and.process.data <- function(data.file,
   temp <- rename.and.drop.columns(raw.data, column.table.file, cst.reference)
   raw.data <- temp$data
   cst.reference <- temp$cst.reference
-  print(tail(cst.reference))
   
   raw.data <- raw.data %>% mutate(site.number = substr(redcap_data_access_group, 1, 3))
   
