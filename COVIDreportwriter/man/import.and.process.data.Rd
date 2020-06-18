@@ -13,6 +13,10 @@ import.and.process.data(
   check.early.dates = TRUE,
   embargo.length = 0,
   ref.date = today(),
+  yn.field.type = "radio",
+  treatment.field.categories = "treatment",
+  comorbidity.categories = "comorbidities",
+  admission.symptom.field.categories = "admission_signs_and_symptoms",
   verbose = F
 )
 }

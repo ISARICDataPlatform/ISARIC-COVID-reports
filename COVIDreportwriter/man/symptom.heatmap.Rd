@@ -4,7 +4,7 @@
 \alias{symptom.heatmap}
 \title{Plot pairwise symptom prevalance.}
 \usage{
-symptom.heatmap(data, admission.symptoms, ...)
+symptom.heatmap(data, admission.symptoms, asterisks = vector(), ...)
 }
 \arguments{
 \item{data}{\code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..}
