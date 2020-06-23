@@ -7,8 +7,8 @@
 #' @keywords internal
 # Main function d.e (dynamic.estimates) calculates estimates and confidence intervals, to be incorporated into report. #
 d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms, treatments, site.name, embargo.length, ...){
-
-
+  
+  
   # Summaries
   
   N.cases <- nrow(data)      # total embargoed
@@ -151,6 +151,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   adm.out.func.1 <- adm.outcome(data, embargo.limit)
   adm.out.summ <- fit.summary.gamma(adm.out.func.1$fit)
   
+  
   adm.to.outcome <-  round(adm.out.summ$m, 1)
   adm.outcome.l <-   round(adm.out.summ$lower.m, 1)
   adm.outcome.u <-   round(adm.out.summ$upper.m, 1)
@@ -173,12 +174,20 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   # Admission to ICU
   
   adm.to.icu.1 <- adm.to.icu(data)
-  adm.icu.summ <-  fit.summary.gamma(adm.to.icu.1$fit)
   
-  
-  adm.icu <- round(adm.icu.summ$m, 1)
-  adm.icu.l <- round(adm.icu.summ$lower.m, 1)
-  adm.icu.u <- round(adm.icu.summ$upper.m, 1)
+  if(!is.null(adm.to.icu.1$fit)){
+    adm.icu.summ <-  fit.summary.gamma(adm.to.icu.1$fit)
+    
+    
+    adm.icu <- round(adm.icu.summ$m, 1)
+    adm.icu.l <- round(adm.icu.summ$lower.m, 1)
+    adm.icu.u <- round(adm.icu.summ$upper.m, 1)
+    
+  } else {
+    adm.icu <- NA
+    adm.icu.l <- NA
+    adm.icu.u <- NA
+  }
   
   
   
@@ -197,13 +206,20 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   
   # Admission to IMV
   
+  
   adm.imv.1 <- adm.to.imv(data)
-  adm.imv.summ <- fit.summary.gamma(adm.imv.1$fit)
   
-  
-  adm.imv <- round(adm.imv.summ$m, 1)
-  adm.imv.l <- round(adm.imv.summ$lower.m, 1)
-  adm.imv.u <- round(adm.imv.summ$upper.m, 1)
+  if(!is.null(adm.imv.1$fit)){
+    adm.imv.summ <- fit.summary.gamma(adm.imv.1$fit)
+    
+    adm.imv <- round(adm.imv.summ$m, 1)
+    adm.imv.l <- round(adm.imv.summ$lower.m, 1)
+    adm.imv.u <- round(adm.imv.summ$upper.m, 1)
+  } else {
+    adm.imv <- NA
+    adm.imv.l <- NA
+    adm.imv.u <- NA
+  }
   
   # # Duration of IMV (more censored cases than cases with outcomes; causing mle error)
   #
@@ -219,14 +235,22 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   
   # Admission to NIV
   
+  
+  
   adm.niv.1 <- adm.to.niv(data)
-  adm.niv.summ <- fit.summary.gamma(adm.niv.1$fit)
   
-  
-  adm.niv <- round(adm.niv.summ$m, 1)
-  adm.niv.l <- round(adm.niv.summ$lower.m, 1)
-  adm.niv.u <- round(adm.niv.summ$upper.m, 1)
-  
+  if(!is.null(adm.niv.1$fit)){
+    adm.niv.summ <- fit.summary.gamma(adm.niv.1$fit)
+    
+    
+    adm.niv <- round(adm.niv.summ$m, 1)
+    adm.niv.l <- round(adm.niv.summ$lower.m, 1)
+    adm.niv.u <- round(adm.niv.summ$upper.m, 1)
+  } else {
+    adm.niv <- NA
+    adm.niv.l <- NA
+    adm.niv.u <- NA
+  }
   
   
   
@@ -234,12 +258,13 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   # Duration of NIV
   
   dur.niv.1 <- dur.niv(data)
-  dur.niv.summ <- fit.summary.gamma(dur.niv.1$fit)
-  
-  
-  dur.niv <- round(dur.niv.summ$m, 1)
-  dur.niv.l <- round(dur.niv.summ$lower.m, 1)
-  dur.niv.u <- round(dur.niv.summ$upper.m, 1)
+  if(!is.null(dur.niv.1$fit)){
+    dur.niv.summ <- fit.summary.gamma(dur.niv.1$fit)
+  } else {
+    dur.niv <- NA
+    dur.niv.l <- NA
+    dur.niv.u <- NA
+  }
   
   
   
@@ -262,7 +287,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   cases.full.adm.outcome <- length(adm.out.func.1$obs)
   obs.median.adm.outcome <- round(x_median, 1)
   obs.iqr.adm.outcome <- round(IQR(x, na.rm = T), 1)
-  
+
   # Onset to admission
   
   y <- onset.adm.fn.1$obs
@@ -276,47 +301,61 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   obs.sd.onset.adm <- round(y_sd, 1)
   obs.median.onset.adm <- round(y_median, 1)
   obs.iqr.onset.adm <- round(IQR(y, na.rm = T), 1)
-  
+
   
   # Admission to ICU (not fitted due to low count)
   
   a.icu <- data$admission.to.ICU
-  a.icu <- round.zeros(abs(a.icu[!is.na(a.icu)]))
+  if(length(a.icu) > 0 & any(!is.na(a.icu))){
+    a.icu <- round.zeros(abs(a.icu[!is.na(a.icu)]))
+  }
+  
   
   
   # ICU duration
   
   d.icu <- data$ICU.duration
-  d.icu <- round.zeros(abs(d.icu[!is.na(d.icu)]))
-  
+  if(length(d.icu) > 0 & any(!is.na(d.icu))){
+    d.icu <- round.zeros(abs(d.icu[!is.na(d.icu)]))
+  }
   
   
   # Admission to IMV
   
   a.imv <- data$admission.to.IMV
-  a.imv <- round.zeros(abs(a.imv[!is.na(a.imv)]))
-  
+  if(length(a.imv) > 0 & any(!is.na(a.imv))){
+    a.imv <- round.zeros(abs(a.imv[!is.na(a.imv)]))
+  }
   
   # IMV duration
   
   d.imv <- data$IMV.duration
-  d.imv <- round.zeros(abs(d.imv[!is.na(d.imv)]))
-  
+  if(length(d.imv) > 0 & any(!is.na(d.imv))){
+    d.imv <- round.zeros(abs(d.imv[!is.na(d.imv)]))
+  }
   
   # Admission to NIMV
   
   a.nimv <- data$admission.to.NIMV
-  a.nimv <- round.zeros(abs(a.nimv[!is.na(a.nimv)]))
-  
+  if(length(a.nimv) > 0 & any(!is.na(a.nimv))){
+    a.nimv <- round.zeros(abs(a.nimv[!is.na(a.nimv)]))
+  }
   
   # NIMV duration
   d.nimv <- data$NIMV.duration
-  d.nimv <- round.zeros(abs(d.nimv[!is.na(d.nimv)]))
-  
-  
+  if(length(d.nimv) > 0 & any(!is.na(d.nimv))){
+    d.nimv <- round.zeros(abs(d.nimv[!is.na(d.nimv)]))
+  }
+
   # CFR
   
-  cfr <- round(casefat2(data, embargo.limit)$cfr,  2)
+  temp <-casefat2(data, embargo.limit)
+  if(!is.null(temp)){
+    cfr <- round(temp$cfr,  2)
+  } else {
+    cfr <- NA
+  }
+
   # cfr.lower <-round(casefat2(data, embargo.limit)$lcfr, 2)
   # cfr.upper <-  round(casefat2(data, embargo.limit)$ucfr, 2)
   # 
@@ -337,7 +376,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   # hfr <- round(db[nrow(db), 'mean'], 2)
   # hfr.upper <- round(db[nrow(db), 'upper'], 2)
   # hfr.lower <- round(db[nrow(db), 'lower'], 2)
-  
+
   # Treatments data
   df <- make.props.treats(data)
   n.treat <- df$N
@@ -373,8 +412,8 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   cough_abs <- data %>% filter(cough.any == 2) %>% nrow()
   cough_unk <- data %>% filter(is.na(cough.any)) %>% nrow()
   combined_cough <- tibble(Condition = 'cough_combined', present = as.integer(cough_pre),
-                               absent = as.integer(cough_abs), unknown = as.integer(cough_unk), label = 'Cough',
-                               derived = TRUE, type = "symptom")
+                           absent = as.integer(cough_abs), unknown = as.integer(cough_unk), label = 'Cough',
+                           derived = TRUE, type = "symptom")
   
   
   # Symptoms 
@@ -391,13 +430,13 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   #   mutate(unknown = as.numeric(unknown))
   # 
   # 
-  
-   s.dat <-  rbind(symptom.prev.calc(data, admission.symptoms)%>% filter(!grepl("Cough", label)), combined_cough)%>%
+
+  s.dat <-  rbind(symptom.prev.calc(data, admission.symptoms)%>% filter(!grepl("Cough", label)), combined_cough)%>%
     mutate(present = as.numeric(present)) %>%
     mutate(absent = as.numeric(absent)) %>%
     mutate(unknown = as.numeric(unknown))
   s.dat <- s.dat[order(-s.dat$present), ]
-
+  
   
   # Comorbidities
   
@@ -420,7 +459,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
                                
                                derived = rep(TRUE, 4),
                                type = rep('treatment', 4))
-                               
+  
   
   t.dat <- rbind(treatment.use.calc(data, treatments)%>% filter(!grepl("vasive|support|Oxygen", label)), oxy.treatments)%>% 
     mutate(present = as.numeric(present)) %>% 

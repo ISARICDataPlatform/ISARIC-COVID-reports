@@ -1908,115 +1908,118 @@ casefat2 <-  function(data, embargo.limit, conf=0.95){
   # Exclude rows which no entries for length of stay
   
   data2 <- data %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
-  data2 <- data2 %>%
-    mutate(length.of.stay =  map2_dbl(abs(start.to.exit), abs(admission.to.censored), function(x,y){
-      max(x, y, na.rm = T)
-    })) %>% filter(!is.na(outcome))  %>%
-    filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
-  
-  
-  t <- abs(data2$length.of.stay)  # time
-  f <- as.factor(data2$outcome)   # status
-  
-  ###############################################################
-  # CFR calculation
-  
-  c = survfit(Surv(t, f)~1)
-  di = which(c$states=="death")  # deaths
-  ri = which(c$states=="discharge")  # recoveries
-  
-  
-  # c$pstate is cumulative incidence function for each endpoint
-  theta1 = max(c$pstate[,di])
-  theta2 = max(c$pstate[,ri])
-  
-  cfr = theta1/(theta1+theta2)
-  
-  ###############################################################
-  # Survivor function and variance for combined endpoint
-  
-  f.end <- fct_recode(f, endpoint = 'death', endpoint = 'discharge')
-  
-  c0 = survfit(Surv(t, f.end)~1)
-  si = which(c0$states!="endpoint")
-  S0 = c0$pstate[,si]
-  V0 = (c0$std.err[,si])^2
-  n = length(V0)
-  if(V0[n]<1E-12){
-    V0[n]=V0[n-1]
-  }
-  nrisk = c0$n.risk[,si]
-  
-  
-  # hazard contributions for each endpoint
-  h1 = c$n.event[,di]/nrisk
-  h2 = c$n.event[,ri]/nrisk
-  
-  
-  ###############################################################
-  # Variances
-  
-  # Greenwood-like method
-  M = diag(V0)
-  for(j in 2:nrow(M)){
-    for(k in 1:(j-1)){
-      M[j, k] = V0[k]*S0[j]/S0[k]
-      M[k, j] = M[j, k]
+  if(nrow(data2) > 0){
+    data2 <- data2 %>%
+      mutate(length.of.stay =  map2_dbl(abs(start.to.exit), abs(admission.to.censored), function(x,y){
+        max(x, y, na.rm = T)
+      })) %>% filter(!is.na(outcome))  %>%
+      filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
+    
+    
+    t <- abs(data2$length.of.stay)  # time
+    f <- as.factor(data2$outcome)   # status
+    
+    ###############################################################
+    # CFR calculation
+    
+    c = survfit(Surv(t, f)~1)
+    di = which(c$states=="death")  # deaths
+    ri = which(c$states=="discharge")  # recoveries
+    
+    
+    # c$pstate is cumulative incidence function for each endpoint
+    theta1 = max(c$pstate[,di])
+    theta2 = max(c$pstate[,ri])
+    
+    cfr = theta1/(theta1+theta2)
+    
+    ###############################################################
+    # Survivor function and variance for combined endpoint
+    
+    f.end <- fct_recode(f, endpoint = 'death', endpoint = 'discharge')
+    
+    c0 = survfit(Surv(t, f.end)~1)
+    si = which(c0$states!="endpoint")
+    S0 = c0$pstate[,si]
+    V0 = (c0$std.err[,si])^2
+    n = length(V0)
+    if(V0[n]<1E-12){
+      V0[n]=V0[n-1]
     }
+    nrisk = c0$n.risk[,si]
+    
+    
+    # hazard contributions for each endpoint
+    h1 = c$n.event[,di]/nrisk
+    h2 = c$n.event[,ri]/nrisk
+    
+    
+    ###############################################################
+    # Variances
+    
+    # Greenwood-like method
+    M = diag(V0)
+    for(j in 2:nrow(M)){
+      for(k in 1:(j-1)){
+        M[j, k] = V0[k]*S0[j]/S0[k]
+        M[k, j] = M[j, k]
+      }
+    }
+    
+    v1 = as.numeric(sum((S0)^2*h1/pmax(nrisk, 1)) + (h1 %*% M %*% h1))
+    v2 = as.numeric(sum((S0)^2*h2/pmax(nrisk, 1)) + (h2 %*% M %*% h2))
+    cov12 = as.numeric((h1 %*% M %*% h2))
+    
+    secfr = sqrt((theta2^2*v1 + theta1^2*v2 - 2*theta1*theta2*cov12))/(theta1+theta2)^2
+    
+    
+    
+    ###############################################################
+    # logit scale for CI
+    
+    lc = log(cfr/(1-cfr))
+    sel = sqrt(v1/theta1^2 + v2/theta2^2 - 2*cov12/(theta1*theta2))
+    alpha = (1-conf)/2
+    za = -qnorm(alpha)
+    llc = lc-za*sel
+    ulc = lc+za*sel
+    lcfr = exp(llc)/(1+exp(llc))
+    ucfr = exp(ulc)/(1+exp(ulc))
+    
+    
+    
+    ###############################################################
+    
+    # Two simple methods
+    Nt = c$n
+    Nd = sum(c$n.event[,di])
+    Nr = sum(c$n.event[,ri])
+    
+    e1 = Nd/Nt
+    see1 = sqrt(e1*(1-e1)/Nt)
+    a1 = Nd+0.5
+    b1 = Nt-Nd+0.5
+    le1 = qbeta(0.025, shape1=a1, shape2=b1)
+    ue1 = qbeta(0.975, shape1=a1, shape2=b1)
+    
+    
+    e2 = Nd/(Nd+Nr)
+    see2 = sqrt(e2*(1-e2)/(Nd+Nr))
+    a2 = Nd+0.5
+    b2 = Nr+0.5
+    alpha = (1-conf)/2
+    le2 = qbeta(alpha, shape1=a2, shape2=b2)
+    ue2 = qbeta(1-alpha, shape1=a2, shape2=b2)
+    
+    
+    ###############################################################
+    
+    return(list(cfr=cfr, secfr=secfr, lcfr = lcfr, ucfr = ucfr, c=c,
+                e1=e1, see1=see1, le1=le1, ue1=ue1,
+                e2=e2, see2=see2, le2=le2, ue2=ue2))
+  } else {
+    return(NULL)
   }
-  
-  v1 = as.numeric(sum((S0)^2*h1/pmax(nrisk, 1)) + (h1 %*% M %*% h1))
-  v2 = as.numeric(sum((S0)^2*h2/pmax(nrisk, 1)) + (h2 %*% M %*% h2))
-  cov12 = as.numeric((h1 %*% M %*% h2))
-  
-  secfr = sqrt((theta2^2*v1 + theta1^2*v2 - 2*theta1*theta2*cov12))/(theta1+theta2)^2
-  
-  
-  
-  ###############################################################
-  # logit scale for CI
-  
-  lc = log(cfr/(1-cfr))
-  sel = sqrt(v1/theta1^2 + v2/theta2^2 - 2*cov12/(theta1*theta2))
-  alpha = (1-conf)/2
-  za = -qnorm(alpha)
-  llc = lc-za*sel
-  ulc = lc+za*sel
-  lcfr = exp(llc)/(1+exp(llc))
-  ucfr = exp(ulc)/(1+exp(ulc))
-  
-  
-  
-  ###############################################################
-  
-  # Two simple methods
-  Nt = c$n
-  Nd = sum(c$n.event[,di])
-  Nr = sum(c$n.event[,ri])
-  
-  e1 = Nd/Nt
-  see1 = sqrt(e1*(1-e1)/Nt)
-  a1 = Nd+0.5
-  b1 = Nt-Nd+0.5
-  le1 = qbeta(0.025, shape1=a1, shape2=b1)
-  ue1 = qbeta(0.975, shape1=a1, shape2=b1)
-  
-  
-  e2 = Nd/(Nd+Nr)
-  see2 = sqrt(e2*(1-e2)/(Nd+Nr))
-  a2 = Nd+0.5
-  b2 = Nr+0.5
-  alpha = (1-conf)/2
-  le2 = qbeta(alpha, shape1=a2, shape2=b2)
-  ue2 = qbeta(1-alpha, shape1=a2, shape2=b2)
-  
-  
-  ###############################################################
-  
-  return(list(cfr=cfr, secfr=secfr, lcfr = lcfr, ucfr = ucfr, c=c,
-              e1=e1, see1=see1, le1=le1, ue1=ue1,
-              e2=e2, see2=see2, le2=le2, ue2=ue2))
-  
 }
 
 
@@ -2505,19 +2508,18 @@ adm.outcome.plot <- function(data, embargo.limit, ...){
 #' @keywords internal
 onset.adm <- function(data, plt = F){
   
-  admit.discharge <- data$onset.to.admission
-  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- map_dbl(admit.discharge, round.zeros)
-  # admit.discharge.2 <- admit.discharge.2[-which(admit.discharge.2>160)]
-  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
+  onset.admission <- data$onset.to.admission
+  onset.admission <- abs(onset.admission[!(is.na(onset.admission))])
+  onset.admission.2 <- map_dbl(onset.admission, round.zeros)
+  fit <- fitdist(onset.admission.2, dist = 'gamma', method = 'mle')
   
-  obs <-  admit.discharge.2  # record observed values for reporting
+  obs <-  onset.admission.2  # record observed values for reporting
   
   # Plot
   
   
   if (plt==T){
-    t <- data.frame(x=admit.discharge)
+    t <- data.frame(x=onset.admission)
     plt <- ggplot(data = t) +
       #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
       geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
@@ -2531,7 +2533,7 @@ onset.adm <- function(data, plt = F){
       labs(y = 'Density', x = 'Time (in days) from symptom onset to admission', title = ' ')
     
     return(list(plt=plt, fit=fit, obs = obs))
-  }else{
+  } else {
     return(list(fit=fit, obs = obs))
   }
   
@@ -2585,41 +2587,48 @@ calculate.durations <- function(data){
 ######## Admission to NIV ############
 #' @export
 #' @keywords internal
-adm.to.niv <- function(data,plt = F,...){
+adm.to.niv <- function(data, plt = F,...){
   
   
   data2 <- data %>% filter(!is.na(admission.to.NIMV))
   
-  admit.discharge <- data2$admission.to.NIMV
-  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- map_dbl(admit.discharge, round.zeros)
-  
-  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
-  
-  obs <-  admit.discharge.2  # record observed values for reporting
-  
-  # Plot
-  
-  if(plt == T){
+  if(nrow(data2) > 0){
+    admit.niv <- data2$admission.to.NIMV
+    admit.niv <- abs(admit.niv[!(is.na(admit.niv))])
+    admit.niv.2 <- map_dbl(admit.niv, round.zeros)
     
-    t <- data.frame(x = admit.discharge)
+    fit <- fitdist(admit.niv.2, dist = 'gamma', method = 'mle')
     
-    plt <- ggplot(data = t) +
-      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-      theme(
-        plot.title = element_text( size=14, face="bold", hjust = 0.5),
-        axis.title.x = element_text( size=12),
-        axis.title.y = element_text( size=12)
-      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Time (in days) from admission to NIV', title = '')
+    obs <-  admit.niv.2  # record observed values for reporting
     
-    return(list(plt=plt, fit=fit, obs = obs))
+    # Plot
     
-  }else{
-    return(list(fit=fit, obs = obs))
+    if(plt == T){
+      
+      t <- data.frame(x = admit.niv)
+      
+      plt <- ggplot(data = t) +
+        geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+        theme(
+          plot.title = element_text( size=14, face="bold", hjust = 0.5),
+          axis.title.x = element_text( size=12),
+          axis.title.y = element_text( size=12)
+        ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+        theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                              colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+        labs(y = 'Density', x = 'Time (in days) from admission to NIV', title = '')
+      
+      return(list(plt=plt, fit=fit, obs = obs))
+      
+    }else{
+      return(list(fit=fit, obs = obs))
+    }
+  } else {
+    out <- list(fit=NULL, obs = NULL)
+    if(plt){
+      out$plt <- insufficient.data.plot()
+    } 
+    out
   }
   
 }
@@ -2642,54 +2651,58 @@ adm.to.niv.plot <- function(data,...){
 dur.niv <- function(data,plt = F, ...){
   data2 <- data %>% filter(!is.na(NIMV.start.date)) %>% mutate(event.start.date = NIMV.start.date) %>% mutate(event.end.date = NIMV.end.date)
   
-  temp <- calculate.durations(data2)
-  
-  data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
-    mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
-    mutate(event.censoring = temp$cens)
-  
-  
-  left <- data2$event.duration   # all duration dates
-  pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
-  right <-  replace(left, pos.cens, values=NA )
-  censored_df <- data.frame(left, right)
-  pos.n.cens <- which(data2$event.censoring == 0)
-  obs <- left[pos.n.cens]
-  
-  
-  if(sum(is.na(right)) > !sum(is.na(right))){
-    fit <- "Cannot be computed, insufficient data"
-  }else{
+  if(nrow(data2) > 0){
     
-    fit <- fitdistcens(censored_df, dist = 'gamma')
+    temp <- calculate.durations(data2)
     
-  }
-  
-  # Plt
-  
-  if(!is.character(fit) & plt == T){
+    data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
+      mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
+      mutate(event.censoring = temp$cens)
     
-    t <- data.frame(x = left)
     
-    plt <- ggplot(data = t) +
-      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-      theme(
-        plot.title = element_text( size=14, face="bold", hjust = 0.5),
-        axis.title.x = element_text( size=12),
-        axis.title.y = element_text( size=12)
-      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Duration of NIV (in days)', title = '')
+    left <- data2$event.duration   # all duration dates
+    pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
+    right <-  replace(left, pos.cens, values=NA )
+    censored_df <- data.frame(left, right)
+    pos.n.cens <- which(data2$event.censoring == 0)
+    obs <- left[pos.n.cens]
     
-    return(list(plt=plt, fit=fit, obs = obs))
     
-  }else{
+    if(sum(is.na(right)) > !sum(is.na(right))){
+      fit <- "Cannot be computed, insufficient data"
+    }else{
+      
+      fit <- fitdistcens(censored_df, dist = 'gamma')
+      
+    }
     
-    plt <- insufficient.data.plot()
-    return(list(plt = plt, fit=fit, obs = obs))
+    # Plt
     
+    if(!is.character(fit) & plt == T){
+      
+      t <- data.frame(x = left)
+      
+      plt <- ggplot(data = t) +
+        geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+        theme(
+          plot.title = element_text( size=14, face="bold", hjust = 0.5),
+          axis.title.x = element_text( size=12),
+          axis.title.y = element_text( size=12)
+        ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+        theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                              colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+        labs(y = 'Density', x = 'Duration of NIV (in days)', title = '')
+      
+      return(list(plt=plt, fit=fit, obs = obs))
+      
+    }else{
+      
+      plt <- insufficient.data.plot()
+      return(list(plt = plt, fit=fit, obs = obs))
+      
+    }
+  } else {
+    return(list(plt = insufficient.data.plot(), fit=NULL, obs = NULL))
   }
 }
 
@@ -2709,35 +2722,44 @@ adm.to.icu <- function(data, plt = F,...){
   
   data2 <- data %>% filter(!is.na(admission.to.ICU))
   
-  admit.discharge <- data2$admission.to.ICU
-  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- map_dbl(admit.discharge, round.zeros)
-  
-  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
-  
-  obs <-  admit.discharge.2  # record observed values for reporting
-  
-  # Plot
-  
-  if(plt==T){
+  if(nrow(data2) > 0){
     
-    t <- data.frame(x = admit.discharge)
+    admit.icu <- data2$admission.to.ICU
+    admit.icu <- abs(admit.icu[!(is.na(admit.icu))])
+    admit.icu.2 <- map_dbl(admit.icu, round.zeros)
     
-    plt <- ggplot(data = t) +
-      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-      theme(
-        plot.title = element_text( size=14, face="bold", hjust = 0.5),
-        axis.title.x = element_text( size=12),
-        axis.title.y = element_text( size=12)
-      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Time (in days) from admission to ICU', title = '')
+    fit <- fitdist(admit.icu.2, dist = 'gamma', method = 'mle')
     
-    return(list(plt=plt, fit=fit, obs = obs))
-  }else{
-    return(list(fit=fit, obs = obs))
+    obs <-  admit.icu.2  # record observed values for reporting
+    
+    # Plot
+    
+    if(plt==T){
+      
+      t <- data.frame(x = admit.icu)
+      
+      plt <- ggplot(data = t) +
+        geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+        theme(
+          plot.title = element_text( size=14, face="bold", hjust = 0.5),
+          axis.title.x = element_text( size=12),
+          axis.title.y = element_text( size=12)
+        ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+        theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                              colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+        labs(y = 'Density', x = 'Time (in days) from admission to ICU', title = '')
+      
+      return(list(plt=plt, fit=fit, obs = obs))
+    }else{
+      return(list(fit=fit, obs = obs))
+    }
+  } else {
+    if(plt==T){
+      return(list(fit=NULL, obs = NULL, plt = insufficient.data.plot()))
+    } else {
+      return(list(fit=NULL, obs = NULL))
+    }
+    
   }
   
 }
@@ -2756,57 +2778,60 @@ dur.icu <- function(data, plt = F, ...) {
   
   data2 <- data %>% filter(!is.na(ICU.admission.date)) %>% mutate(event.start.date = ICU.admission.date) %>% mutate(event.end.date = ICU.discharge.date)
   
-  temp <- calculate.durations(data2)
-  
-  data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
-    mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
-    mutate(event.censoring = temp$cens)
-  
-  mutate(event.duration = map_dbl(durs, function(x) calculate.durations(x)$durs)) %>%
-    mutate(event.duration = map_dbl(event.duration, function(x) abs(round.zeros(x)))) %>%
-    mutate(event.censoring = map_dbl(cens, calculate.durations(x)$cens))
-  
-  left <- data2$event.duration   # all duration dates
-  pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
-  right <-  replace(left, pos.cens, values=NA )
-  censored_df <- data.frame(left, right)
-  
-  pos.n.cens <- which(data2$event.censoring == 0)
-  obs <- left[pos.n.cens]
-  
-  if(sum(is.na(right)) > !sum(is.na(right))){
+  if(nrow(data2) > 0){
+    temp <- calculate.durations(data2)
     
-    fit <- "Cannot be computed, insufficient data"
-  }else{
+    data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
+      mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
+      mutate(event.censoring = temp$cens)
     
-    fit <- fitdistcens(censored_df, dist = 'gamma')
-  }
-  
-  
-  if(!is.character(fit) & plt==T){
+    mutate(event.duration = map_dbl(durs, function(x) calculate.durations(x)$durs)) %>%
+      mutate(event.duration = map_dbl(event.duration, function(x) abs(round.zeros(x)))) %>%
+      mutate(event.censoring = map_dbl(cens, calculate.durations(x)$cens))
+    
+    left <- data2$event.duration   # all duration dates
+    pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
+    right <-  replace(left, pos.cens, values=NA )
+    censored_df <- data.frame(left, right)
+    
+    pos.n.cens <- which(data2$event.censoring == 0)
+    obs <- left[pos.n.cens]
+    
+    if(sum(is.na(right)) > !sum(is.na(right))){
+      
+      fit <- "Cannot be computed, insufficient data"
+    }else{
+      
+      fit <- fitdistcens(censored_df, dist = 'gamma')
+    }
     
     
-    t <- data.frame(x = left)
-    
-    plt <- ggplot(data = t) +
-      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-      theme(
-        plot.title = element_text( size=14, face="bold", hjust = 0.5),
-        axis.title.x = element_text( size=12),
-        axis.title.y = element_text( size=12)
-      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Time (in days) spent in ICU', title = '')
-    
-    return(list(plt=plt, fit=fit, obs = obs))
-    
-  }else{
-    
-    plt <- insufficient.data.plot()
-    return(list(plt = plt, fit=fit, obs = obs))
-    
+    if(!is.character(fit) & plt==T){
+      
+      
+      t <- data.frame(x = left)
+      
+      plt <- ggplot(data = t) +
+        geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+        theme(
+          plot.title = element_text( size=14, face="bold", hjust = 0.5),
+          axis.title.x = element_text( size=12),
+          axis.title.y = element_text( size=12)
+        ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+        theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                              colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+        labs(y = 'Density', x = 'Time (in days) spent in ICU', title = '')
+      
+      return(list(plt=plt, fit=fit, obs = obs))
+      
+    }else{
+      
+      plt <- insufficient.data.plot()
+      return(list(plt = plt, fit=fit, obs = obs))
+      
+    }
+  } else {
+    return(list(plt = insufficient.data.plot(), fit=NULL, obs = NULL))
   }
 }
 
@@ -2827,37 +2852,45 @@ dur.icu.plot <- function(data,...){
 adm.to.imv <- function(data, plt = F, ...){
   
   data2 <- data %>% filter(!is.na(admission.to.IMV))
-  
-  admit.discharge <- data2$admission.to.IMV
-  admit.discharge <- abs(admit.discharge[!(is.na(admit.discharge))])
-  admit.discharge.2 <- map_dbl(admit.discharge, round.zeros)
-  
-  fit <- fitdist(admit.discharge.2, dist = 'gamma', method = 'mle')
-  
-  obs <-  admit.discharge.2  # record observed values for reporting
-  
-  # Plot
-  
-  if(plt == T){
+  if(nrow(data2)> 0){
     
-    t <- data.frame(x = admit.discharge)
     
-    plt <- ggplot(data = t) +
-      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-      theme(
-        plot.title = element_text( size=14, face="bold", hjust = 0.5),
-        axis.title.x = element_text( size=12),
-        axis.title.y = element_text( size=12)
-      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Time (in days) from admission to IMV', title = '')
+    admit.imv <- data2$admission.to.IMV
+    admit.imv <- abs(admit.imv[!(is.na(admit.imv))])
+    admit.imv.2 <- map_dbl(admit.imv, round.zeros)
     
-    return(list(plt=plt, fit=fit, obs = obs))
+    fit <- fitdist(admit.imv.2, dist = 'gamma', method = 'mle')
     
-  }else{
-    return(list(fit=fit, obs = obs))
+    obs <-  admit.imv.2  # record observed values for reporting
+    
+    # Plot
+    
+    if(plt == T){
+      
+      t <- data.frame(x = admit.imv)
+      
+      plt <- ggplot(data = t) +
+        geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+        theme(
+          plot.title = element_text( size=14, face="bold", hjust = 0.5),
+          axis.title.x = element_text( size=12),
+          axis.title.y = element_text( size=12)
+        ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+        theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                              colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+        labs(y = 'Density', x = 'Time (in days) from admission to IMV', title = '')
+      
+      return(list(plt=plt, fit=fit, obs = obs))
+      
+    }else{
+      return(list(fit=fit, obs = obs))
+    }
+  } else {
+    out <- list(fit=NULL, obs = NULL)
+    if(plt){
+      out$plt <- insufficient.data.plot()
+    }
+    out
   }
 }
 
@@ -2876,55 +2909,58 @@ dur.imv <- function(data, plt=F, ...) {
   
   data2 <- data %>% filter(!is.na(IMV.start.date)) %>% mutate(event.start.date = IMV.start.date) %>% mutate(event.end.date = IMV.end.date)
   
-  temp <- calculate.durations(data2)
-  
-  data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
-    mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
-    mutate(event.censoring = temp$cens)
-  
-  
-  left <- data2$event.duration   # all duration dates
-  pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
-  right <-  replace(left, pos.cens, values=NA )
-  censored_df <- data.frame(left, right)
-  pos.n.cens <- which(data2$event.censoring == 0)
-  obs <- left[pos.n.cens]
-  
-  
-  if(sum(is.na(right)) > !sum(is.na(right))){
-    fit <- "Cannot be computed, insufficient data"
-  }else{
+  if(nrow(data2) > 0){
     
-    fit <- fitdistcens(censored_df, dist = 'gamma')
+    temp <- calculate.durations(data2)
+    
+    data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
+      mutate(event.duration = map_dbl(event.duration, function(x) round.zeros(x))) %>%
+      mutate(event.censoring = temp$cens)
     
     
+    left <- data2$event.duration   # all duration dates
+    pos.cens <- which(data2$event.censoring == 1) # select positions for censored cases
+    right <-  replace(left, pos.cens, values=NA )
+    censored_df <- data.frame(left, right)
+    pos.n.cens <- which(data2$event.censoring == 0)
+    obs <- left[pos.n.cens]
+    
+    
+    if(sum(is.na(right)) > !sum(is.na(right))){
+      fit <- "Cannot be computed, insufficient data"
+    }else{
+      
+      fit <- fitdistcens(censored_df, dist = 'gamma')
+      
+      
+    }
+    
+    
+    
+    if(!is.character(fit) & plt ==T){
+      
+      t <- data.frame(x = left)
+      
+      plt <- ggplot(data = t) +
+        geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
+        theme(
+          plot.title = element_text( size=14, face="bold", hjust = 0.5),
+          axis.title.x = element_text( size=12),
+          axis.title.y = element_text( size=12)
+        ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
+        theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+                                              colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
+        labs(y = 'Density', x = 'Time (in days) spent receiving IMV', title = '')
+      
+      return(list(plt=plt, fit=fit, obs = obs))
+    }else{
+      
+      plt <- insufficient.data.plot()
+      return(list(plt = plt, fit=fit, obs = obs))
+    }
+  } else {
+    return(list(plt = insufficient.data.plot(), fit=NULL, obs = NULL))
   }
-  
-  
-  
-  if(!is.character(fit) & plt ==T){
-    
-    t <- data.frame(x = left)
-    
-    plt <- ggplot(data = t) +
-      #geom_histogram(data = as.data.frame(admit.discharge), aes(x=admit.discharge, y=..density..), binwidth = 1,  color = 'white', fill = 'blue', alpha = 0.8)+
-      geom_line(aes(x=x, y=dgamma(x,fit$estimate[["shape"]], fit$estimate[["rate"]])), color="blue", size = 1.1) +
-      theme(
-        plot.title = element_text( size=14, face="bold", hjust = 0.5),
-        axis.title.x = element_text( size=12),
-        axis.title.y = element_text( size=12)
-      ) +  geom_vline(xintercept = fit.summary.gamma(fit)$m, linetype = 'dashed') +
-      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) ) +
-      labs(y = 'Density', x = 'Time (in days) spent receiving IMV', title = '')
-    
-    return(list(plt=plt, fit=fit, obs = obs))
-  }else{
-    
-    plt <- insufficient.data.plot()
-    return(list(plt = plt, fit=fit, obs = obs))
-  }
-  
 }
 
 
