@@ -1009,32 +1009,39 @@ modified.km.plot <- function(data, embargo.limit, ...) {
   
   # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
   
-  # Exclude rows which no entries for length of stay
   
-  # c$pstate is cumulative incidence function for each endpoint
-  c <- casefat2(data, embargo.limit)$c
-  Fd <- c$pstate[,which(c$states=="death")] # death
-  Fr <- c$pstate[,which(c$states=="discharge")] # recovery
-  cfr <- casefat2(data, embargo.limit)$cfr
-  
-  
-  # Plot
-  df <- data.frame(day = rep(c$time,3), value = c(1-Fr, Fd, rep(cfr,length(Fd))),
-                   status =factor(c(rep('discharge', length(Fd)), rep('death', length(Fd)), rep('cfr', length(Fd))),
-                                  levels = c("death", "discharge", "cfr")
-                   ))
-  
-  
-  ggplot(data = df)+
-    geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
-    geom_ribbon(data = df %>% filter(status == "death"), aes(x=day, ymin = 0, ymax = value), fill ="indianred", alpha = 0.66)+
-    geom_ribbon(data = df %>% filter(status == "discharge"), aes(x=day, ymin = value, ymax = 1), fill ="springgreen4", alpha = 0.66)+
-    theme_bw()+ xlim(0, 50) +
-    scale_colour_manual(values = c("indianred",  "springgreen4", "black"), name = "Legend", labels = c( "Deaths", "Discharges","Case fatality\nratio")) +
-    scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
-    xlab("Days after admission") +
-    ylab("Cumulative probability") +
-    ylim(c(0,1))
+  if(is.na(data$admission.to.censored) > 0.8*nrow(data) | is.na(data$start.to.exit)> 0.8*nrow(data)){
+    plt <- insufficient.data.plot()
+  }else{
+    
+    # Exclude rows which no entries for length of stay
+    
+    # c$pstate is cumulative incidence function for each endpoint
+    c <- casefat2(data, embargo.limit)$c
+    Fd <- c$pstate[,which(c$states=="death")] # death
+    Fr <- c$pstate[,which(c$states=="discharge")] # recovery
+    cfr <- casefat2(data, embargo.limit)$cfr
+    
+    
+    # Plot
+    df <- data.frame(day = rep(c$time,3), value = c(1-Fr, Fd, rep(cfr,length(Fd))),
+                     status =factor(c(rep('discharge', length(Fd)), rep('death', length(Fd)), rep('cfr', length(Fd))),
+                                    levels = c("death", "discharge", "cfr")
+                     ))
+    
+    
+    ggplot(data = df)+
+      geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
+      geom_ribbon(data = df %>% filter(status == "death"), aes(x=day, ymin = 0, ymax = value), fill ="indianred", alpha = 0.66)+
+      geom_ribbon(data = df %>% filter(status == "discharge"), aes(x=day, ymin = value, ymax = 1), fill ="springgreen4", alpha = 0.66)+
+      theme_bw()+ xlim(0, 50) +
+      scale_colour_manual(values = c("indianred",  "springgreen4", "black"), name = "Legend", labels = c( "Deaths", "Discharges","Case fatality\nratio")) +
+      scale_linetype_manual(values = c( "solid", "solid", "dashed" ),  guide = F) +
+      xlab("Days after admission") +
+      ylab("Cumulative probability") +
+      ylim(c(0,1))
+    
+  }
   
 }
 
