@@ -1010,7 +1010,7 @@ modified.km.plot <- function(data, embargo.limit, ...) {
   # Method: Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
   
   
-  if(is.na(data$admission.to.censored) > 0.8*nrow(data) | is.na(data$start.to.exit)> 0.8*nrow(data)){
+  if(sum(is.na(data$admission.to.censored)) > 0.8*nrow(data) | sum(is.na(data$start.to.exit)) > 0.8*nrow(data)){
     plt <- insufficient.data.plot()
   }else{
     
