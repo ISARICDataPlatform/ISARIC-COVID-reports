@@ -21,7 +21,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   transfer.outcome <- sum(summary(data$exit.code)[['transfer']],  summary(data$exit.code)[['transfer.palliative']])
   unk.outcome <-  sum(summary(data$exit.code)[['hospitalisation']], summary(data$exit.code)[['unknown']]) # 'Hospitalisation' entries mostly mean the data collection wasn't completed
   
-  
+
   
   N.censored <- data %>% filter(outcome == "censored") %>% nrow()    # censored-count
   N.deaths <- data %>% filter(outcome == "death") %>% nrow()    # deaths-count
@@ -369,8 +369,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   # cfr.non.icu.l <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.l
   # cfr.non.icu.u <- icu.cfr.func(data, embargo.limit)$cfr.non.icu.u
   # 
-  
-  
+
   # # HFR
   # db <- hospital.fatality.ratio(data)$db
   # hfr <- round(db[nrow(db), 'mean'], 2)
@@ -430,6 +429,8 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   #   mutate(unknown = as.numeric(unknown))
   # 
   # 
+  
+
 
   s.dat <-  rbind(symptom.prev.calc(data, admission.symptoms)%>% filter(!grepl("Cough", label)), combined_cough)%>%
     mutate(present = as.numeric(present)) %>%
@@ -475,8 +476,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   # Sum
   
   #surv.sum <- sum(table(surv.plot.func(data)$df$sex, surv.plot.func(data)$df$event))
-  
-  
+
   return(list(site.name = site.name,
               embargo.length = embargo.length,
               
