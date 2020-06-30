@@ -242,7 +242,6 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   if(!is.null(adm.niv.1$fit)){
     adm.niv.summ <- fit.summary.gamma(adm.niv.1$fit)
     
-    
     adm.niv <- round(adm.niv.summ$m, 1)
     adm.niv.l <- round(adm.niv.summ$lower.m, 1)
     adm.niv.u <- round(adm.niv.summ$upper.m, 1)
@@ -260,6 +259,11 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   dur.niv.1 <- dur.niv(data)
   if(!is.null(dur.niv.1$fit)){
     dur.niv.summ <- fit.summary.gamma(dur.niv.1$fit)
+    
+    dur.niv <- round(dur.niv.summ$m, 1)
+    dur.niv.l <- round(dur.niv.summ$lower.m, 1)
+    dur.niv.u <- round(dur.niv.summ$upper.m, 1)
+    
   } else {
     dur.niv <- NA
     dur.niv.l <- NA
