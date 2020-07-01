@@ -1909,13 +1909,12 @@ casefat2 <-  function(data, embargo.limit, conf=0.95){
   # Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
   
   #############################################################
-  
-  # Modify data
+  # A bit of data shaping
   
   # Exclude rows which no entries for length of stay
   
   data2 <- data %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
-  if(nrow(data2) > 0){
+  if(nrow(data2) > 0.2*nrow(data)){ # check that sufficient data is available 
     data2 <- data2 %>%
       mutate(length.of.stay =  map2_dbl(abs(start.to.exit), abs(admission.to.censored), function(x,y){
         max(x, y, na.rm = T)
@@ -1928,105 +1927,109 @@ casefat2 <-  function(data, embargo.limit, conf=0.95){
     
     ###############################################################
     # CFR calculation
-    
-    c = survfit(Surv(t, f)~1)
-    di = which(c$states=="death")  # deaths
-    ri = which(c$states=="discharge")  # recoveries
-    
-    
-    # c$pstate is cumulative incidence function for each endpoint
-    theta1 = max(c$pstate[,di])
-    theta2 = max(c$pstate[,ri])
-    
-    cfr = theta1/(theta1+theta2)
-    
-    ###############################################################
-    # Survivor function and variance for combined endpoint
-    
-    f.end <- fct_recode(f, endpoint = 'death', endpoint = 'discharge')
-    
-    c0 = survfit(Surv(t, f.end)~1)
-    si = which(c0$states!="endpoint")
-    S0 = c0$pstate[,si]
-    V0 = (c0$std.err[,si])^2
-    n = length(V0)
-    if(V0[n]<1E-12){
-      V0[n]=V0[n-1]
-    }
-    nrisk = c0$n.risk[,si]
-    
-    
-    # hazard contributions for each endpoint
-    h1 = c$n.event[,di]/nrisk
-    h2 = c$n.event[,ri]/nrisk
-    
-    
-    ###############################################################
-    # Variances
-    
-    # Greenwood-like method
-    M = diag(V0)
-    for(j in 2:nrow(M)){
-      for(k in 1:(j-1)){
-        M[j, k] = V0[k]*S0[j]/S0[k]
-        M[k, j] = M[j, k]
+    if(length(levels(f)) < 3){ # check that all outcomes are represented 
+      return(NULL)
+    }else{
+      c = survfit(Surv(t, f)~1)
+      di = which(c$states=="death")  # deaths
+      ri = which(c$states=="discharge")  # recoveries
+      
+      
+      # c$pstate is cumulative incidence function for each endpoint
+      theta1 = max(c$pstate[,di])
+      theta2 = max(c$pstate[,ri])
+      
+      cfr = theta1/(theta1+theta2)
+      
+      ###############################################################
+      # Survivor function and variance for combined endpoint
+      
+      f.end <- fct_recode(f, endpoint = 'death', endpoint = 'discharge')
+      
+      c0 = survfit(Surv(t, f.end)~1)
+      si = which(c0$states!="endpoint")
+      S0 = c0$pstate[,si]
+      V0 = (c0$std.err[,si])^2
+      n = length(V0)
+      if(V0[n]<1E-12){
+        V0[n]=V0[n-1]
       }
-    }
+      nrisk = c0$n.risk[,si]
+      
+      
+      # hazard contributions for each endpoint
+      h1 = c$n.event[,di]/nrisk
+      h2 = c$n.event[,ri]/nrisk
+      
+      
+      ###############################################################
+      # Variances
+      
+      # Greenwood-like method
+      M = diag(V0)
+      for(j in 2:nrow(M)){
+        for(k in 1:(j-1)){
+          M[j, k] = V0[k]*S0[j]/S0[k]
+          M[k, j] = M[j, k]
+        }
+      }
+      
+      v1 = as.numeric(sum((S0)^2*h1/pmax(nrisk, 1)) + (h1 %*% M %*% h1))
+      v2 = as.numeric(sum((S0)^2*h2/pmax(nrisk, 1)) + (h2 %*% M %*% h2))
+      cov12 = as.numeric((h1 %*% M %*% h2))
+      
+      secfr = sqrt((theta2^2*v1 + theta1^2*v2 - 2*theta1*theta2*cov12))/(theta1+theta2)^2
+      
+      
+      
+      ###############################################################
+      # logit scale for CI
+      
+      lc = log(cfr/(1-cfr))
+      sel = sqrt(v1/theta1^2 + v2/theta2^2 - 2*cov12/(theta1*theta2))
+      alpha = (1-conf)/2
+      za = -qnorm(alpha)
+      llc = lc-za*sel
+      ulc = lc+za*sel
+      lcfr = exp(llc)/(1+exp(llc))
+      ucfr = exp(ulc)/(1+exp(ulc))
+      
+      
+      
+      ###############################################################
+      
+      # Two simple methods
+      Nt = c$n
+      Nd = sum(c$n.event[,di])
+      Nr = sum(c$n.event[,ri])
+      
+      e1 = Nd/Nt
+      see1 = sqrt(e1*(1-e1)/Nt)
+      a1 = Nd+0.5
+      b1 = Nt-Nd+0.5
+      le1 = qbeta(0.025, shape1=a1, shape2=b1)
+      ue1 = qbeta(0.975, shape1=a1, shape2=b1)
+      
+      
+      e2 = Nd/(Nd+Nr)
+      see2 = sqrt(e2*(1-e2)/(Nd+Nr))
+      a2 = Nd+0.5
+      b2 = Nr+0.5
+      alpha = (1-conf)/2
+      le2 = qbeta(alpha, shape1=a2, shape2=b2)
+      ue2 = qbeta(1-alpha, shape1=a2, shape2=b2)
+      
+      
+      ###############################################################
+      
+      return(list(cfr=cfr, secfr=secfr, lcfr = lcfr, ucfr = ucfr, c=c,
+                  e1=e1, see1=see1, le1=le1, ue1=ue1,
+                  e2=e2, see2=see2, le2=le2, ue2=ue2))}
     
-    v1 = as.numeric(sum((S0)^2*h1/pmax(nrisk, 1)) + (h1 %*% M %*% h1))
-    v2 = as.numeric(sum((S0)^2*h2/pmax(nrisk, 1)) + (h2 %*% M %*% h2))
-    cov12 = as.numeric((h1 %*% M %*% h2))
-    
-    secfr = sqrt((theta2^2*v1 + theta1^2*v2 - 2*theta1*theta2*cov12))/(theta1+theta2)^2
-    
-    
-    
-    ###############################################################
-    # logit scale for CI
-    
-    lc = log(cfr/(1-cfr))
-    sel = sqrt(v1/theta1^2 + v2/theta2^2 - 2*cov12/(theta1*theta2))
-    alpha = (1-conf)/2
-    za = -qnorm(alpha)
-    llc = lc-za*sel
-    ulc = lc+za*sel
-    lcfr = exp(llc)/(1+exp(llc))
-    ucfr = exp(ulc)/(1+exp(ulc))
-    
-    
-    
-    ###############################################################
-    
-    # Two simple methods
-    Nt = c$n
-    Nd = sum(c$n.event[,di])
-    Nr = sum(c$n.event[,ri])
-    
-    e1 = Nd/Nt
-    see1 = sqrt(e1*(1-e1)/Nt)
-    a1 = Nd+0.5
-    b1 = Nt-Nd+0.5
-    le1 = qbeta(0.025, shape1=a1, shape2=b1)
-    ue1 = qbeta(0.975, shape1=a1, shape2=b1)
-    
-    
-    e2 = Nd/(Nd+Nr)
-    see2 = sqrt(e2*(1-e2)/(Nd+Nr))
-    a2 = Nd+0.5
-    b2 = Nr+0.5
-    alpha = (1-conf)/2
-    le2 = qbeta(alpha, shape1=a2, shape2=b2)
-    ue2 = qbeta(1-alpha, shape1=a2, shape2=b2)
-    
-    
-    ###############################################################
-    
-    return(list(cfr=cfr, secfr=secfr, lcfr = lcfr, ucfr = ucfr, c=c,
-                e1=e1, see1=see1, le1=le1, ue1=ue1,
-                e2=e2, see2=see2, le2=le2, ue2=ue2))
-  } else {
+  }else{
     return(NULL)
   }
+  
 }
 
 
