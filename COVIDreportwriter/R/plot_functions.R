@@ -3128,24 +3128,54 @@ comorb.by.age <- function(data, ...) {
     # ylimit may need to go up when adding cardiac comorbidities and hypertension
     # back in
     
-    pa <- plot.prop.by.age(df, df$asthma_mhyn,
-                           "Proportion with\nasthma", ymax = ylimit, sz = size)
-    pb <- plot.prop.by.age(df, df$malignantneo_mhyn,
-                           "Proportion with\nmalignancy", ymax = ylimit, sz = size)
-    pc <- plot.prop.by.age(df, df$obesity_mhyn,
-                           "Proportion with\nobesity", ymax = ylimit, sz = size)
-    pd <- plot.prop.by.age(df, df$diabetes,
-                           "Proportion with\ndiabetes mellitus", ymax = ylimit, sz = size)
-    pe <- plot.prop.by.age(df, df$dementia_mhyn,
-                           "Proportion with\ndementia", ymax = ylimit, sz = size)
+    if(any(!is.na(df$aidshiv_mhyn))){
+      pa <- plot.prop.by.age(df, df$asthma_mhyn,
+                             "Proportion with\nasthma", ymax = ylimit, sz = size)
+    } else {
+      pa <- insufficient.data.plot()
+    }
+    if(any(!is.na(df$malignantneo_mhyn))){
+      pb <- plot.prop.by.age(df, df$malignantneo_mhyn,
+                             "Proportion with\nmalignancy", ymax = ylimit, sz = size)
+    } else {
+      pb <- insufficient.data.plot()
+    }
+    if(any(!is.na(df$obesity_mhyn))){
+      pc <- plot.prop.by.age(df, df$obesity_mhyn,
+                             "Proportion with\nobesity", ymax = ylimit, sz = size)
+    } else {
+      pc <- insufficient.data.plot()
+    }
+    if(any(!is.na(df$diabetes))){
+      pd <- plot.prop.by.age(df, df$diabetes,
+                             "Proportion with\ndiabetes mellitus", ymax = ylimit, sz = size)
+    } else {
+      pd <- insufficient.data.plot()
+    }
+    if(any(!is.na(df$dementia_mhyn))){
+      pe <- plot.prop.by.age(df, df$dementia_mhyn,
+                             "Proportion with\ndementia", ymax = ylimit, sz = size)
+    } else {
+      pe <- insufficient.data.plot()
+    }
+    
+    
+
+
+
+
     # Chronic cardiac disease omitted as described above.
     # pf <- plot.prop.by.age(df, df$chrincard,
     #                        "Proportion with\nchronic cardiac disease", ymax = ylimit, sz = size)
     # Most have missing for hypertension - leave out until resolved
     #  pg <- plot.prop.by.age(df, df$hypertension_mhyn,
     #                         "Proportion with\nhypertension", ymax = ylimit, sz = size)
-    ph <- plot.prop.by.age(df, df$CurrentSmoke,
-                           "Proportion who\ncurrently smoke", ymax = ylimit, sz = size)
+    if(any(!is.na(df$CurrentSmoke))){
+      ph <- plot.prop.by.age(df, df$CurrentSmoke,
+                             "Proportion who\ncurrently smoke", ymax = ylimit, sz = size)
+    } else {
+      ph <- insufficient.data.plot()
+    }
     
     #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
     p <- arrangeGrob(pa, pb, pc, pd, pe, ph, ncol = 2)
@@ -3184,17 +3214,25 @@ sx.by.age <- function(data, admission.symptoms, ...) {
     df$All <- 1
     if(length(intersect(colnames(df), c("cough.bloodysputum", "cough.nosputum", 
                                         "cough.sputum") )) != 0){
-      df$Cough <- pmax(df$cough.bloodysputum, df$cough.nosputum, df$cough.sputum,
-                       na.rm = TRUE)
+      
+      colnamestemp <- intersect(colnames(df), c("cough.bloodysputum", "cough.nosputum", 
+                                                "cough.sputum") )
+      
+      
+      df <- df %>% mutate(Cough = pmap_dbl(list(!!!rlang::parse_exprs(colnamestemp)), max)) 
+      
     } else {
       df$Cough <- NA 
     }
     if(length(intersect(colnames(df), c("sorethroat_ceoccur_v2", 
                                         "runnynose_ceoccur_v2", 
                                         "earpain_ceoccur_v2") )) != 0){
-      df$Upper.Resp <- pmax(df$sorethroat_ceoccur_v2, df$runnynose_ceoccur_v2, 
-                            df$earpain_ceoccur_v2,
-                            na.rm = TRUE)
+
+      colnamestemp <- intersect(colnames(df), c("sorethroat_ceoccur_v2",  "runnynose_ceoccur_v2",  "earpain_ceoccur_v2") )
+      
+      
+      df <- df %>% mutate(Upper.Resp = pmap_dbl(list(!!!rlang::parse_exprs(colnamestemp)), max)) 
+      
     } else {
       df$Upper.Resp <- NA 
     }
@@ -3202,25 +3240,36 @@ sx.by.age <- function(data, admission.symptoms, ...) {
                                         "jointpain_ceoccur_v2", 
                                         "fatigue_ceoccur_v2", 
                                         "headache_ceoccur_v2") )) != 0){
-      df$Const <- pmax(df$myalgia_ceoccur_v2, df$jointpain_ceoccur_v2, 
-                       df$fatigue_ceoccur_v2, df$headache_ceoccur_v2,
-                       na.rm = TRUE)
+      
+      colnamestemp <- intersect(colnames(df), c("myalgia_ceoccur_v2", 
+                                                "jointpain_ceoccur_v2", 
+                                                "fatigue_ceoccur_v2", 
+                                                "headache_ceoccur_v2"))
+      df <- df %>% mutate(Const = pmap_dbl(list(!!!rlang::parse_exprs(colnamestemp)), max)) 
+
     } else {
       df$Const <- NA 
     }       
     # Cough or fever
     if(length(intersect(colnames(df), c("Cough", 
-                                        "df$fever_ceoccur_v2") )) != 0){
-      df$Cough.Fever <- pmax(df$Cough, df$fever_ceoccur_v2,
-                             na.rm = TRUE)
+                                        "fever_ceoccur_v2") )) != 0){
+      
+      colnamestemp <- intersect(colnames(df), c("Cough", 
+                                                "fever_ceoccur_v2"))
+      df <- df %>% mutate(Cough.Fever = pmap_dbl(list(!!!rlang::parse_exprs(colnamestemp)), max)) 
+      
     } else {
       df$Cough.Fever <- NA 
     }    
     # Cough, fever or short of breath
     if(length(intersect(colnames(df), c("Cough.Fever", 
-                                        "df$shortness.breath") )) != 0){
-      df$Cough.Fever.SOB <- pmax(df$Cough.Fever, df$shortness.breath,
-                                 na.rm = TRUE)
+                                        "shortness.breath") )) != 0){
+      
+      colnamestemp <- intersect(colnames(df), c("Cough.Fever", 
+                                                "shortness.breath"))
+      df <- df %>% mutate(Cough.Fever.SOB = pmap_dbl(list(!!!rlang::parse_exprs(colnamestemp)), max)) 
+      
+
     } else {
       df$Cough.Fever.SOB <- NA 
     }    
