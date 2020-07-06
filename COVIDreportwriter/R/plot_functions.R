@@ -1897,7 +1897,6 @@ fit.summary.gamma <- function(fit){
 }
 
 
-# @todo set filter for lengths of stay to automatically remove potentially wrong entries > 150 days
 
 #' @export
 #' @import dplyr
@@ -1913,14 +1912,15 @@ casefat2 <-  function(data, embargo.limit, conf=0.95){
   
   # Exclude rows which no entries for length of stay
   
-  data2 <- data %>% dplyr::filter(!is.na(start.to.exit) | !is.na(admission.to.censored))
+  data2 <- data %>% dplyr::filter(!(is.na(start.to.exit) | start.to.exit < 0) | !(is.na(start.to.censored) | start.to.censored <0 ))
+  
   if(nrow(data2) > 0.2*nrow(data)){ # check that sufficient data is available 
     data2 <- data2 %>%
-      mutate(length.of.stay =  map2_dbl(abs(start.to.exit), abs(admission.to.censored), function(x,y){
+      mutate(length.of.stay =  map2_dbl(start.to.exit, start.to.censored, function(x,y){
         max(x, y, na.rm = T)
       })) %>% filter(!is.na(outcome))  %>%
-      filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01")))
-    
+      filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01"))) # Exclude improbable length of stay values.
+     
     
     t <- abs(data2$length.of.stay)  # time
     f <- as.factor(data2$outcome)   # status
