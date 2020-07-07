@@ -906,15 +906,20 @@ treatment.use.plot <- function(data, treatments, ...){
     mutate(label = glue("{Count}/{total}")) %>%
     dplyr::select(-total)
   
-  plt<-  ggplot(data2) +
-    geom_col(aes(x = Treatment, y = Proportion, fill = affected)) +
-    geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
-    theme_bw() +
-    coord_flip() +
-    ylim(0, 1) +
-    scale_fill_manual(values = c("chartreuse2", "chartreuse4"), name = "Treatment", labels = c("No", "Yes")) +
-    theme(axis.text.y = element_text(size = 7))
-  plt
+  
+  if(nrow(data2) >0 ){
+    plt<-  ggplot(data2) +
+      geom_col(aes(x = Treatment, y = Proportion, fill = affected)) +
+      geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
+      theme_bw() +
+      coord_flip() +
+      ylim(0, 1) +
+      scale_fill_manual(values = c("chartreuse2", "chartreuse4"), name = "Treatment", labels = c("No", "Yes")) +
+      theme(axis.text.y = element_text(size = 7))
+    plt
+  } else {
+    insufficient.data.plot()
+  }
 }
 
 
@@ -1186,6 +1191,10 @@ treatment.upset <- function(data, ...) {
     ) %>%
     pivot_longer(2:6, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present))
+  
+  if(nrow(treatments2) ==0){
+    return(insufficient.data.plot())
+  }
   # Change labels
   treatments2$Treatment[treatments2$Treatment == "O2.ever"] <-
     "Any oxygen provision"
@@ -1416,6 +1425,10 @@ status.by.time.after.admission <- function(data, ...){
     )) %>%
     dplyr::mutate(final.status = factor(final.status)) %>%
     filter(!is.na(admission.date))
+  
+  if(all(is.na(data2$outcome.date))){
+    return(insufficient.data.plot())
+  }
   
   timings.wrangle <- data2 %>%
     dplyr::select(subjid,
@@ -1735,6 +1748,9 @@ icu.treatment.upset <- function(data, ...) {
     ) %>%
     pivot_longer(2:7, names_to = "Treatment", values_to = "Present") %>%
     mutate(Present = as.logical(Present))
+  if(nrow(treatments2)==0){
+    return(insufficient.data.plot())
+  }
   # Change labels
   treatments2$Treatment[treatments2$Treatment == "O2.ever"] <-
     "Any oxygen provision"
@@ -1787,6 +1803,11 @@ icu.violin.plot  <- function(data, ref.date, ...){
   data <- data %>% filter(start.to.exit < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) %>% 
     filter(ICU.duration < as.numeric(as.Date(today()) - as.Date("2019-12-01"))) 
   
+  
+  if(nrow(data)==0){
+    return(insufficient.data.plot())
+  }
+  
   dur <- data$start.to.exit
   dur <- dur[which(dur>=0)]  # Exclude negative times
   d <- data.frame(dur = dur)
@@ -1800,6 +1821,7 @@ icu.violin.plot  <- function(data, ref.date, ...){
   d <- rbind(d, d.2, deparse.level = 1) %>%
     filter(!is.na(dur))
   d$type <- factor(d$type, levels = c(1, 2), labels = c("Total hospital stay", "ICU"))
+
   
   p <- ggplot(data = d, aes(x = type, y = dur, fill = type)) +
     geom_violin(trim = TRUE, show.legend = FALSE) +
