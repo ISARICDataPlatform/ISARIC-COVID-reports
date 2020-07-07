@@ -10,6 +10,11 @@
 #' @param message.out.file Path of a file to store messages about fields that were overwritten in the data cleaning process. If not given, this file is not generated
 #' @param embargo.length Length of the data embargo in days; patients enrolled less than this period before \code{ref.date} will be excluded from reports. Default 0.
 #' @param ref.date Date to be taken as the date of the report. Default is today's date.
+#' @param yn.field.type The "Field Type" in the data dictionary for yes/no questions. Usually "radio" but sometimes "dropdown"
+#' @param treatment.field.categories The "Form Name" entry or entries (will accept a vector of multiple values) in the data dictionary for treatments.
+#' @param comorbidity.categories The "Form Name" entry or entries (will accept a vector of multiple values) in the data dictionary for comorbidities.
+#' @param admission.symptom.field.categories The "Form Name" entry or entries (will accept a vector of multiple values) in the data dictionary for sypmtoms at admission.
+#' @param overall.switch In some datasets (e.g. RAPID) treatment fields ending "cmyn", "occur" or "prtrt" refer to treatments given on the day of admission, rather than over the entire hospital stay. Overall stay treatments are in columns with "overall_" appending to the start of the name. This option switches these over.
 #' @param verbose Flag for verbose output
 #'
 #' @return A list with components: \describe{
@@ -36,11 +41,36 @@ import.and.process.data <- function(data.file,
                                     treatment.field.categories = "treatment",
                                     comorbidity.categories = "comorbidities",
                                     admission.symptom.field.categories = "admission_signs_and_symptoms",
-                                    verbose = F){
+                                    overall.switch = FALSE,
+                                    verbose = FALSE){
   
   if(verbose) cat("Reading data...\n")
   
   raw.data <- import.patient.data(data.file, data.dict.file, source.name, verbose)
+  
+  if(overall.switch){
+    all.colnames <- colnames(raw.data)
+    
+    # RAPID xxx_cmyn fields are "on day of admission". overall_xxx_cmyn are "ever". Change these over.
+    
+    overall.col.exists <- map_lgl(all.colnames, function(cn){
+      glue("overall_{cn}") %in% all.colnames & 
+        (endsWith(cn, "cmyn") | endsWith(cn, "occur") | endsWith(cn, "prtrt"))
+    })
+    
+    
+    columns.for.replacement <- all.colnames[overall.col.exists]
+    columns.to.replace <- glue("overall_{columns.for.replacement}")
+    
+    renamer <- function(cn){
+      str_match(cn, "overall_(.*)")[,2]
+    }
+    
+    raw.data <- raw.data %>%
+      select(-any_of(columns.for.replacement)) %>%
+      rename_with(.fn = renamer, .cols = any_of(columns.to.replace))
+  }
+
   
   if(verbose) cat("Identifying symptoms, comorbidities and treatments...\n")
   

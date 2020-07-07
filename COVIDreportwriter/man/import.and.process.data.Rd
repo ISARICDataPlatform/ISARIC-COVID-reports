@@ -17,7 +17,8 @@ import.and.process.data(
   treatment.field.categories = "treatment",
   comorbidity.categories = "comorbidities",
   admission.symptom.field.categories = "admission_signs_and_symptoms",
-  verbose = F
+  overall.switch = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,16 @@ import.and.process.data(
 \item{embargo.length}{Length of the data embargo in days; patients enrolled less than this period before \code{ref.date} will be excluded from reports. Default 0.}
 
 \item{ref.date}{Date to be taken as the date of the report. Default is today's date.}
+
+\item{yn.field.type}{The "Field Type" in the data dictionary for yes/no questions. Usually "radio" but sometimes "dropdown"}
+
+\item{treatment.field.categories}{The "Form Name" entry or entries (will accept a vector of multiple values) in the data dictionary for treatments.}
+
+\item{comorbidity.categories}{The "Form Name" entry or entries (will accept a vector of multiple values) in the data dictionary for comorbidities.}
+
+\item{admission.symptom.field.categories}{The "Form Name" entry or entries (will accept a vector of multiple values) in the data dictionary for sypmtoms at admission.}
+
+\item{overall.switch}{In some datasets (e.g. RAPID) treatment fields ending "cmyn", "occur" or "prtrt" refer to treatments given on the day of admission, rather than over the entire hospital stay. Overall stay treatments are in columns with "overall_" appending to the start of the name. This option switches these over.}
 
 \item{verbose}{Flag for verbose output}
 }
