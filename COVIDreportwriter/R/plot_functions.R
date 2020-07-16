@@ -907,7 +907,7 @@ treatment.use.plot <- function(data, treatments, ...){
     dplyr::select(-total)
   
   
-  if(nrow(data2) >0 ){
+  if(nrow(data2) > 0){
     plt<-  ggplot(data2) +
       geom_col(aes(x = Treatment, y = Proportion, fill = affected)) +
       geom_text(data = data2 %>% filter(affected), aes(x=Treatment, y = 1, label = label), hjust = 1, nudge_y = -0.01, size = 2)+
@@ -1055,7 +1055,7 @@ modified.km.plot <- function(data, embargo.limit, ...) {
 #' @keywords internal
 
 hospital.fatality.ratio <- function(data){
-  library(binom)
+
   # Method from https://doi.org/10.2807/1560-7917.ES.2020.25.3.2000044
   # Only uses individuals who have either died or been discharged
   Dc_date <- data$discharge.date
@@ -1063,9 +1063,9 @@ hospital.fatality.ratio <- function(data){
   # Identify first and last events
   first <- min(Dc_date, Died_date, na.rm = TRUE)
   # Set start date as 1 March 2020
-  first <- as.Date("2020-03-01")
-  last <- max(Dc_date, Died_date, na.rm = TRUE)
-  diff <- last - first
+  first <- as.Date(parse_date_time("2020-03-01", orders = "ymd"))
+  last <- as.Date(max(Dc_date, Died_date, na.rm = TRUE))
+  diff <- as.numeric(last - first)
   # Plot to start after first event
   d.0 <- first
   for (i in 0:diff) {
@@ -1456,6 +1456,7 @@ status.by.time.after.admission <- function(data, ...){
   # this generates a table of the status of every patient on every day
   
   complete.timeline <- map(1:nrow(timings.wrangle), function(pat.no){
+    print(pat.no)
     times <- map(overall.start:overall.end, function(day){
       if(!timings.wrangle$ever.ICU[pat.no]){
         if(!timings.wrangle$censored[pat.no] & is.na(timings.wrangle$hospital.end[pat.no])){
@@ -1826,7 +1827,7 @@ icu.violin.plot  <- function(data, ref.date, ...){
   p <- ggplot(data = d, aes(x = type, y = dur, fill = type)) +
     geom_violin(trim = TRUE, show.legend = FALSE) +
     scale_fill_manual(values = c("darkorchid2", "darkorchid4")) +
-    geom_boxplot(width = 0.1, fill = "white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    geom_boxplot(width = 0.1, fill = "white", outlier.shape = NA)  +
     labs(title = " ", x = "Location", y = "Length of stay (days)") +
     theme(
       axis.title.x = element_text(size = 12),
@@ -2130,7 +2131,7 @@ violin.sex.func <- function(data, embargo.limit, ...){
     
     plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) +
       geom_violin(trim=F)+
-      geom_boxplot(width=0.1, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+      geom_boxplot(width=0.1, fill="white", outlier.shape = NA)  +
       scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
       labs(title=" ", x="Sex", y = "Length of hospital stay") +
       theme(
@@ -2176,7 +2177,7 @@ violin.sex.func.discharge <- function(data, ...){
   
   plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) +
     geom_violin(trim=TRUE)+
-    geom_boxplot(width=0.1, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    geom_boxplot(width=0.1, fill="white", outlier.shape = NA)  +
     scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
     labs(title=" ", x="Sex", y = "Length of hospital stay") +
     theme(
@@ -2215,7 +2216,7 @@ violin.sex.func.death <- function(data, ...){
   
   plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) +
     geom_violin(trim=TRUE)+
-    geom_boxplot(width=0.1, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    geom_boxplot(width=0.1, fill="white", outlier.shape = NA)  +
     scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
     labs(title=" ", x="Sex", y = "Length of hospital stay") +
     theme(
@@ -2254,7 +2255,7 @@ violin.sex.func.hospital <- function(data, ...){
   
   plt <- ggplot(vd, aes(x = Sex, y = length.of.stay, fill=Sex)) +
     geom_violin(trim=TRUE)+
-    geom_boxplot(width=0.1, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    geom_boxplot(width=0.1, fill="white", outlier.shape = NA)  +
     scale_fill_viridis(drop = F, discrete = "true", option = "magma", begin = 0.25, end = 0.75) +
     labs(title=" ", x="Sex", y = "Length of hospital stay") +
     theme(
@@ -2301,7 +2302,7 @@ violin.age.func <- function(data, embargo.limit,...){
     
     plt <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) +
       geom_violin(trim=F) +
-      geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+      geom_boxplot(width=0.05, fill="white", outlier.shape = NA)  +
       labs(title="  ", x="Age group", y = "Length of hospital stay") +
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -2351,7 +2352,7 @@ violin.age.func.discharge <- function(data, ...){
   
   plt <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) +
     geom_violin(trim=F) +
-    geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    geom_boxplot(width=0.05, fill="white", outlier.shape = NA)  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") +
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -2425,7 +2426,7 @@ violin.age.func.hospital <- function(data, ...){
   
   plt <- ggplot(vdx, aes(x = Age, y = length_of_stay, fill=Age)) +
     geom_violin(trim=F) +
-    geom_boxplot(width=0.05, fill="white", outlier.shape = 21, outlier.fill = "white", outlier.size = 1.5)  +
+    geom_boxplot(width=0.05, fill="white", outlier.shape = NA)  +
     labs(title="  ", x="Age group", y = "Length of hospital stay") +
     theme(
       plot.title = element_text( size=14, face="bold", hjust = 0.5),
@@ -2624,7 +2625,7 @@ adm.to.niv <- function(data, plt = F,...){
   
   data2 <- data %>% filter(!is.na(admission.to.NIMV))
   
-  if(nrow(data2) > 0){
+  if(nrow(data2) > 1){
     admit.niv <- data2$admission.to.NIMV
     admit.niv <- abs(admit.niv[!(is.na(admit.niv))])
     admit.niv.2 <- map_dbl(admit.niv, round.zeros)
@@ -2683,7 +2684,7 @@ adm.to.niv.plot <- function(data,...){
 dur.niv <- function(data,plt = F, ...){
   data2 <- data %>% filter(!is.na(NIMV.start.date)) %>% mutate(event.start.date = NIMV.start.date) %>% mutate(event.end.date = NIMV.end.date)
   
-  if(nrow(data2) > 0){
+  if(nrow(data2) > 1){
     
     temp <- calculate.durations(data2)
     
@@ -2754,7 +2755,7 @@ adm.to.icu <- function(data, plt = F,...){
   
   data2 <- data %>% filter(!is.na(admission.to.ICU))
   
-  if(nrow(data2) > 0){
+  if(nrow(data2) > 1){
     
     admit.icu <- data2$admission.to.ICU
     admit.icu <- abs(admit.icu[!(is.na(admit.icu))])
@@ -2810,7 +2811,7 @@ dur.icu <- function(data, plt = F, ...) {
   
   data2 <- data %>% filter(!is.na(ICU.admission.date)) %>% mutate(event.start.date = ICU.admission.date) %>% mutate(event.end.date = ICU.discharge.date)
   
-  if(nrow(data2) > 0){
+  if(nrow(data2) > 1){
     temp <- calculate.durations(data2)
     
     data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
@@ -2884,7 +2885,7 @@ dur.icu.plot <- function(data,...){
 adm.to.imv <- function(data, plt = F, ...){
   
   data2 <- data %>% filter(!is.na(admission.to.IMV))
-  if(nrow(data2)> 0){
+  if(nrow(data2)> 1){
     
     
     admit.imv <- data2$admission.to.IMV
@@ -2941,7 +2942,7 @@ dur.imv <- function(data, plt=F, ...) {
   
   data2 <- data %>% filter(!is.na(IMV.start.date)) %>% mutate(event.start.date = IMV.start.date) %>% mutate(event.end.date = IMV.end.date)
   
-  if(nrow(data2) > 0){
+  if(nrow(data2) > 1){
     
     temp <- calculate.durations(data2)
     
