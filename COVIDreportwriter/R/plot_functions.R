@@ -1035,7 +1035,7 @@ modified.km.plot <- function(data, embargo.limit, ...) {
                      ))
     
     
-    ggplot(data = df)+
+   plt <-  ggplot(data = df)+
       geom_line(aes(x=day, y = value, col = status, linetype = status), size=0.75)+
       geom_ribbon(data = df %>% filter(status == "death"), aes(x=day, ymin = 0, ymax = value), fill ="indianred", alpha = 0.66)+
       geom_ribbon(data = df %>% filter(status == "discharge"), aes(x=day, ymin = value, ymax = 1), fill ="springgreen4", alpha = 0.66)+
@@ -1047,7 +1047,7 @@ modified.km.plot <- function(data, embargo.limit, ...) {
       ylim(c(0,1))
     
   }
-  
+  plt 
 }
 
 
