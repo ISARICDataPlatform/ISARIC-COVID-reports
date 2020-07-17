@@ -1456,7 +1456,6 @@ status.by.time.after.admission <- function(data, ...){
   # this generates a table of the status of every patient on every day
   
   complete.timeline <- map(1:nrow(timings.wrangle), function(pat.no){
-    print(pat.no)
     times <- map(overall.start:overall.end, function(day){
       if(!timings.wrangle$ever.ICU[pat.no]){
         if(!timings.wrangle$censored[pat.no] & is.na(timings.wrangle$hospital.end[pat.no])){
