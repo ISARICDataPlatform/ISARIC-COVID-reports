@@ -3131,7 +3131,6 @@ comorb.by.age <- function(data, ...) {
       )
     # chroniccard_mhyn is all NA in patient.data
     # chrincard does not exist in most datasets.
-    # hypertension_mhyn does not exist in some datasets.
     # Therefore chronic cardiac disease currently omitted.
     df <- plot.by.age.grouping(df)
     for (i in 2: ncol(df)) df[, i] <- plot.by.age.make.zeroandone(df[, i])
