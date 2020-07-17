@@ -3126,7 +3126,7 @@ comorb.by.age <- function(data, ...) {
     df <- data %>%
       dplyr::select(subjid, consolidated.age, 
                     asthma_mhyn, malignantneo_mhyn, aidshiv_mhyn, obesity_mhyn,
-                    diabetes, dementia_mhyn, smoking_mhyn,
+                    diabetes, dementia_mhyn, smoking_mhyn, hypertension_mhyn, 
                     start.to.exit, sex
       )
     # chroniccard_mhyn is all NA in patient.data
@@ -3194,9 +3194,14 @@ comorb.by.age <- function(data, ...) {
     } else {
       ph <- insufficient.data.plot()
     }
-    
+    if(any(!is.na(df$hypertension_mhyn))){
+      pj <- plot.prop.by.age(df, df$hypertension_mhyn,
+                             "Proportion with\nhypertension", ymax = ylimit, sz = size)
+    } else {
+      pj <- insufficient.data.plot()
+    }
     #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
-    p <- arrangeGrob(pa, pb, pc, pd, pe, ph, ncol = 2)
+    p <- arrangeGrob(pa, pb, pc, pd, pe, ph, pj, ncol = 2)
     
   }
   
@@ -3209,7 +3214,7 @@ comorb.by.age <- function(data, ...) {
 
 #' @title Plot the prevalence of symptoms by age group.
 #
-#' @description Plots the prevalence of five comorbidities (fever, cough, shortness of breath, confusion, and gastrointestinal symptoms), stratified  by age group.
+#' @description Plots the prevalence of five symptoms (fever, cough, shortness of breath, confusion, and gastrointestinal symptoms), stratified  by age group.
 #'
 #' @export sx.by.age
 #' @param data \code{detailed.data}, a component of the output of \code{\link{import.and.process.data}}..
