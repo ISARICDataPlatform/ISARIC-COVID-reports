@@ -89,7 +89,7 @@ age.pyramid <- function(data, ...){
         ymax = max.count/2,
         xmin = length(levels(data2$agegp5))+1.5,
         xmax = length(levels(data2$agegp5))+1.5) +
-      theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"))
+      theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"), axis.text.x=element_text(angle = -90, hjust = 0))
     
   }
   
