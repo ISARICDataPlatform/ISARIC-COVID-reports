@@ -3176,18 +3176,11 @@ comorb.by.age <- function(data, ...) {
     } else {
       pe <- insufficient.data.plot()
     }
-    
-    
-
-
-
 
     # Chronic cardiac disease omitted as described above.
     # pf <- plot.prop.by.age(df, df$chrincard,
     #                        "Proportion with\nchronic cardiac disease", ymax = ylimit, sz = size)
-    # Most have missing for hypertension - leave out until resolved
-    #  pg <- plot.prop.by.age(df, df$hypertension_mhyn,
-    #                         "Proportion with\nhypertension", ymax = ylimit, sz = size)
+
     if(any(!is.na(df$CurrentSmoke))){
       ph <- plot.prop.by.age(df, df$CurrentSmoke,
                              "Proportion who\ncurrently smoke", ymax = ylimit, sz = size)
@@ -3200,7 +3193,7 @@ comorb.by.age <- function(data, ...) {
     } else {
       pj <- insufficient.data.plot()
     }
-    #  p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, ph, ncol = 2)
+    
     p <- arrangeGrob(pa, pb, pc, pd, pe, ph, pj, ncol = 2)
     
   }
