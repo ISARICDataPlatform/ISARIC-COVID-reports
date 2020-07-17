@@ -1042,7 +1042,6 @@ modified.km.plot <- function(data, embargo.limit, ...) {
       xlab("Days after admission") +
       ylab("Cumulative probability") +
       ylim(c(0,1))
-    
   }
   plt 
 }
@@ -2620,14 +2619,16 @@ adm.to.niv <- function(data, plt = F,...){
   
   data2 <- data %>% filter(!is.na(admission.to.NIMV))
   
-  if(nrow(data2) > 1){
-    admit.niv <- data2$admission.to.NIMV
-    admit.niv <- abs(admit.niv[!(is.na(admit.niv))])
-    admit.niv.2 <- map_dbl(admit.niv, round.zeros)
+  admit.niv <- data2$admission.to.NIMV
+  admit.niv <- abs(admit.niv[!(is.na(admit.niv))])
+  admit.niv.2 <- map_dbl(admit.niv, round.zeros)
+  obs <-  admit.niv.2 
+  
+  if(nrow(data2) > 0.1*nrow(data)){
     
     fit <- fitdist(admit.niv.2, dist = 'gamma', method = 'mle')
     
-    obs <-  admit.niv.2  # record observed values for reporting
+    # record observed values for reporting
     
     # Plot
     
@@ -2679,7 +2680,7 @@ adm.to.niv.plot <- function(data,...){
 dur.niv <- function(data,plt = F, ...){
   data2 <- data %>% filter(!is.na(NIMV.start.date)) %>% mutate(event.start.date = NIMV.start.date) %>% mutate(event.end.date = NIMV.end.date)
   
-  if(nrow(data2) > 1){
+  if(nrow(data2)> 0.1*nrow(data2)){
     
     temp <- calculate.durations(data2)
     
@@ -2750,7 +2751,7 @@ adm.to.icu <- function(data, plt = F,...){
   
   data2 <- data %>% filter(!is.na(admission.to.ICU))
   
-  if(nrow(data2) > 1){
+  if(nrow(data2)> 0.1*nrow(data2)){
     
     admit.icu <- data2$admission.to.ICU
     admit.icu <- abs(admit.icu[!(is.na(admit.icu))])
@@ -2806,7 +2807,7 @@ dur.icu <- function(data, plt = F, ...) {
   
   data2 <- data %>% filter(!is.na(ICU.admission.date)) %>% mutate(event.start.date = ICU.admission.date) %>% mutate(event.end.date = ICU.discharge.date)
   
-  if(nrow(data2) > 1){
+  if(nrow(data2) > 0.1*nrow(data2)){
     temp <- calculate.durations(data2)
     
     data2 <- data2  %>% mutate(event.duration = abs(temp$durs)) %>%
@@ -2880,8 +2881,7 @@ dur.icu.plot <- function(data,...){
 adm.to.imv <- function(data, plt = F, ...){
   
   data2 <- data %>% filter(!is.na(admission.to.IMV))
-  if(nrow(data2)> 1){
-    
+  if(nrow(data2)> 0.1*nrow(data2)){
     
     admit.imv <- data2$admission.to.IMV
     admit.imv <- abs(admit.imv[!(is.na(admit.imv))])
@@ -2937,7 +2937,7 @@ dur.imv <- function(data, plt=F, ...) {
   
   data2 <- data %>% filter(!is.na(IMV.start.date)) %>% mutate(event.start.date = IMV.start.date) %>% mutate(event.end.date = IMV.end.date)
   
-  if(nrow(data2) > 1){
+  if(nrow(data2) > 0.1*nrow(data2)){
     
     temp <- calculate.durations(data2)
     
