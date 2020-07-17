@@ -472,6 +472,67 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
     mutate(unknown = as.numeric(unknown))
   t.dat <- t.dat[order(-t.dat$present), ] 
   
+  # Steroid
+  
+  steroid.total.n = sum(data$steroid.any == 1, na.rm = TRUE)
+  steroid.total.N = sum(data$steroid.any == 2, na.rm = TRUE) + steroid.total.n
+  steroid.total.percent = sprintf("%3.1f", 100 * steroid.total.n / steroid.total.N)
+  steroid.data <- data %>%
+    mutate(imv.no.na = if_else(is.na(IMV.ever), FALSE, IMV.ever)) %>%
+    mutate(level = factor(
+      if_else(
+        imv.no.na == TRUE,
+        1,
+        if_else(O2.ever == TRUE, 2, 3)
+      ),
+      levels = c(1:3),
+      labels = c("IMV", "Other oxygen", "No oxygen")
+    )) %>%
+    filter(!is.na(level)) %>%
+    group_by(level) %>%
+    summarise(
+      steroid.yes = sum(steroid.any == 1, na.rm = TRUE),
+      steroid.no = sum(steroid.any == 2, na.rm = TRUE)
+    ) %>%
+    mutate(total = steroid.yes + steroid.no)
+  steroid.imv.n = steroid.data$steroid.yes[steroid.data$level == "IMV"]
+  steroid.imv.N = steroid.data$steroid.no[steroid.data$level == "IMV"] + steroid.imv.n
+  steroid.imv.percent = sprintf("%3.1f", 100 * steroid.imv.n / steroid.imv.N)
+  steroid.o2.n = steroid.data$steroid.yes[steroid.data$level == "Other oxygen"]
+  steroid.o2.N = steroid.data$steroid.no[steroid.data$level == "Other oxygen"] + steroid.o2.n
+  steroid.o2.percent = sprintf("%3.1f", 100 * steroid.o2.n / steroid.o2.N)
+  steroid.noo2.n = steroid.data$steroid.yes[steroid.data$level == "No oxygen"]
+  steroid.noo2.N = steroid.data$steroid.no[steroid.data$level == "No oxygen"] + steroid.noo2.n
+  steroid.noo2.percent = sprintf("%3.1f", 100 * steroid.noo2.n / steroid.noo2.N)
+  steroid.data2 <- data %>%
+    filter(start.date >= as.Date("2020-06-16")) %>%
+    mutate(imv.no.na = if_else(is.na(IMV.ever), FALSE, IMV.ever)) %>%
+    mutate(level = factor(
+      if_else(
+        imv.no.na == TRUE,
+        1,
+        if_else(O2.ever == TRUE, 2, 3)
+      ),
+      levels = c(1:3),
+      labels = c("IMV", "Other oxygen", "No oxygen")
+    )) %>%
+    filter(!is.na(level)) %>%
+    group_by(level) %>%
+    summarise(
+      steroid.yes = sum(steroid.any == 1, na.rm = TRUE),
+      steroid.no = sum(steroid.any == 2, na.rm = TRUE)
+    ) %>%
+    mutate(total = steroid.yes + steroid.no)
+  steroid.imv.n.jun16 = steroid.data2$steroid.yes[steroid.data2$level == "IMV"]
+  steroid.imv.N.jun16 = steroid.data2$steroid.no[steroid.data2$level == "IMV"] + steroid.imv.n.jun16
+  steroid.imv.percent.jun16 = sprintf("%3.1f", 100 * steroid.imv.n.jun16 / steroid.imv.N.jun16)
+  steroid.o2.n.jun16 = steroid.data2$steroid.yes[steroid.data2$level == "Other oxygen"]
+  steroid.o2.N.jun16 = steroid.data2$steroid.no[steroid.data2$level == "Other oxygen"] + steroid.o2.n.jun16
+  steroid.o2.percent.jun16 = sprintf("%3.1f", 100 * steroid.o2.n.jun16 / steroid.o2.N.jun16)
+  steroid.noo2.n.jun16 = steroid.data2$steroid.yes[steroid.data2$level == "No oxygen"]
+  steroid.noo2.N.jun16 = steroid.data2$steroid.no[steroid.data2$level == "No oxygen"] + steroid.noo2.n.jun16
+  steroid.noo2.percent.jun16 = sprintf("%3.1f", 100 * steroid.noo2.n.jun16 / steroid.noo2.N.jun16)
+  
   
   # p-value
   
@@ -660,10 +721,33 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
               
               cough_pre = cough_pre,
               cough_abs = cough_abs,
-              cough_unk = cough_unk
+              cough_unk = cough_unk,
               
               
               #surv.sum = surv.sum
+              
+              steroid.total.n = steroid.total.n,
+              steroid.total.N = steroid.total.N,
+              steroid.total.percent = steroid.total.percent,
+              steroid.imv.n = steroid.imv.n,
+              steroid.imv.N = steroid.imv.N,
+              steroid.imv.percent = steroid.imv.percent,
+              steroid.o2.n = steroid.o2.n,
+              steroid.o2.N = steroid.o2.N,
+              steroid.o2.percent = steroid.o2.percent,
+              steroid.noo2.n = steroid.noo2.n,
+              steroid.noo2.N = steroid.noo2.N,
+              steroid.noo2.percent = steroid.noo2.percent,
+              steroid.imv.n.jun16 = steroid.imv.n.jun16,
+              steroid.imv.N.jun16 = steroid.imv.N.jun16,
+              steroid.imv.percent.jun16 = steroid.imv.percent.jun16,
+              steroid.o2.n.jun16 = steroid.o2.n.jun16,
+              steroid.o2.N.jun16 = steroid.o2.N.jun16,
+              steroid.o2.percent.jun16 = steroid.o2.percent.jun16,
+              steroid.noo2.n.jun16 = steroid.noo2.n.jun16,
+              steroid.noo2.N.jun16 = steroid.noo2.N.jun16,
+              steroid.noo2.percent.jun16 = steroid.noo2.percent.jun16
+                
   ))
   
   
