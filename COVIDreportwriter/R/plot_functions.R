@@ -990,6 +990,82 @@ make.props.treats <- function(data, ...){
 
 # df <- make.props.treats(patient.data)
 
+
+## Steroid use by admission date and oxygen therapy 
+
+steroid.admission.plot <- function(data, ...) {
+  # Plots proportions of patients recorded as receiving steroid at any point 
+  # during their hospital admission against the date of admission. Patients are 
+  # divided into 3 mutually exclusive groups: IMV, other oxygen therapy or no 
+  # oxygen therapy. Patients are omited if IMV and oxygen are both missing, or 
+  # if IMV is no and oxygen is missing. Weeks in which any category has <5 
+  # patients are not plotted. A dotted line at 16 June marks the release of the 
+  # RECOVERY dexamethasone results.
+  data <- data %>%
+    mutate(start.week = as.integer(
+      (as.numeric(start.date - as.Date("2019-12-29"))) / 7)
+    ) %>%
+    filter(start.date > as.Date("2019-12-29")) %>%
+    # quite liberal with the start date as any week without >=5 people in each
+    # category is removed
+    mutate(imv.no.na = if_else(is.na(IMV.ever), FALSE, IMV.ever)) %>%
+    mutate(level = factor(
+      if_else(
+        imv.no.na == TRUE,
+        1,
+        if_else(O2.ever == TRUE, 2, 3)
+      ),
+      levels = c(1:3),
+      labels = c("IMV", "Other oxygen", "No oxygen")
+    )) %>%
+    filter(!is.na(level)) %>%
+    group_by(level, start.week) %>%
+    summarise(
+      steroid.yes = sum(steroid.any == 1, na.rm = TRUE),
+      steroid.no = sum(steroid.any == 2, na.rm = TRUE)
+    ) %>%
+    mutate(total = steroid.yes + steroid.no) %>%
+    group_by(start.week) %>%
+    mutate(min_n = min(total)) %>%
+    filter(min_n >= 5) %>%
+    bind_cols(binom.confint(
+      .$steroid.yes, 
+      .$total, 
+      conf.level = .95,
+      methods = "exact"
+    )) %>%
+    mutate(plot.date = as.Date(start.week * 7, origin = "2019-12-29"))
+  
+  line <- geom_line(
+    aes(x = plot.date, y = mean, color = level)
+  )
+  shade <-  geom_ribbon(
+    aes(x = plot.date, ymin = lower, ymax = upper, fill = level),
+    alpha = .3
+  )
+  threshold <- as.Date("2020-06-16")
+  xa <- scale_x_date(
+    name = "Admission date, 2020",
+    date_breaks = "1 month",
+    date_labels = "%b"
+  )
+  ya <- scale_y_continuous(name = "Proportion receiving corticosteroid")
+  guides <- guides(
+    color = guide_legend(title = "Oxygen therapy"), 
+    fill = FALSE
+  )
+  
+  p <- ggplot(data = data) +
+    line + shade +
+    geom_vline(xintercept = threshold, linetype = "dashed") +
+    xa + ya +
+    guides + 
+    theme_bw() 
+  
+  return(p)
+}
+
+
 ## "Modified KM plot" ##     - increase xlim
 
 #'  Plot case fatality ratio (CFR) and survival functions for deaths and recovery.
