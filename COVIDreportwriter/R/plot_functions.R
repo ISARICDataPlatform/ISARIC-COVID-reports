@@ -3217,7 +3217,7 @@ comorb.by.age <- function(data, ...) {
     df$CurrentSmoke[is.na(df$smoking_mhyn) == TRUE] <- NA
     df$All <- 1
     size <- nrow(df) / 20
-    ylimit <- .4
+    ylimit <- .65
     # ylimit may need to go up when adding cardiac comorbidities and hypertension
     # back in
     
