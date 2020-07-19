@@ -1519,7 +1519,9 @@ status.by.time.after.admission <- function(data, ...){
     mutate(ever.ICU = !is.na(ICU.start)) %>%
     # If hospital end is known but ICU end is not, impossible to resolve
     filter(!(!is.na(hospital.end) & is.na(ICU.end) & ever.ICU)) %>%
-    mutate(last.date = pmax(hospital.end, ICU.end, censored.date, na.rm = T))
+    mutate(last.date = pmax(hospital.end, ICU.end, censored.date, na.rm = T))%>%
+    filter(!(censored & is.na(censored.date))) # Drop patients who are censored but do not have censored dates (lines 3647-3648 assumes that such cases are non-existent)
+  # ***************************************
   
   overall.start <- 0
   overall.end <- quantile(timings.wrangle$hospital.end, 0.99, na.rm = T)
