@@ -3617,79 +3617,65 @@ blood.results.by.age <- function(data, ...) {
   
 }
 
-blood.results.by.age.2page_data <- function(data, ...) {
+blood.results.by.age_data <- function(data, ...) {
   # Alternative version of blood.results.by.age to split plots over 2 pages.
   # This part generates the data
   
-  if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
-    df <- NULL
-  }else{
+  if(all(is.na(data$consolidated.age)) | all(is.na(data$sex))) {
+    data2 <- NULL
+  } else {
     
-    # Use a loop to collect data to avoid problems of data too large to process
-    for (i in 1:nrow(data)) {
-      p <- data$events[i][[1]] %>%
-        dplyr::select(dsstdat, daily_crp_lborres,
-                      daily_bun_lborres, daily_bun_lborresu,
-                      daily_wbc_lborres, daily_wbc_lborresu, daily_aptt_lborres,
-                      daily_pt_lborres, daily_lymp_lborres, daily_neutro_lborres,
-                      ddimer_lborres, daily_alt_lborres, daily_bil_lborres,
-                      daily_bil_lborresu, daily_ast_lborres
-        ) %>%
-        add_column(
-          subjid = data$subjid[i],
-          consolidated.age = data$consolidated.age[i],
-          agedat = data$agedat[i],
-          start.date = data$start.date[i],
-          agegp10 = data$agegp10[i],
-        ) %>%
-        filter(dsstdat <= start.date + 1)
-      if (i == 1) {
-        df <- p
-      } else {
-        df <- bind_rows(df, p)
-      }
-    }
-    df <- plot.by.age.grouping(df)
-    #Make numeric and convert units
-    df$CRP <- as.numeric(df$daily_crp_lborres)
-    df$Urea <- as.numeric(df$daily_bun_lborres)
-    # df$Urea[df$daily_bun_lborresu == 2 & is.na(df$Urea) == FALSE] includes some
-    # lines where df$Urea = NA. Why?
-    df$uc <- 1
-    df$uc[df$daily_bun_lborresu != 2] <- 0
-    df$uc[is.na(df$Urea) == TRUE] <- 0
-    df$Urea[df$uc == 1] <- .1665 * df$Urea[df$uc == 1]
-    # Units for WCC are equivalent
-    df$WCC <- as.numeric(df$daily_wbc_lborres)
-    df$APTT <- as.numeric(df$daily_aptt_lborres)
-    df$PT <- as.numeric(df$daily_pt_lborres)
-    df$Lcyte <- as.numeric(df$daily_lymp_lborres)
-    df$Neut <- as.numeric(df$daily_neutro_lborres)
-    df$Ddimer <- as.numeric(df$ddimer_lborres)
-    df$Bili <- as.numeric(df$daily_bil_lborres)
-    #df$Bili[df$daily_bil_lborresu == 2 & is.na(df$Bili) == FALSE] includes NA ??
-    df$bc <- 1
-    df$bc[df$daily_bil_lborresu != 2] <- 0
-    df$bc[is.na(df$Bili) == TRUE] <- 0
-    df$Bili[df$bc == 1] <- df$Bili[df$bc == 1] * 17.1
-    df$ALT <- as.numeric(df$daily_alt_lborres)
-    df$AST <- as.numeric(df$daily_ast_lborres)
-    
-    # WCC, lcyte, neut all vary over orders of magnitude
-    df$WCC[df$WCC > 100 & is.na(df$WCC) == FALSE] <-
-      df$WCC[df$WCC > 100 & is.na(df$WCC) == FALSE] / 1000
-    df$Lcyte[df$Lcyte > 100 & is.na(df$Lcyte) == FALSE] <-
-      df$Lcyte[df$Lcyte > 100 & is.na(df$Lcyte) == FALSE] / 1000
-    df$Neut[df$Neut > 100 & is.na(df$Neut) == FALSE] <-
-      df$Neut[df$Neut > 100 & is.na(df$Neut) == FALSE] / 1000
-    
-    return(df)
+    data2 <- data %>%
+      dplyr::select(subjid, start.date, consolidated.age, events) %>%
+      unnest_longer(events) %>%
+      filter(events$redcap_event_name == "day_1_arm_1") %>%
+      filter(!is.na(events$dsstdat)) %>%
+      filter(events$dsstdat <= start.date + 1) %>%
+      mutate(
+        CRP = as.numeric(events$daily_crp_lborres),
+        daily_bun_lborres = as.numeric(events$daily_bun_lborres), 
+        daily_bun_lborresu = events$daily_bun_lborresu,
+        WCC = as.numeric(events$daily_wbc_lborres), # WCC units are equivalent
+        APTT = as.numeric(events$daily_aptt_lborres),
+        PT = as.numeric(events$daily_pt_lborres), 
+        Lcyte = as.numeric(events$daily_lymp_lborres), 
+        Neut = as.numeric(events$daily_neutro_lborres),
+        Ddimer = as.numeric(events$ddimer_lborres), 
+        ALT = as.numeric(events$daily_alt_lborres), 
+        daily_bil_lborres = as.numeric(events$daily_bil_lborres),
+        daily_bil_lborresu = events$daily_bil_lborresu, 
+        AST = as.numeric(events$daily_ast_lborres)
+      ) %>%
+      dplyr::select(
+        subjid, start.date, consolidated.age,
+        CRP, daily_bun_lborres, daily_bun_lborresu, 
+        WCC,  APTT, 
+        PT, Lcyte, Neut, 
+        Ddimer, ALT, daily_bil_lborres, 
+        daily_bil_lborresu, AST
+      ) %>%
+      plot.by.age.grouping() %>%
+      mutate(
+        urea.conv = if_else(daily_bun_lborresu == 2, .1665, 1), 
+        bili.conv = if_else(daily_bil_lborresu == 2, 17.1, 1)
+      ) %>%
+      mutate(
+        Urea = daily_bun_lborres * urea.conv,
+        Bili = daily_bil_lborres * bili.conv
+      ) %>%
+      # WCC, lcyte, neut all vary over orders of magnitude
+      mutate(
+        WCC = if_else(WCC > 100, WCC / 1000, WCC),
+        Lcyte = if_else(Lcyte > 100, Lcyte / 1000, Lcyte),
+        Neut = if_else(Neut > 100, Neut / 1000, Neut)
+      )
   }
+  return(data2)
 }
    
 blood.results.by.age.2page.1 <- function(data, ...) {
   # Uses to data from blood.results.by.age.2page_data to generate first 6 plots
-  df <- blood.results.by.age.2page_data(data)
+  df <- blood.results.by.age_data(data)
   if(is.null(df)) {
     p<- insufficient.data.plot()
   } else {
@@ -3710,7 +3696,7 @@ blood.results.by.age.2page.1 <- function(data, ...) {
 
 blood.results.by.age.2page.2 <- function(data, ...) {
   # Uses to data from blood.results.by.age.2page_data to generate first 6 plots
-  df <- blood.results.by.age.2page_data(data)
+  df <- blood.results.by.age_data(data)
   if(is.null(df)) {
     p<- insufficient.data.plot()
   } else {  
