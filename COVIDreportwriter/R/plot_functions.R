@@ -3610,10 +3610,12 @@ blood.results.by.age <- function(data, ...) {
     
     # Omit AST as N much lower than for ALT
     
-    p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 2)
+    #p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 2)
+    pp <- list(pa, pb, pc, pd, pe, pf, pg, pj, pl)
     
   }
-  return(p)
+#  return(p)
+  return(pp)
   
 }
 
