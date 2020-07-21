@@ -3674,7 +3674,7 @@ blood.results.by.age_data <- function(data, ...) {
    
 blood.results.by.age.2page.1 <- function(data, ...) {
   # Uses to data from blood.results.by.age.2page_data to generate first 6 plots
-  df <- blood.results.by.age_data(data)
+  df <- data
   if(is.null(df)) {
     p<- insufficient.data.plot()
   } else {
@@ -3695,7 +3695,7 @@ blood.results.by.age.2page.1 <- function(data, ...) {
 
 blood.results.by.age.2page.2 <- function(data, ...) {
   # Uses to data from blood.results.by.age.2page_data to generate first 6 plots
-  df <- blood.results.by.age_data(data)
+  df <- data
   if(is.null(df)) {
     p<- insufficient.data.plot()
   } else {  
