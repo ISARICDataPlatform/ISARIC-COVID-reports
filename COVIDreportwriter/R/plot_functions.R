@@ -3708,7 +3708,9 @@ blood.results.by.age.2page.2 <- function(data, ...) {
     
     # Omit AST as N much lower than for ALT
     
-    p <- arrangeGrob(pg, pj, pl, ncol = 2)
+    r.b <- grid.rect(gp = gpar(col = NA))
+    
+    p <- arrangeGrob(pg, pj, pl, r.b, ncol = 2)
     
   }
   return(p)
