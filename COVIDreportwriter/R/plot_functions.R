@@ -3624,7 +3624,6 @@ blood.results.by.age_data <- function(data, ...) {
   if(all(is.na(data$consolidated.age)) | all(is.na(data$sex))) {
     data2 <- NULL
   } else {
-    
     data2 <- data %>%
       dplyr::select(subjid, start.date, consolidated.age, events) %>%
       unnest_longer(events) %>%
@@ -3702,14 +3701,14 @@ blood.results.by.age.2page.2 <- function(data, ...) {
   } else {  
     pg <- plot.bw.by.age(df, df$APTT, "APTT (s)")
     # To include D-dimer when enough data
-    ph <- plot.bw.by.age(df, df$Ddimer, "D-dimer (mg/L)")
+    #ph <- plot.bw.by.age(df, df$Ddimer, "D-dimer (mg/L)")
     pj_name <- expression("Bilirubin (" * mu * "mol/L)")
     pj <- plot.bw.by.age(df, df$Bili, pj_name)
     pl <- plot.bw.by.age(df, df$ALT, "ALT (units/L)")
     
     # Omit AST as N much lower than for ALT
     
-    p <- arrangeGrob(pg, ph, pj, pl, ncol = 2)
+    p <- arrangeGrob(pg, pj, pl, ncol = 2)
     
   }
   return(p)
