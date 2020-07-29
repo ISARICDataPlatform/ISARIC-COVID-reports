@@ -1997,10 +1997,12 @@ fit.summary.gamma <- function(fit){
 #' @import dplyr
 #' @keywords internal
 
+
 casefat2 <-  function(data, embargo.limit, conf=0.95){
   
-  # Function for the estimation of the case fatality ratio based on the nonparametric KM-like method by
-  # Ghani et ql. 2005:  https://doi.org/10.1093/aje/kwi230
+  # Function for the estimation of the case fatality ratio 
+  # Based on the nonparametric KM-like method by
+  # Ghani et al. 2005:  https://doi.org/10.1093/aje/kwi230
   
   #############################################################
   # A bit of data shaping
@@ -2015,7 +2017,7 @@ casefat2 <-  function(data, embargo.limit, conf=0.95){
         max(x, y, na.rm = T)
       })) %>% filter(!is.na(outcome))  %>%
       filter(length.of.stay < as.numeric(as.Date(embargo.limit) - as.Date("2019-12-01"))) # Exclude improbable length of stay values.
-     
+    
     
     t <- abs(data2$length.of.stay)  # time
     f <- as.factor(data2$outcome)   # status
@@ -2119,7 +2121,7 @@ casefat2 <-  function(data, embargo.limit, conf=0.95){
       
       return(list(cfr=cfr, secfr=secfr, lcfr = lcfr, ucfr = ucfr, c=c,
                   e1=e1, see1=see1, le1=le1, ue1=ue1,
-                  e2=e2, see2=see2, le2=le2, ue2=ue2))}
+                  e2=e2, see2=see2, le2=le2, ue2=ue2, f = f))}
     
   }else{
     return(NULL)
