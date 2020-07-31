@@ -3533,8 +3533,9 @@ signs.by.age <- function(data, ...) {
 blood.results.by.age <- function(data, ...) {
   
   if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
-    p<- insufficient.data.plot()
-  }else{
+    return(insufficient.data.plot())
+    
+  } else {
     
     # Use a loop to collect data to avoid problems of data too large to process
     for (i in 1:nrow(data)) {
@@ -3614,10 +3615,10 @@ blood.results.by.age <- function(data, ...) {
     
     #p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 2)
     pp <- list(pa, pb, pc, pd, pe, pf, pg, pj, pl)
-    
+    return(pp)
   }
-#  return(p)
-  return(pp)
+
+
   
 }
 
