@@ -26,7 +26,7 @@ age.pyramid <- function(data, ...){
   
   if( all(is.na(data$consolidated.age)) | all(is.na(data$sex))){
     plt <- insufficient.data.plot()
-  }else{
+  } else {
     
     data2 <- data %>%
       filter(!is.na(outcome)) %>%
