@@ -25,7 +25,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   
   N.censored <- data %>% filter(outcome == "censored") %>% nrow()    # censored-count
   N.deaths <- data %>% filter(outcome == "death") %>% nrow()    # deaths-count
-  N.recoveries <- data %>% filter(outcome == "recovery") %>% nrow()   # recoveries -count
+  N.recoveries <- data %>% filter(outcome == "discharge") %>% nrow()   # recoveries -count
   N.outcomes <- N.deaths+N.recoveries         # outcomes-count (deaths+recoveries)
   #N.ICU <- sum(!is.na(data$Admit.ICU))       # ICU-admissions-count
   N.healthworkers <- data %>% filter(healthwork_erterm == 1) %>% nrow()
