@@ -16,5 +16,5 @@ of the number of people in each age group for whom information on that symptom i
 whose records are included in the plot) is printed (this varies between plots due to data completeness).
 }
 \description{
-Plots the prevalence of five comorbidities (fever, cough, shortness of breath, confusion, and gastrointestinal symptoms), stratified  by age group.
+Plots the prevalence of five symptoms (fever, cough, shortness of breath, confusion, and gastrointestinal symptoms), stratified  by age group.
 }

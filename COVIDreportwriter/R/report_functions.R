@@ -167,7 +167,8 @@ import.and.process.data <- function(data.file,
 #' @return PDF report containing summaries of the data.
 #' @import rmarkdown ggplot2 fitdistrplus boot survival tibble grid ggupset viridis binom
 #' @importFrom filesstrings file.move
-#' @importFrom gridExtra arrangeGrob
+#' @importFrom gridExtra arrangeGrob 
+#' @importFrom gridExtra marrangeGrob
 #' @importFrom psych phi
 #' @importFrom lubridate epiweek
 #' @export generate.report
@@ -421,12 +422,12 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
                           'hodur', 'invasive_prdur', 'subjid', 'liver_mhyn', 'chroniccard_mhyn', 'chronicpul_mhyn', 'asthma_mhyn', 'renal_mhyn',
                           'modliver', 'mildliver', 'chronicneu_mhyn', 'malignantneo_mhyn', 'chronhaemo_mhyn', 'aidshiv_mhyn', 'obesity_mhyn',
                           'diabetescom_mhyn', 'diabetes_mhyn', 'rheumatologic_mhyn', 'dementia_mhyn', 'malnutrition_mhyn', 'smoking_mhyn',
-                          'other_mhyn', 'fever_ceoccur_v2', 'cough_ceoccur_v2', 'cough_ceoccur_v2_2', 'coughsput_ceoccur_v2', 'coughhb_ceoccur_v2',
-                          'sorethroat_ceoccur_v2', 'runnynose_ceoccur_v2', 'earpain_ceoccur_v2', 'wheeze_ceoccur_v2', 'chestpain_ceoccur_v2',
-                          'myalgia_ceoccur_v2', 'jointpain_ceoccur_v2', 'fatigue_ceoccur_v2', 'shortbreath_ceoccur_v2', 'lowerchest_ceoccur_v2',
-                          'headache_ceoccur_v2', 'confusion_ceoccur_v2', 'seizures_cecoccur_v2', 'abdopain_ceoccur_v2', 'vomit_ceoccur_v2',
-                          'diarrhoea_ceoccur_v2', 'diabetes_mhyn_2', 'conjunct_ceoccur_v2', 'rash_ceoccur_v2', 'skinulcers_ceoccur_v2', 'lymp_ceoccur_v2',
-                          'bleed_ceoccur_v2', 'antiviral_cmyn', 'antibiotic_cmyn', 'corticost_cmyn', 'antifung_cmyn', 'oxygen_cmoccur',
+                          'hypertension_mhyn', 'other_mhyn', 'fever_ceoccur_v2', 'cough_ceoccur_v2', 'cough_ceoccur_v2_2', 'coughsput_ceoccur_v2', 
+                          'coughhb_ceoccur_v2', 'sorethroat_ceoccur_v2', 'runnynose_ceoccur_v2', 'earpain_ceoccur_v2', 'wheeze_ceoccur_v2', 
+                          'chestpain_ceoccur_v2', 'myalgia_ceoccur_v2', 'jointpain_ceoccur_v2', 'fatigue_ceoccur_v2', 'shortbreath_ceoccur_v2', 
+                          'lowerchest_ceoccur_v2','headache_ceoccur_v2', 'confusion_ceoccur_v2', 'seizures_cecoccur_v2', 'abdopain_ceoccur_v2', 
+                          'vomit_ceoccur_v2','diarrhoea_ceoccur_v2', 'diabetes_mhyn_2', 'conjunct_ceoccur_v2', 'rash_ceoccur_v2', 'skinulcers_ceoccur_v2', 
+                          'lymp_ceoccur_v2', 'bleed_ceoccur_v2', 'antiviral_cmyn', 'antibiotic_cmyn', 'corticost_cmyn', 'antifung_cmyn', 'oxygen_cmoccur',
                           'noninvasive_proccur', 'invasive_proccur', 'pronevent_prtrt', 'inhalednit_cmtrt', 'tracheo_prtrt', 'extracorp_prtrt',
                           'rrt_prtrt', 'inotrop_cmtrt', 'other_cmyn', 'agedat', 'pregyn_rptestcd', 'redcap_event_name', 'dsterm', 'dsstdtcyn',
                           'icu_hostdat', 'icu_hoendat', 'hodur', 'invasive_prdur', 'antiviral_cmyn', 'antiviral_cmtrt___1', 'antiviral_cmtrt___2',

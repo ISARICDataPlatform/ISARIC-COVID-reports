@@ -111,7 +111,7 @@ grid.draw(signs.by.age(patient.data))
 ALT, Alanine transaminase; APTT, Activated partial thromboplastin time; CRP, C-reactive protein
 
 ```{r labsbyage, echo=FALSE, out.width= "100%", fig.height=8, message=FALSE}
-grid.draw(blood.results.by.age(patient.data))
+do.call("marrangeGrob", c(blood.results.by.age(patient.data), ncol = 3,nrow = 2))
 
 ```
 
