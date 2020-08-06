@@ -59,7 +59,7 @@ d.e <- function(data, datafull, embargo.limit, comorbidities, admission.symptoms
   }
   
   
-  if(!all(is.na(data$age_estimateyears))){  # if age data is available
+  if(!all(is.na(data$consolidated.age))){  # if age data is available
     
     median.age <- round(median(data$consolidated.age, na.rm = T), 1) # median age (observed)
     mean.age <-  mean(data$consolidated.age, na.rm = T)  # mean age
