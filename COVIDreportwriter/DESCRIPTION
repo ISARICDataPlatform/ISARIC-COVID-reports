@@ -2,15 +2,23 @@ Package: COVIDreportwriter
 Title: Generation of COVID-19 reports from REDCAP clinical data
 Version: 0.1.0
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    c(person(given = "Emmanuelle",
+           family = "Dankwa",
+           role = c("aut")),
+    person(given = "Matthew",
+           family = "Hall",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           email = "matthew.hall@bdi.ox.ac.uk",
+           comment = c(ORCID = "0000-0002-2671-3864")),
+    person(given = "Mark",
+           family = "Pritchard",
+           role = c("aut"))
+           )
 Description: Processes raw REDCAP clinical data for the generation of a PDF report containing text and plot summaries of the data.  
 Depends: R (>= 3.5.0)
 Imports: binom, boot, broom, filesstrings, fitdistrplus, knitr, ggupset, glue, grid, gridExtra, lubridate, magrittr, psych, rmarkdown, sf, survival, survminer, taRifx, tidyselect, tidyverse, viridis
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
+License: MIT + file LICENSE
