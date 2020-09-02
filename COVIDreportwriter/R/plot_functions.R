@@ -3610,11 +3610,12 @@ blood.results.by.age <- function(data, ...) {
     pj_name <- expression("Bilirubin (" * mu * "mol/L)")
     pj <- plot.bw.by.age(df, df$Bili, pj_name)
     pl <- plot.bw.by.age(df, df$ALT, "ALT (units/L)")
+    pm <- plot.bw.by.age(df, df$AST, "AST (units/L)")
     
     # Omit AST as N much lower than for ALT
     
     #p <- arrangeGrob(pa, pb, pc, pd, pe, pf, pg, pj, pl, ncol = 2)
-    pp <- list(pa, pb, pc, pd, pe, pf, pg, pj, pl)
+    pp <- list(pa, pb, pc, pd, pe, pf, pg, pj, pl, pm)
     return(pp)
   }
 
