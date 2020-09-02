@@ -88,8 +88,8 @@ age.pyramid <- function(data, ...){
         ymin = max.count/2,
         ymax = max.count/2,
         xmin = length(levels(data2$agegp5))+1.5,
-        xmax = length(levels(data2$agegp5))+1.5) +
-      theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"), axis.text.x=element_text(angle = -90, hjust = 0))
+        xmax = length(levels(data2$agegp5))+1.5) #+
+      # theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"), axis.text.x=element_text(angle = 90, hjust = 1, vjust = 0.5))
     
   }
   
@@ -124,7 +124,7 @@ sites.by.country <- function(data, ...){
     xlab("Country") +
     ylab("Sites") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-    geom_text(aes(x=Country, y=n.sites + nudge, label=n.sites), size=4)
+    geom_text(aes(x=Country, y=n.sites + nudge, label=n.sites), size=3)
 }
 
 
@@ -226,7 +226,8 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
     group_by(two.digit.epiweek, outcome) %>%
     summarise(count = n()) %>%
     group_by(outcome) %>%
-    mutate(cum.count = cumsum(count))
+    mutate(cum.count = cumsum(count)) 
+  
   
   
   # 
@@ -246,7 +247,8 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
     ylim(c(0,1.05*peak.cases)) +
     scale_x_discrete(drop = F) +
     annotate(geom = "text", label = "*", x = max(data2$two.digit.epiweek),
-             y = peak.cases, size =15)
+             y = peak.cases, size =15) +
+    theme(axis.text.x=element_text(angle = -90, hjust = 1, vjust = 0.5))
 }
 
 ##### Comorbidities upset plot #####
@@ -619,6 +621,7 @@ symptom.heatmap <- function(data, admission.symptoms, asterisks = vector(), ...)
           panel.grid.minor = element_blank(),
           axis.title.x=element_blank(),
           axis.title.y=element_blank(),
+          text = element_text(size=9),
           axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
     coord_fixed()
   
@@ -3753,18 +3756,19 @@ histogram.admission.to.ICU<- function(data, embargo.limit, ...){
     
     
     plt <-  ggplot(vdx, aes(x = length_of_stay)) +
-      geom_histogram(aes(y=..density..), color="darkblue", fill="lightblue", binwidth = 1)  +
+      geom_histogram(aes(y=..density..), fill="lightblue", binwidth = 1)  +
       labs(title="  ", x="Time (in days) from admission to ICU", y = "Density") +
+      theme_bw() + 
       theme(
         plot.title = element_text( size=14, face="bold", hjust = 0.5),
         axis.title.x = element_text( size=12),
         axis.title.y = element_text( size=12)
       ) +
-      scale_x_continuous(limits = c(-1,20), breaks =  seq(0,20,1)) +
+      scale_x_continuous(limits = c(-1,20), breaks =  seq(0,20,1)) 
       # 
-      theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                            colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
-    
+      # theme(panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
+      #                                       colour = "grey"), panel.background = element_rect(fill = 'white', colour = 'white'), panel.grid.major = element_line(size = 0.5, linetype = 'solid',colour = "grey"),  axis.line = element_line(colour = "black"), panel.border = element_rect(colour = 'black', fill = NA, size=1) )
+      # 
   }
   
   return(plt)
