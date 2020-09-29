@@ -88,8 +88,8 @@ age.pyramid <- function(data, ...){
         ymin = max.count/2,
         ymax = max.count/2,
         xmin = length(levels(data2$agegp5))+1.5,
-        xmax = length(levels(data2$agegp5))+1.5) #+
-      # theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"), axis.text.x=element_text(angle = 90, hjust = 1, vjust = 0.5))
+        xmax = length(levels(data2$agegp5))+1.5) +
+      theme(plot.margin=unit(c(30,5,5,5.5,5.5),"pt"), axis.text.x=element_text(angle = 90, hjust = 1, vjust = 0.5))
     
   }
   
@@ -123,7 +123,7 @@ sites.by.country <- function(data, ...){
     theme_bw() +
     xlab("Country") +
     ylab("Sites") +
-    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+    theme(axis.text.x = element_text(angle = 45, hjust=1, size = 7)) +
     geom_text(aes(x=Country, y=n.sites + nudge, label=n.sites), size=3)
 }
 
@@ -175,7 +175,7 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
     # xlab("Country") +
     ylab("Patient records (pseudo log scale)") +
     # coord_fixed(ratio = 0.23) +
-    theme(axis.text.x = element_text(angle = 45, hjust=1), axis.title.x=element_blank()) +
+    theme(axis.text.x = element_text(angle = 45, hjust=1, size = 7), axis.title.x=element_blank()) +
     scale_y_continuous( trans = pseudo_log_trans(), expand = c(0,0.1), breaks = c(0,1, 10, 100, 1000, 10000, 100000), minor_breaks = NULL)
   # nudge2 <- max(data3$count)/30
   
@@ -569,12 +569,6 @@ symptom.heatmap <- function(data, admission.symptoms, asterisks = vector(), ...)
     }
   }
   
-  combinations.tibble <- tibble(cond1 = rep(admission.symptoms$field, length(admission.symptoms$field)),
-                                cond2 = rep(admission.symptoms$field, each = length(admission.symptoms$field))) %>%
-    mutate(phi.correlation = map2_dbl(cond1, cond2, phi.correlation)) %>%
-    left_join(admission.symptoms, by=c("cond1" = "field"), suffix = c(".x", ".y")) %>%
-    left_join(admission.symptoms, by=c("cond2" = "field"), suffix = c(".x", ".y"))
-  
   fct.order <- c("Runny nose",
                  "Sore throat",
                  "Ear pain",
@@ -603,9 +597,25 @@ symptom.heatmap <- function(data, admission.symptoms, asterisks = vector(), ...)
                  "Altered consciousness / confusion"
   )
   
-  if(length(asterisks) > 0){
-    fct.order[asterisks] <- glue("{fct.order[asterisks]}*")
-  }
+  fct.order[which(fct.order %in% admission.symptoms$label[which(admission.symptoms$field %in% asterisks)])] <- 
+    glue("{fct.order[which(fct.order %in% admission.symptoms$label[which(admission.symptoms$field %in% asterisks)])]}*")
+  
+  
+  admission.symptoms$label[which(admission.symptoms$field %in% asterisks)] <- 
+    glue("{admission.symptoms$label[which(admission.symptoms$field %in% asterisks)]}*")
+  
+  
+  combinations.tibble <- tibble(cond1 = rep(admission.symptoms$field, length(admission.symptoms$field)),
+                                cond2 = rep(admission.symptoms$field, each = length(admission.symptoms$field))) %>%
+    mutate(phi.correlation = map2_dbl(cond1, cond2, phi.correlation)) %>%
+    left_join(admission.symptoms, by=c("cond1" = "field"), suffix = c(".x", ".y")) %>%
+    left_join(admission.symptoms, by=c("cond2" = "field"), suffix = c(".x", ".y"))
+  
+  
+
+  # if(length(asterisks) > 0){
+  #   fct.order[asterisks] <- glue("{fct.order[asterisks]}*")
+  # }
   
   combinations.tibble.2 <- combinations.tibble %>%
     mutate(label.x = factor(label.x, levels = fct.order)) %>%
