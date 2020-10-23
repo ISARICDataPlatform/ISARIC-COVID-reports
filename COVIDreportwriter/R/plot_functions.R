@@ -212,6 +212,9 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
 #' @return  Bar plot showing the number of patients per country and by outcome (discharge/ongoincg care/death). Bars are annotated with counts.
 #'
 outcomes.by.admission.date <- function(data, embargo.limit, ...){
+  
+
+  
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored", "death"))) %>%
@@ -222,12 +225,20 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
       ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
     })) %>%
     filter(!is.na(admission.date)) %>%
-    filter(epiweek(start.date) <= epiweek(embargo.limit)) %>%
+    filter(epiweek(start.date) <= epiweek(embargo.limit)) 
+  
+  epiweek.run <- map_chr(min(data2$epiweek):max(data2$epiweek), function(x){
+    ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
+  })
+  
+  data2 <- data2 %>%
+    mutate(two.digit.epiweek = factor(two.digit.epiweek, levels = epiweek.run)) %>%
     group_by(two.digit.epiweek, outcome) %>%
     summarise(count = n()) %>%
+    ungroup() %>%
+    complete(two.digit.epiweek,outcome, fill = list(count = 0)) %>%
     group_by(outcome) %>%
     mutate(cum.count = cumsum(count)) 
-  
   
   
   # 
@@ -246,7 +257,7 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
     ylab("Cumulative patient records") +
     ylim(c(0,1.05*peak.cases)) +
     scale_x_discrete(drop = F) +
-    annotate(geom = "text", label = "*", x = max(data2$two.digit.epiweek),
+    annotate(geom = "text", label = "*", x = max(levels(data2$two.digit.epiweek)),
              y = peak.cases, size =15) +
     theme(axis.text.x=element_text(angle = -90, hjust = 1, vjust = 0.5))
 }
