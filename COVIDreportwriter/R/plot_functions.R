@@ -587,8 +587,8 @@ symptom.heatmap <- function(data, admission.symptoms, asterisks = vector(), ...)
                  "Cough (bloody sputum / haemoptysis)",
                  "Chest pain",
                  "Lymphadenopathy",
-                 "Disturbance or loss of taste",
-                 "Disturbance or loss of smell",
+                 "Loss of taste",
+                 "Loss of smell",
                  "Conjunctivitis",
                  "Bleeding",
                  "Skin ulcers",
@@ -611,11 +611,10 @@ symptom.heatmap <- function(data, admission.symptoms, asterisks = vector(), ...)
     left_join(admission.symptoms, by=c("cond1" = "field"), suffix = c(".x", ".y")) %>%
     left_join(admission.symptoms, by=c("cond2" = "field"), suffix = c(".x", ".y"))
   
-  
 
-  # if(length(asterisks) > 0){
-  #   fct.order[asterisks] <- glue("{fct.order[asterisks]}*")
-  # }
+  if(length(asterisks) > 0){
+    fct.order[asterisks] <- glue("{fct.order[asterisks]}*")
+  }
   
   combinations.tibble.2 <- combinations.tibble %>%
     mutate(label.x = factor(label.x, levels = fct.order)) %>%
