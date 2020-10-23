@@ -171,6 +171,7 @@ import.and.process.data <- function(data.file,
 #' @importFrom gridExtra marrangeGrob
 #' @importFrom psych phi
 #' @importFrom lubridate epiweek
+#' @importFrom rmarkdown render
 #' @export generate.report
 generate.report <- function(patient.data.output, file.name, site.name){
   
