@@ -303,8 +303,6 @@ process.event.dates <- function(events.tbl, summary.status.name, daily.status.na
   } else {
     ever <- any((check.rows$summary.col == 1) | (check.rows$daily.col == 1), na.rm = T)
   }
-  
-  
   rows <- subtbl %>% filter(!is.na(daily.col) & !(is.na(dsstdat) & is.na(daily_dsstdat))) %>%
     mutate(consolidated.dssdat = map2_chr(dsstdat, daily_dsstdat, function(x,y) ifelse(is.na(y), as.character(x), as.character(y)))) %>%
     mutate(consolidated.dssdat = ymd(consolidated.dssdat))
@@ -441,7 +439,8 @@ rename.and.drop.columns <- function(data, column.table.file, cst.reference){
                           'oxy_vsorresu', 'hr_vsorres', 'sysbp_vsorres', 'temp_vsorres', 'temp_vsorresu', 'daily_crp_lborres',
                           'daily_bun_lborres', 'daily_bun_lborresu', 'daily_wbc_lborres', 'daily_wbc_lborresu', 'daily_pt_lborres',
                           'ddimer_lborres', 'daily_bil_lborresu', 'daily_aptt_lborres', 'daily_lymp_lborres', 'daily_neutro_lborres',
-                          'daily_alt_lborres', 'daily_ast_lborres', 'daily_bil_lborres', 'daily_bun_lborresu', 'daily_bil_lborresu')
+                          'daily_alt_lborres', 'daily_ast_lborres', 'daily_bil_lborres', 'daily_bun_lborresu', 'daily_bil_lborresu', 
+                          'other_mbyn', 'other_mborres')
   }
   
   
@@ -1036,7 +1035,7 @@ process.data <- function(data,
     dplyr::select(-ECMO.cols) %>%
     # ICU - we already have this information incompletely from icu_hostdat, icu_hoendat and hostdur,
     # so these columns are "ICU2" and we consolidate later
-    mutate(ICU.cols  = map(events, function(el){
+    mutate(ICU.cols  = map2(subjid, events, function(id, el){
       process.event.dates(el, "icu_hoterm", "daily_hoterm")
     })) %>%
     mutate(ICU.cols = map(ICU.cols, function(x){
@@ -1084,7 +1083,7 @@ process.data <- function(data,
   # values from the outcome sheet. Where available, the outcome sheet ispreferred.
   
   patient.data <- patient.data %>%
-    # ICU.ever is either ICU2.ever or non-NA icu_hoterm. At the moment, NA ICU2.evers lead to NA ICU.evers in the absence of a icu_hoterm.
+    # ICU.ever is either ICU2.ever or non-NA icu_hostdat, At the moment, NA ICU2.evers lead to NA ICU.evers in the absence of a icu_hoterm.
     # It's possible that they should be FALSE instead
     mutate(ICU.ever = !is.na(ICU.start.date) | ICU2.ever) %>%
     # mutate(ICU.ever2 = !is.na(ICU.start.date) | !(is.na(ICU2.ever)  | !ICU2.ever)) %>%
@@ -1170,52 +1169,107 @@ process.data <- function(data,
   
   patient.data <- patient.data %>%
     mutate(cov.test.result =
-             map_dbl(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "corna_mbcat"))) %>%
+             map_dbl(events, function(x)
+               extract.named.column.from.events(x, column.name = "corna_mbcat", sanity.check =  TRUE))) %>%
     mutate(cov.test.organism =
-             map_dbl(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "corna_mbcaty"))) %>%
-    mutate(cov.other.organism.freetext =
-             map_chr(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "coronaother_mborres"))) %>%
-    mutate(any.test.result =
-             map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mborres"))) %>%
-    mutate(any.test.freetext =
-             map(patient.data$events, function(x) extract.named.column.from.events(events.tibble = x, column.name = "mbtestcd")))
+             map_dbl(events, function(x)
+               extract.named.column.from.events(x, column.name = "corna_mbcaty", sanity.check =  TRUE))) %>%
+    mutate(
+      cov.other.organism.freetext =
+        map_chr(events,function(x)
+          extract.named.column.from.events(x, column.name = "coronaother_mborres", sanity.check =  TRUE))
+    ) %>%
+    mutate(any.test.result.1 =
+             map(events, function(x)
+               extract.named.column.from.events(x, column.name = "mborres"))) %>%
+    mutate(any.test.freetext.1 =
+             map(events, function(x)
+               extract.named.column.from.events(x, column.name = "mbtestcd")))  %>%
+    mutate(any.test.result.2 =
+             map(events, function(x)
+               extract.named.column.from.events(x, column.name = "other_mbyn"))) %>%
+    mutate(any.test.freetext.2 =
+             map(events, function(x)
+               extract.named.column.from.events(x, column.name = "other_mborres")))
   
   # IMPORTANT: At the moment "positive.COV19.test" refers to "evidence for a positive test". FALSE is not evidence for a negative test.
   
   patient.data <- patient.data %>%
-    mutate(positive.COV19.test = pmap_lgl(list(subjid, cov.test.result, cov.test.organism, cov.other.organism.freetext, any.test.result, any.test.freetext),
-                                          function(id, ctest, cpos, cfreetext, anytest, anyfreetext){
-                                            cpos.covlikely = probable.cov.freetext(cfreetext)
-                                            anytest2 <- as.numeric(anytest)
-                                            anyfreetext2 <- anyfreetext[which(!is.na(anytest))]
-                                            if((ctest %in% c(1,2)) & ((!is.na(cpos) & cpos == 1) | (cpos == 888 & !is.na(cfreetext) & cpos.covlikely))){
-                                              # You have COVID if:
-                                              # 1) Your SARS-CoV-2 test result is a weak or strong positive for SARS-CoV-2
-                                              # OR 2) Your SARS-CoV-2 test result is a weak or strong positive for "another virus" but the free text says that virus is actually SARS-CoV-2(!)
-                                              return(TRUE)
-                                            } else if(ctest == 0 | is.na(ctest) | (ctest  %in% c(1,2) & (is.na(cpos) | cpos == 2 | (!is.na(cpos.covlikely) & !cpos.covlikely)))){
-                                              # Patients get here if:
-                                              # 1) They have a negative SARS-CoV-2 test
-                                              # OR 2) They have an NA entry for SARS-CoV-2 test result
-                                              # OR 3) They have a weak or strong positive test for a coronavirus other than SARS-CoV-2 AND
-                                              #   3A) The entry for virus species is NA
-                                              #   OR 3B) The entry for virus species is "MERS"
-                                              #   OR 3C) The free text is missing or says that virus is not SARS-CoV-2
-                                              if(length(anyfreetext) > 0){
-                                                # This examines the free text from the daily form, looking for COVID-like words
-                                                otherpos.covlikely = map_lgl(anyfreetext2, probable.cov.freetext)
-                                                if(any(!is.na(otherpos.covlikely) & !is.na(anytest2) & otherpos.covlikely & anytest2 == 1)){
-                                                  # words found and the test was positive
-                                                  return(TRUE)
-                                                } else {
-                                                  # words not found or the test was negative
-                                                  return(FALSE)
-                                                }
-                                              }
-                                            } else {
-                                              return(FALSE)
-                                            }
-                                          }))
+    mutate(positive.COV19.test = pmap_lgl(list(
+      subjid,
+      cov.test.result,
+      cov.test.organism,
+      cov.other.organism.freetext,
+      any.test.result.1,
+      any.test.freetext.1,
+      any.test.result.2,
+      any.test.freetext.2
+    ),
+    function(id,
+             ctest,
+             cpos,
+             cfreetext,
+             anytest.1,
+             anyfreetext.1,
+             anytest.2,
+             anyfreetext.2) {
+      
+      cpos.covlikely = probable.cov.freetext(cfreetext)
+      anytestprocessed.1 <-
+        as.numeric(anytest.1)
+      anyfreetextprocessed.1 <-
+        anyfreetext.1[which(!is.na(anytest.1))]
+      anytestprocessed.2 <-
+        as.numeric(anytest.2)
+      anyfreetextprocessed.2 <-
+        anyfreetext.2[which(!is.na(anytest.2))]
+      if ((ctest %in% c(1, 2, 3)) &
+          ((!is.na(cpos) &
+            cpos == 1) | (cpos == 888 & !is.na(cfreetext) & cpos.covlikely))) {
+        # You have COVID if:
+        # 1) Your SARS-CoV-2 test result is a weak or strong positive for SARS-CoV-2
+        # OR 2) Your SARS-CoV-2 test result is a weak or strong positive for "another virus" but the free text says that virus is actually SARS-CoV-2(!)
+        return(TRUE)
+      } else if (ctest %in% c(0, 4) |
+                 is.na(ctest) |
+                 (ctest  %in% c(1, 2) &
+                  (is.na(cpos) |
+                   cpos == 2 | (
+                     !is.na(cpos.covlikely) & !cpos.covlikely
+                   )))) {
+        # Patients get here if:
+        # 1) They have a negative SARS-CoV-2 test
+        # OR 2) They have an NA entry for SARS-CoV-2 test result
+        # OR 3) They have a weak or strong positive test for a coronavirus infection AND
+        #   3A) The entry for virus species is NA
+        #   OR 3B) The entry for virus species is "MERS"
+        #   OR 3C) The free text is missing or says that virus is not SARS-CoV-2
+        if (length(anyfreetext.1) > 0 |
+            length(anyfreetext.2) > 0) {
+          # This examines the free text from the daily form, looking for COVID-like words
+          otherpos.covlikely.1 = map_lgl(anyfreetextprocessed.1, probable.cov.freetext)
+          otherpos.covlikely.2 = map_lgl(anyfreetextprocessed.2, probable.cov.freetext)
+          if (any(
+            !is.na(otherpos.covlikely.1) &
+            !is.na(anytestprocessed.1) &
+            otherpos.covlikely.1 & anytestprocessed.1 == 1
+          ) |
+          any(
+            !is.na(otherpos.covlikely.2) &
+            !is.na(anytestprocessed.2) &
+            otherpos.covlikely.2 & anytestprocessed.2 == 1
+          )) {
+            # words found and the test was positive
+            return(TRUE)
+          } else {
+            # words not found or the test was negative
+            return(FALSE)
+          }
+        }
+      } else {
+        return(FALSE)
+      }
+    }))
   
   
   # Minimal table for the unebargoed data
