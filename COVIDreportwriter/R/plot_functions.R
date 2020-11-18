@@ -3509,14 +3509,26 @@ signs.by.age <- function(data, ...) {
                     rr_vsorres, oxy_vsorresu, oxy_vsorres, hr_vsorres,
                     sysbp_vsorres, temp_vsorres, temp_vsorresu, start.to.exit,
                     sex
+      ) %>%
+      plot.by.age.grouping() %>%
+      mutate(RR = as.numeric(rr_vsorres)) %>%
+      # There are quite a few non-integer respiratory rates <3, which must be 
+      # data entry errors. Rate of 4 or 5 also highly implausible for infants.
+      mutate(
+        RR = ifelse(
+          RR <= 3 | (agegp10 == "0-9" & RR <= 5), 
+          NA, 
+          RR)) %>%
+      mutate(
+        SpO2_roomair = ifelse(
+          as.numeric(oxy_vsorresu) == 1, 
+          as.numeric(oxy_vsorres), 
+          NA
+        ),
+        HR = as.numeric(hr_vsorres),
+        SBP = as.numeric(sysbp_vsorres),
+        Temp = as.numeric(temp_vsorres)
       )
-    df <- plot.by.age.grouping(df)
-    df$RR <- as.numeric(df$rr_vsorres)
-    df$SpO2_roomair <- as.numeric(df$oxy_vsorres)
-    df$SpO2_roomair[df$oxy_vsorresu != 1] <- NA
-    df$HR <- as.numeric(df$hr_vsorres)
-    df$SBP <- as.numeric(df$sysbp_vsorres)
-    df$Temp <- as.numeric(df$temp_vsorres)
     # In case anyone goes Fahrenheit
     if (max(df$temp_vsorresu, na.rm = TRUE) >= 2) {
       df$temp_vsorresu[is.na(df$temp_vsorresu) == TRUE] <- 0
