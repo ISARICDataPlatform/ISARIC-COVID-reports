@@ -225,7 +225,7 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
       ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
     })) %>%
     filter(!is.na(admission.date)) %>%
-    filter(epiweek(start.date) <= epiweek(embargo.limit)) 
+    filter(epiweek(start.date) <= epiweek(embargo.limit) | year(start.date) < year(embargo.limit)) 
   
   epiweek.run <- map_chr(min(data2$epiweek):max(data2$epiweek), function(x){
     ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
