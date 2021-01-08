@@ -213,32 +213,46 @@ outcomes.by.country <- function(data, include.uk = TRUE, ...){
 #'
 outcomes.by.admission.date <- function(data, embargo.limit, ...){
   
-
-  
   data2 <- data %>%
     filter(!is.na(outcome)) %>%
     dplyr::mutate(outcome = factor(outcome, levels = c("discharge", "censored", "death"))) %>%
     mutate(epiweek = map_dbl(start.date, function(x){
       ew <- epiweek(x)
     })) %>%
-    mutate(two.digit.epiweek = map_chr(epiweek, function(x){
-      ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
+    mutate(year.epiweek = map2_chr(start.date, epiweek, function(sd, x){
+      yeartemp <- year(sd)
+      ewtemp <- ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
+      glue("{yeartemp}-{ewtemp}")
     })) %>%
-    filter(!is.na(admission.date)) %>%
+    filter(!is.na(start.date)) %>%
     filter(epiweek(start.date) <= epiweek(embargo.limit) | year(start.date) < year(embargo.limit)) 
   
-  epiweek.run <- map_chr(min(data2$epiweek):max(data2$epiweek), function(x){
-    ifelse(nchar(as.character(x))==1, glue("0{as.character(x)}"), as.character(x))
-  })
+  minyear <- data2$start.date %>% year %>% min(na.rm = T)
+  maxyear <- data2$start.date %>% year %>% max(na.rm = T)
+  
+  epiweek.run <- map(minyear:maxyear, function(x){
+    run <- c(glue("0{1:9}"), as.character(10:53))
+    glue("{x}-{run}")
+  }) %>% unlist()
   
   data2 <- data2 %>%
-    mutate(two.digit.epiweek = factor(two.digit.epiweek, levels = epiweek.run)) %>%
-    group_by(two.digit.epiweek, outcome) %>%
+    mutate(year.epiweek = factor(year.epiweek, levels = epiweek.run)) %>%
+    group_by(year.epiweek, outcome) %>%
     summarise(count = n()) %>%
     ungroup() %>%
-    complete(two.digit.epiweek,outcome, fill = list(count = 0)) %>%
+    complete(year.epiweek, outcome, fill = list(count = 0))
+  
+  nonzeros <- which(data2$count >0)
+  
+  first.nonzero <- nonzeros[1]
+  last.nonzero <- nonzeros[length(nonzeros)]
+  
+  data2 <- data2 %>%
+    slice(first.nonzero:last.nonzero) %>%
+    mutate(year.epiweek = fct_drop(year.epiweek)) %>%
     group_by(outcome) %>%
     mutate(cum.count = cumsum(count)) 
+  
   
   
   # 
@@ -247,9 +261,9 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
   # data2 <- data2 %>%
   #   mutate(two.digit.epiweek = factor(two.digit.epiweek, levels = ew.labels))
   
-  peak.cases <- data2 %>% group_by(two.digit.epiweek) %>% dplyr::summarise(count = sum(cum.count)) %>% pull(count) %>% max()
+  peak.cases <- data2 %>% group_by(year.epiweek) %>% dplyr::summarise(count = sum(cum.count)) %>% pull(count) %>% max()
   
-  ggplot(data2) + geom_col(aes(x = two.digit.epiweek, y=cum.count, fill = outcome), width = 0.95) +
+  ggplot(data2) + geom_col(aes(x = year.epiweek, y=cum.count, fill = outcome), width = 0.95) +
     theme_bw() +
     scale_fill_brewer(palette = 'Set2', name = "Outcome", drop="F", labels = c("Discharge", "Ongoing care", "Death")) +
     # scale_x_continuous(breaks = seq(min(epiweek(data2$hostdat), na.rm = TRUE), max(epiweek(data2), na.rm = TRUE), by=2)) +
@@ -257,9 +271,9 @@ outcomes.by.admission.date <- function(data, embargo.limit, ...){
     ylab("Cumulative patient records") +
     ylim(c(0,1.05*peak.cases)) +
     scale_x_discrete(drop = F) +
-    annotate(geom = "text", label = "*", x = max(levels(data2$two.digit.epiweek)),
+    annotate(geom = "text", label = "*", x = max(levels(data2$year.epiweek)),
              y = peak.cases, size =15) +
-    theme(axis.text.x=element_text(angle = -90, hjust = 1, vjust = 0.5))
+    theme(axis.text.x=element_text(angle = -90, hjust = 1, vjust = 0.5, size = 7))
 }
 
 ##### Comorbidities upset plot #####
